@@ -28,17 +28,27 @@ Saving a change to main branch of repository will deploy to production environme
 ### Goal 4:
 Optionally, make the app available publicly with no ongoing cost.
 
-## Unit Tests
+
+## Development
+This repository has been developed using Python 3.12.  
+To install all required modules in your Python 3.12 virtual environment run command:
+```
+pip install -r requirements.txt
+```
+
+### Unit Tests
 
 Unit testing has been set up using pytest and tox and should be run with the command
 ```
 tox
 ```
 
-## Prefect
+### Prefect
 
 This project uses Prefect for workflow orchestraion, and is planned to be run on Prefect cloud.
 https://www.prefect.io/
+
+https://www.prefect.io/cloud
 
 ### Local development:
 
