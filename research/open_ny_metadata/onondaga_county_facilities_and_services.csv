@@ -1,0 +1,20 @@
+Dataset Name,Onondaga County Public Facilities and Services
+Dataset Source,Onondaga County
+Description,"Onondaga County has created an interactive facilities locator that allows residents to find public locations such as parks, hospitals, and urgent care facilities."
+All Columns
+Column ID,Column Field Name,Column Name,Column Type,Column Description
+603203231,building_name,Building Name,text,Building Name
+603203232,building_code,Building Code,text,Building Category
+603203233,type_of_service,Type of Service,text,Service Provided
+603203234,room_or_suite,Room or Suite,text,Location within building 
+603203235,main_phone_number,Main Phone Number,text,Building phone #
+603203236,street_address,Street Address,text,Building street address 
+603203237,city_state_zip,City State Zip,text,Building city/state/zip
+603203238,hours_of_operation,Hours of Operation,text,Building hours of operation
+603203239,latitude,Latitude,text,Latitude
+603203240,longitude,Longitude,text,Longitude
+603203241,location,Location,location,Open Data/Socrata-generated geocoding information from supplied address components. 
+603203249,georeference,Georeference,point,"Open Data platform-generated geocoding information from supplied address components. Point-type location is the centroid of the address components provided and does not reflect a specific address if the street address component is not provided. Point-type location is supplied in ""POINT ( )"" format."
+603203246,:@computed_region_yamh_8v7k,NYS Municipal Boundaries,number,This column was automatically created in order to record in what polygon from the dataset 'NYS Municipal Boundaries' (yamh-8v7k) the point in column 'location' is located. This enables the creation of region maps (choropleths) in the visualization canvas and data lens.
+603203247,:@computed_region_wbg7_3whc,New York Zip Codes,number,This column was automatically created in order to record in what polygon from the dataset 'New York Zip Codes' (wbg7-3whc) the point in column 'location' is located. This enables the creation of region maps (choropleths) in the visualization canvas and data lens.
+603203248,:@computed_region_kjdx_g34t,Counties,number,This column was automatically created in order to record in what polygon from the dataset 'Counties' (kjdx-g34t) the point in column 'location' is located. This enables the creation of region maps (choropleths) in the visualization canvas and data lens.

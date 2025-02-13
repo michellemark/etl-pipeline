@@ -1,0 +1,12 @@
+Dataset Name,Residential Assessment Ratios:  Beginning Rate Year 1982
+Dataset Source,New York State Department of Taxation and Finance
+Description,The Department of Taxation and Finance annually establishes a residential assessment ratio for assessing taxing jurisdictions to determine at what level of market value those jurisdictions are assessing their residential property.
+All Columns
+Column ID,Column Field Name,Column Name,Column Type,Column Description
+551158352,rate_year,RATE YEAR,number,Rate Year of equalization rate
+551158353,swis_code,SWIS CODE,text,Tax and Finance Code for Municipality
+551158354,type,TYPE,text,"Type of Municipality (City, Town, Village, County)"
+551158355,county_name,COUNTY NAME,text,Name of County of Municipality
+551158356,municipality_name,MUNICIPALITY NAME,text,Name of Municipality
+551158357,village_name,VILLAGE NAME,text,Name of Village in Municipality
+551158358,residential_assessment_ratio,RESIDENTIAL ASSESSMENT RATIO,number,The measurement of the overall ratio of the total assessed value of residential property in the municipality compared to the full value of that residential property

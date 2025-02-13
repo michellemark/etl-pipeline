@@ -1,0 +1,14 @@
+Dataset Name,"New York State Cities, Towns, and Villages per County"
+Dataset Source,NYS Office of Information Technology Services
+Description,"The dataset contains a hierarchal listing of New York State counties, cities, towns, and villages, as well as official locality websites"
+All Columns
+Column ID,Column Field Name,Column Name,Column Type,Column Description
+428937111,type_code,Type Code,number,"Type of entity described:
+1 – County or Borough/County; 
+2 – City; 
+3 – Town; 
+4 – Village.
+"
+428937112,type,Type,text,Type name: County or Borough/County; City; Town; Village.
+428937113,county,County Name,text,NYS county name.
+428937119,municipality,Municipality,number,"Name of municipality, if applicable; blank if Type is ‘County’."

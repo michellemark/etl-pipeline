@@ -1,0 +1,12 @@
+coverage
+matplotlib
+pandas
+prefect
+prefect-sqlalchemy
+pytest
+pytest-cov
+python-dotenv
+scikit-learn
+numpy
+sodapy
+tox

@@ -1,0 +1,9 @@
+.coverage
+.env
+*.ipynb
+.DS_Store
+.idea/
+__pycache__/
+etl_ml_pipeline.egg-info/
+formatted/
+sample_data/

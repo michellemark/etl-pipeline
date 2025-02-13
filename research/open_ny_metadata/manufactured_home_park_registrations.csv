@@ -1,0 +1,50 @@
+Dataset Name,Manufactured Home Park Registrations: Beginning 2020
+Dataset Source,New York State Department of Taxation and Finance
+Description,"This dataset captures the park name, address, and county in which a manufactured home park is located; the number of site capacity and number of occupied sites; the name of the park contact, and the owner.. New York State Department of Taxation and Finance oversees the registration of these parks in accordance with NYS Real Property Law Section 233 subdivision (v) which requires owners of manufactured home parks with three or more homes register their park with the Department of Taxation and Finance.
+
+Pre-2020 (historical) data was collected by NYS Division of Housing and Community Renewal (HCR) and is available at https://data.ny.gov/d/sxi2-m23m."
+All Columns
+Column ID,Column Field Name,Column Name,Column Type,Column Description
+541192866,report_year,Report Year,number,Manufactured home park registration year
+541192867,county,County,text,Name of the New York State County where the manufactured home park is located
+541192868,facility_id_number,Facility ID Number,number,The facility ID is the unique identifier used in the Manufactured Homes Program database
+541192869,facility_name,Facility Name,text,Name of manufactured home park
+541192870,facility_address,Facility Address,text,Full address of manufactured home park
+541192871,park_emergency_phone_number,Park Emergency Phone Number,number,Phone number for emergencies related to the manufactured home park
+541192872,site_capacity,Site Capacity,number,The maximum number of sites at the manufactured home park
+541192873,sites_occupancy,Sites Occupancy,number,The number of occupied or filled sites
+541192874,park_owner_1,Park Owner 1,text,The name of the person or company that owns the facility
+541192875,park_owner_2,Park Owner 2,text,"If applicable, name of a second owner"
+541192876,park_owner_3,Park Owner 3,text,"If applicable, name of a third owner"
+541192877,park_owner_4,Park Owner 4,text,"If applicable, name of a fourth owner"
+541192878,park_owner_5,Park Owner 5,text,"If applicable, name of a fifth owner"
+541192879,park_owner_6,Park Owner 6,text,"If applicable, name of a sixth owner"
+541192880,park_owner_7,Park Owner 7,text,"If applicable, name of a seventh owner"
+541192881,contact_name,Contact Name,text,Name of the individual who is listed as the contact for the manufactured home park
+541192882,home_setup,Home Setup,text,Does the facility provide manufactured home park setup?
+541192883,tiedown,Tiedown,text,Does the facility provide manufactured home tiedowns?
+541192884,home_sales,Home Sales,text,Does the facility allow home sales?
+541192885,home_maintenance,Home Maintenance,text,Does the facility provide manufactured home maintenance?
+541192886,ground_maintenance,Ground Maintenance,text,Does the facility provide grounds maintenance?
+541192887,road_maintenance,Road Maintenance,text,Does the facility provide road maintenance?
+541192888,storage,Storage,text,Does the facility provide storage?
+541192889,playground,Playground,text,Does the facility have a playground?
+541192890,parking_space,Parking Space,text,Does the facility have a parking space for the lots?
+541192891,water,Water,text,Does the facility have running water?
+541192892,sewage,Sewage,text,Does the facility have a sewage system?
+541192893,beach,Beach,text,Does the facility have a beach?
+541192894,pool,Pool,text,Does the facility have a pool?
+541192895,garbage_trash,Garbage/Trash,text,Does the facility provide waste management?
+541192896,security_guard,Security Guard,text,Does the facility have security guards?
+541192897,food_store,Food/Store,text,Does the facility have an on-site food store?
+541192898,clubhouse,Clubhouse,text,Does the facility have a clubhouse?
+541192899,laundry_room,Laundry Room,text,Does the facility have a laundry room?
+541192900,electrical,Electrical,text,Does the facility have electricity?
+541192901,natural_gas,Natural Gas,text,Does the facility have natural gas?
+541192902,propane_gas,Propane Gas,text,Does the facility have propane gas?
+541192903,tv_cable_hookup,TV/Cable Hookup,text,Does the facility provide a hookup for television/cable?
+541192904,other_park_amenity_1,Other Park Amenity 1,text,Indicates any other amenities or offerings provided by the facility
+541192905,other_park_amenity_2,Other Park Amenity 2,text,Indicates any other amenities or offerings provided by the facility
+541192906,other_park_amenity_3,Other Park Amenity 3,text,Indicates any other amenities or offerings provided by the facility
+541192907,other_park_amenity_4,Other Park Amenity 4,text,Indicates any other amenities or offerings provided by the facility
+541192908,other_park_amenity_5,Other Park Amenity 5,text,Indicates any other amenities or offerings provided by the facility

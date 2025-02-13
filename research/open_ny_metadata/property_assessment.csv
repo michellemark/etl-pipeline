@@ -1,0 +1,114 @@
+Dataset Name,Property Assessment Data from Local Assessment Rolls
+Dataset Source,Department of Taxation and Finance
+Description,"This dataset is comprised of the final assessment rolls submitted to the New York State Department of Taxation and Finance – Office of Real Property Tax Services by 996 local governments. Together, the assessment rolls provide the details of the more than 4.7 million parcels in New York State.  
+ 
+The dataset includes assessment rolls for all cities and towns, except New York City. (For New York City assessment roll data, see NYC Open Data [https://opendata.cityofnewyork.us]) 
+ 
+For each property, the dataset includes assessed value, full market value, property size, owners, exemption information, and other fields. 
+  
+Tip: For a unique identifier for every property in New York State, combine the SWIS code and print key fields."
+All Columns
+Column ID,Column Field Name,Column Name,Column Type,Column Description
+555399065,roll_year,Roll Year,number,The calendar year in which the assessment roll was filed.
+555399066,county_name,County Name,text,The name of the county in which the parcel resides.
+555399067,municipality_code,Municipality Code,text,Six-digit code that uniquely identifies each municipality.
+555399068,municipality_name,Municipality Name,text,The name of the city or town in which the parcel resides.
+555399069,school_district_code,School District Code,text,Six-digit code that uniquely identifies each school district.
+555399070,school_district_name,School District Name,text,The name of the school district in which the parcel resides.
+555399071,swis_code,SWIS Code,text,"Six-digit code that identifies subsections of a city or town, such as a village that resides within."
+555399072,tax_class,Tax Class,text,Tax class used in municipalities where class assessing is applicable.
+555399073,roll_section,Roll Section,number,"The section of the assessment roll on which the property resides. 1 - Ordinary taxable property including that which is partially exempt. 3 - Taxable State Owned Land. All property owned by the State of New York that is subject to general tax levies. 5 - Special Franchise. Real property owned by public utilities, such as cables, transmission or distribution wires, mains, etc., which is located under, above, or upon any public right of way. 6 - Utilities and Non-Ceiling Railroads. all property owned by public utility companies and privately held railroad companies except special franchise and ceiling railroad property. 7 - Ceiling Railroads. All railroad transportation property whose assessments are subject to a ceiling imposed by the Office of Real Property Tax Services. 8 - Wholly Exempt Property. includes all parcels which are entirely exempt from property taxes for the general levies. Many properties in this section are required to pay some special district taxes, however. Sections 2 and 4 are not currently in use."
+555399074,property_class,Property Class,number,"A three digit code, established by ORPS for categorizing property by use."
+555399075,property_class_description,Property Class Description,text,Literal text description of the property class assigned to the parcel.
+555399076,print_key_code,Print Key Code,text,Unique identifier for the parcel within a given municipality.
+555399077,parcel_address_number,Parcel Address Number,text,Street number associated with the physical location of the property.
+555399078,parcel_address_street,Parcel Address Street,text,Street name associated with the physical location of the property.
+555399079,parcel_address_suff,Parcel Address Suff,text,Street suffix associated with the physical location of the property.
+555399080,front,Front,number,The width of the parcel from the front in feet.
+555399081,depth,Depth,number,Measurement from the front to the rear line of the parcel in feet.
+555399082,bank,Bank,text,Identifier for the bank used in the latest sale transaction.
+555399083,grid_coordinates_east,Grid Coordinates East,number,"Information from the tax map process that represents an easting reading from the point of origin, of the appropriate zone, of the New York coordinate system to the visual center of each land parcel."
+555399084,grid_coordinates_north,Grid Coordinates North,number,"Information from the tax map process that represents an northing reading from the point of origin, of the appropriate zone, of the New York coordinate system to the visual center of each land parcel."
+555399085,deed_book,Deed Book,number,"When deeds are recorded, they are assigned a book number which is used by the record office to locate the deed when it needs to be retrieved."
+555399086,page,Page,number,"When deeds are recorded, they are assigned a page number which is used by the record office to locate the deed when it needs to be retrieved."
+555399087,primary_owner_first_name,Primary Owner First Name,text,Primary Owner First Name
+555399088,primary_owner_mi,Primary Owner MI,text,Primary Owner Middle Initial
+555399089,primary_owner_last_name,Primary Owner Last Name,text,Primary Owner Last Name
+555399090,primary_owner_suffix,Primary Owner Suffix,text,Primary Owner Suffix
+555399091,additional_owner_1_first,Additional Owner 1 First Name,text,Additional Owner #1 First Name
+555399092,additional_owner_1_mi,Additional Owner 1 MI,text,Additional Owner #1 Middle Initial
+555399093,additional_owner_1_last_name,Additional Owner 1 Last Name,text,Additional Owner #1 Last Name
+555399094,additional_owner_1_suffix,Additional Owner 1 Suffix,text,Additional Owner #1 Suffix
+555399095,additional_owner_2_first,Additional Owner 2 First Name,text,Additional Owner #2 First Name
+555399096,additional_owner_2_mi,Additional Owner 2 MI,text,Additional Owner #2 Middle Initial
+555399097,additional_owner_2_last_name,Additional Owner 2 Last Name,text,Additional Owner #2 Last Name
+555399098,additional_owner_2_suffix,Additional Owner 2 Suffix,text,Additional Owner #2 Suffix
+555399099,additional_owner_3_first,Additional Owner 3 First Name,text,Additional Owner #3 First Name
+555399100,additional_owner_3_mi,Additional Owner 3 MI,text,Additional Owner #3 Middle Initial
+555399101,additional_owner_3_last_name,Additional Owner 3 Last Name,text,Additional Owner #3 Last Name
+555399102,additional_owner_3_suffix,Additional Owner 3 Suffix,text,Additional Owner #3 Suffix
+555399103,mailing_address_prefix,Mailing Address Prefix,text,Mailing Address Street Prefix
+555399104,mailing_address_number,Mailing Address Number,text,Mailing Address Street Number
+555399105,mailing_address_street,Mailing Address Street,text,Mailing Address Street Name
+555399106,mailing_address_suff,Mailing Address Suff,text,Mailing Address Street Suffix
+555399107,mailing_address_city,Mailing Address City,text,Mailing Address City
+555399108,mailing_address_state,Mailing Address State,text,Mailing Address Street Name
+555399109,mailing_address_zip,Mailing Address Zip,text,Mailing Address Zip Code
+555399110,mailing_address_country,Mailing Address Country,text,Mailing Address Country
+555399111,mailing_address_po_box,Mailing Address PO Box,text,Mailing Address PO Box
+555399112,exemption_code_1,Exemption Code 1,number,A four digit number assigned by the Office of Real Property Tax Services (ORPTS) to every exemption granted by statute in New York State. The exemption code associated with exemption #1.
+555399113,exemption_application_number,Exemption Application Number 1,number,"The taxing purposes to which exemption #1 applies. 0 - County, City/Town, and school. 1 - County and City/Town. 2 - County only. 3 - City/Town only. 4 - School only. 5 - County and school. 6 - City/Town and school purposes. 7 - Village only"
+555399114,exemption_amount_county_1,Exemption Amount County 1,number,The dollar amount of exemption #1 for county taxation purposes.
+555399115,exemption_amount_city_1,Exemption Amount City 1,number,The dollar amount of exemption #1 for city/town taxation purposes.
+555399116,exemption_amount_school_1,Exemption Amount School 1,number,The dollar amount of exemption #1 for school taxation purposes.
+555399117,exemption_code_2,Exemption Code 2,number,The exemption code associated with exemption #2.
+555399118,exemption_application_number_1,Exemption Application Number 2,number,The taxing purposes to which exemption #2 applies.
+555399119,exemption_amount_county_2,Exemption Amount County 2,number,The dollar amount of exemption #2 for county taxation purposes.
+555399120,exemption_amount_city_2,Exemption Amount City 2,number,The dollar amount of exemption #2 for city/town taxation purposes.
+555399121,exemption_amount_school_2,Exemption Amount School 2,number,The dollar amount of exemption #2 for school taxation purposes.
+555399122,exemption_code_3,Exemption Code 3,number,The exemption code associated with exemption #3.
+555399123,exemption_application_number_2,Exemption Application Number 3,number,The taxing purposes to which exemption #3 applies.
+555399124,exemption_amount_county_3,Exemption Amount County 3,number,The dollar amount of exemption #3 for county taxation purposes.
+555399125,exemption_amount_city_3,Exemption Amount City 3,number,The dollar amount of exemption #3 for city/town taxation purposes.
+555399126,exemption_amount_school_3,Exemption Amount School 3,number,The dollar amount of exemption #3 for school taxation purposes.
+555399127,exemption_code_4,Exemption Code 4,number,The exemption code associated with exemption #4.
+555399128,exemption_application_number_3,Exemption Application Number 4,number,The taxing purposes to which exemption #4 applies.
+555399129,exemption_amount_county_4,Exemption Amount County 4,number,The dollar amount of exemption #4 for county taxation purposes.
+555399130,exemption_amount_city_4,Exemption Amount City 4,number,The dollar amount of exemption #4 for city/town taxation purposes.
+555399131,exemption_amount_school_4,Exemption Amount School 4,number,The dollar amount of exemption #4 for school taxation purposes.
+555399132,exemption_code_5,Exemption Code 5,number,The exemption code associated with exemption #5.
+555399133,exemption_application_number_4,Exemption Application Number 5,number,The taxing purposes to which exemption #5 applies.
+555399134,exemption_amount_county_5,Exemption Amount County 5,number,The dollar amount of exemption #5 for county taxation purposes.
+555399135,exemption_amount_city_5,Exemption Amount City 5,number,The dollar amount of exemption #5 for city/town taxation purposes.
+555399136,exemption_amount_school_5,Exemption Amount School 5,number,The dollar amount of exemption #5 for school taxation purposes.
+555399188,exemption_code_6,Exemption Code 6,number,The exemption code associated with exemption #6.
+555399175,exemption_application_number_5,Exemption Application Number 6,number,The taxing purposes to which exemption #6 applies.
+555399185,exemption_amount_county_6,Exemption Amount County 6,number,The dollar amount of exemption #6 for county taxation purposes.
+555399180,exemption_amount_city_6,Exemption Amount City 6,number,The dollar amount of exemption #6 for city/town taxation purposes.
+555399190,exemption_amount_school_6,Exemption Amount School 6,number,The dollar amount of exemption #6 for school taxation purposes.
+555399192,exemption_code_7,Exemption Code 7,number,The exemption code associated with exemption #7.
+555399184,exemption_application_number_6,Exemption Application Number 7,number,The taxing purposes to which exemption #7 applies.
+555399181,exemption_amount_county_7,Exemption Amount County 7,number,The dollar amount of exemption #7 for county taxation purposes.
+555399169,exemption_amount_city_7,Exemption Amount City 7,number,The dollar amount of exemption #7 for city/town taxation purposes.
+555399187,exemption_amount_school_7,Exemption Amount School 7,number,The dollar amount of exemption #7 for school taxation purposes.
+555399183,exemption_code_8,Exemption Code 8,number,The exemption code associated with exemption #8.
+555399186,exemption_application_number_7,Exemption Application Number 8,number,The taxing purposes to which exemption #8 applies.
+555399189,exemption_amount_county_8,Exemption Amount County 8,number,The dollar amount of exemption #8 for county taxation purposes.
+555399174,exemption_amount_city_8,Exemption Amount City 8,number,The dollar amount of exemption #8 for city/town taxation purposes.
+555399191,exemption_amount_school_8,Exemption Amount School 8,number,The dollar amount of exemption #8 for school taxation purposes.
+555399179,exemption_code_9,Exemption Code 9,number,The exemption code associated with exemption #9.
+555399178,exemption_application_number_8,Exemption Application Number 9,number,The taxing purposes to which exemption #9 applies.
+555399168,exemption_amount_county_9,Exemption Amount County 9,number,The dollar amount of exemption #9 for county taxation purposes.
+555399182,exemption_amount_city_9,Exemption Amount City 9,number,The dollar amount of exemption #9 for city/town taxation purposes.
+555399177,exemption_amount_school_9,Exemption Amount School 9,number,The dollar amount of exemption #9 for school taxation purposes.
+555399173,exemption_code_10,Exemption Code 10,number,The exemption code associated with exemption #10.
+555399172,exemption_application_number_9,Exemption Application Number 10,number,The taxing purposes to which exemption #10 applies.
+555399171,exemption_amount_county_10,Exemption Amount County 10,number,The dollar amount of exemption #10 for county taxation purposes.
+555399176,exemption_amount_city_10,Exemption Amount City 10,number,The dollar amount of exemption #10 for city/town taxation purposes.
+555399170,exemption_amount_school_10,Exemption Amount School 10,number,The dollar amount of exemption #10 for school taxation purposes.
+555399162,full_market_value,Full Market Value,number,"The hypothetical price that a property would bring if exposed for sale in the open market, in an arm's length transaction between a willing seller and a willing buyer, both of whom are knowledgeable concerning all the uses to which it is adapted and for which it is capable of being used."
+555399163,assessment_land,Assessment Land,number,The assessed value of only the land associated with the parcel.
+555399164,assessment_total,Assessment Total,number,"A figure in dollars, determined by an assessor, which reflects a property's worth in relation to other properties on an assessment roll and which; unless exempt; is used to compute a tax dollar obligation by multiplying it by a tax rate."
+555399165,county_taxable_value,County Taxable Value,number,Total taxable assessment for county taxation purposes.
+555399166,town_taxable_value,Town Taxable Value,number,Total taxable assessment for city/town taxation purposes.
+555399167,school_taxable,School Taxable,number,Total taxable assessment for school taxation purposes.

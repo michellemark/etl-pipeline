@@ -1,0 +1,33 @@
+# Welcome to your prefect.yaml file! You can use this file for storing and managing
+# configuration for deploying your flows. We recommend committing this file to source
+# control along with your flow code.
+
+# Generic metadata about this project
+name: etl-ml-pipeline
+prefect-version: 3.1.13
+
+# build section allows you to manage and build docker images
+build: null
+
+# push section allows you to manage if and how this project is uploaded to remote locations
+push: null
+
+# pull section allows you to provide instructions for cloning this project in remote locations
+pull:
+- prefect.deployments.steps.set_working_directory:
+    directory: /Users/michelle/workspace/suny_poly/capstone_project/etl-ml-pipeline
+
+# the deployments section allows you to provide configuration for deploying flows
+deployments:
+- name: etl-pipeline
+  version: 0.0.1
+  tags: ['capstone', 'bachelors']
+  description: 'ETL in capstone project for BS in computer science.'
+  schedule: {}
+  flow_name: null
+  entrypoint: data_import_pipeline.py:hello_world
+  parameters: { "name": "Michelle", "goodbye": True }
+  work_pool:
+    name: null
+    work_queue_name: null
+    job_variables: {}

@@ -1,0 +1,22 @@
+Dataset Name,Parcel Counts By Type By Municipality: Beginning Roll Year 2000
+Dataset Source,Office of Tax Policy Analysis
+Description,"The Department of Taxation and Finance annually produces a report pertaining to the distribution of parcels by property class.  The data analysis involves a breakdown of property classes to nine segments of broad use, namely Agricultural, Residential, Vacant Land/Farm, Commercial, Recreation, Community Service, Industrial, Public Service, and Forest/Conservation. For more information please go to:  http://www.tax.ny.gov/research/property/default.htm"
+All Columns
+Column ID,Column Field Name,Column Name,Column Type,Column Description
+541195311,roll_year,Roll Year,number,Assessment Roll Year
+541195312,swis_code,Swis Code,text,Tax and Finance Code for Municipality
+541195313,municipality_name,Municipality Name,text,Name of Municipality
+541195314,county_name,County Name,text,Name of County of Municipality
+541195315,broad_use_100_agricultural_property_count,Broad Use 100 - Agricultural Property Count,number,Count of agricultural parcels in municipality
+541195316,broad_use_200_residential_property_count,Broad Use 200 - Residential Property Count,number,Count of residential parcels in municipality
+541195317,broad_use_300_vacant_land_property_count,Broad Use 300 - Vacant Land Property Count,number,Count of vacant land parcels in municipality
+541195318,broad_use_400_commercial_property_count,Broad Use 400 - Commercial Property Count,number,Count of commercial parcels in municipality
+541195319,broad_use_500_recreation_property_count,Broad Use 500 - Recreation Property Count,number,Count of recreation parcels in municipality
+541195320,broad_use_600_community_service_property_count,Broad Use 600 - Community Service Property Count,number,"Count of community service parcels in
+municipality"
+541195321,broad_use_700_industrial_property_count,Broad Use 700 - Industrial Property Count,number,Count of industrial parcels in municipality
+541195322,broad_use_800_public_service_property_count,Broad Use 800 - Public Service Property Count,number,"Count of public service parcels in
+municipality"
+541195323,broad_use_900_forest_and_conservation_property_count,Broad Use 900 - Forest and Conservation Property Count,number,"Count of forest and conservation parcels in
+municipality"
+541195324,total_parcel_count,Total Parcel Count,number,Total parcel count in municipality

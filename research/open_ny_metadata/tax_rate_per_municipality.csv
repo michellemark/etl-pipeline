@@ -1,0 +1,26 @@
+Dataset Name,Real Property Tax Rates Levy Data By Municipality: Beginning 2004
+Dataset Source,New York State Department of Taxation and Finance
+Description,"The Department of Taxation and Finance annually produces a data file providing property tax rates and levies for the taxing jurisdictions in New York State.  The data are culled from files on the State Comptroller’s website.  The dataset takes each school district segment and provides the levy for county, municipal and school tax purposes, as well as the tax rates that apply in those taxing jurisdictions."
+All Columns
+Column ID,Column Field Name,Column Name,Column Type,Column Description
+440622000,fiscal_year_ending,Fiscal Year Ending,number,New York State fiscal year
+440622001,roll_year,Roll Year,number,Year on which taxes were levied
+440622002,swis_code,Swis Code,text,Tax and Finance code for municipality
+440622003,municipality,Municipality,text,Name of municipality
+440622004,county,County,text,Name of county of municipality
+440622005,school_code,School Code,text,Tax and Finance code for school district
+440622006,school_name,School Name,text,Name of school district
+440622007,type_of_value_on_whichtax_rates_are_applied,Type of Value on which Tax Rates are applied,text,"Either Assessed value or Full value; the type of value on which the various tax rates are applied for tax amount calculation.
+Note: Tax rates prior to FYE2013 are applied to assessed value rather than full value."
+440622008,county_tax_levy,County Tax Levy,number,Levy for county purposes
+440622009,county_tax_rate_outside_village_per_1000_assessed_value,County Tax Rate Outside Village (per $1000 value),number,"County tax rate on municipality not located
+inside a village"
+440622010,county_tax_rate_inside_village_per_1000_assessed_value,County Tax Rate Inside Village (per $1000 value),number,"County tax rate on municipality located
+inside a village"
+440622011,municipality_tax_levy,Municipality Tax Levy,number,Levy for municipal purposes
+440622012,municipal_tax_rate_outside_village_per_1000_assessed_value,Municipal Tax Rate Outside Village (per $1000 value),number,"Municipal tax rate on municipality not
+located inside a village"
+440622013,municipal_tax_rate_inside_village_per_1000_assessed_value,Municipal Tax Rate Inside Village (per $1000 value),number,"Municipal tax rate on municipality located
+inside a village"
+440622014,school_district_tax_levy,School District Tax Levy,number,Levy for school district purposes
+440622015,school_district_tax_rate_per_1000_assessed_value,School District Tax Rate (per $1000 value),number,School tax rate on municipality

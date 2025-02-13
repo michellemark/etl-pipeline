@@ -1,0 +1,13 @@
+[run]
+source = etl
+parallel = True
+
+[report]
+show_missing = True
+omit =
+    */__init__.py
+    */data/*
+    */generated/*
+    */models/*
+    */research/*
+    */tests/*
