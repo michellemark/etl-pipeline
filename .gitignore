@@ -5,5 +5,7 @@
 .idea/
 __pycache__/
 etl_ml_pipeline.egg-info/
+extracted/
+generated/
 formatted/
 sample_data/
