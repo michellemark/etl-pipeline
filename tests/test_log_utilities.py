@@ -16,8 +16,7 @@ def test_custom_logger_local_context():
 
 
 @pytest.mark.parametrize("log_level", ALLOWED_LOG_LEVELS)
-def test_custom_logger_prefect_context_allowed_levels(log_level
-                                            ):
+def test_custom_logger_prefect_context_allowed_levels(log_level):
     """Test that custom_logger uses Prefect's logger when in a Prefect context."""
     prefect_message = "This is a Prefect message."
 
