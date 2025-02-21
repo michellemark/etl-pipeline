@@ -4,17 +4,6 @@ import sqlite3
 import boto3
 
 
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
-AWS_REGION = os.environ.get("AWS_REGION")
-aws_session = boto3.Session(
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name=AWS_REGION
-)
-s3_client = aws_session.client("s3")
-s3_bucket_name = "cny-realestate-data"
-
 current_file_path = os.path.abspath(__file__)
 project_root = os.path.dirname(os.path.dirname(current_file_path))
 extracted_data_dir = os.path.join(project_root, "extracted")
@@ -81,6 +70,21 @@ def upload_database_to_s3():
     """
     Upload the SQLite database to S3.
     """
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+    AWS_REGION = os.environ.get("AWS_REGION")
+
+    if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY or not AWS_REGION:
+        print("Missing required AWS environment variables. Skipping upload.")
+        return
+
+    aws_session = boto3.Session(
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        region_name=AWS_REGION
+    )
+    s3_client = aws_session.client("s3")
+    s3_bucket_name = "cny-realestate-data"
     s3_client.upload_file(db_local_path, s3_bucket_name, sqlite_db_name)
     print(f"Uploaded {db_local_path} to s3://{s3_bucket_name}/{sqlite_db_name}")
 

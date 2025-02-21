@@ -1,12 +1,12 @@
+boto3
 coverage
 matplotlib
+numpy
 pandas
 prefect
-prefect-sqlalchemy
 pytest
 pytest-cov
 python-dotenv
 scikit-learn
-numpy
 sodapy
 tox
