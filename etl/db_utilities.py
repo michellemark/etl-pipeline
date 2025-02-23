@@ -27,29 +27,25 @@ def ensure_data_directories_exist():
 
 def create_database():
     """
-    Create a new SQLite database and initialize it with a basic schema.
+    Create a new SQLite database and initialize it with defined schema.
     """
-    # Ensure needed data directories exist, if they do not already
     ensure_data_directories_exist()
+    create_table_definitions_path = os.path.join(project_root, "sql", "create_table_definitions.sql")
 
-    # Connecting to SQLite DB creates the file if it does not exist
-    db_connection = sqlite3.connect(db_local_path)
-    db_cursor = db_connection.cursor()
+    try:
 
-    # Create table to store extracted NY real estate data
-    db_cursor.execute(f"""
-    CREATE TABLE IF NOT EXISTS {NY_DB_TABLE} (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        address TEXT NOT NULL,
-        price INTEGER NOT NULL,
-        bedrooms INTEGER,
-        bathrooms INTEGER
-    );
-    """)
+        with open(create_table_definitions_path, "r") as sql_file:
+            sql_script = sql_file.read()
 
-    db_connection.commit()
-    db_connection.close()
-    custom_logger(INFO_LOG_LEVEL, f"Database created at {db_local_path}")
+        db_connection = sqlite3.connect(db_local_path)
+        db_cursor = db_connection.cursor()
+        db_cursor.executescript(sql_script)
+        db_connection.commit()
+        db_connection.close()
+        custom_logger(INFO_LOG_LEVEL, f"Database created at {db_local_path}")
+
+    except Exception as e:
+        custom_logger(ERROR_LOG_LEVEL, f"Error creating the database: {str(e)}")
 
 
 def populate_database(new_data):
@@ -94,10 +90,10 @@ def upload_database_to_s3():
 if __name__ == "__main__":
     create_database()
     # Example data to insert
-    sample_data = [
-        ("123 Maple St", 250000, 3, 2),
-        ("456 Oak St", 350000, 4, 3),
-        ("789 Pine St", 150000, 2, 1),
-    ]
-    populate_database(sample_data)
-    upload_database_to_s3()
+    # sample_data = [
+    #     ("123 Maple St", 250000, 3, 2),
+    #     ("456 Oak St", 350000, 4, 3),
+    #     ("789 Pine St", 150000, 2, 1),
+    # ]
+    # populate_database(sample_data)
+    # upload_database_to_s3()

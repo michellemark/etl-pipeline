@@ -30,7 +30,7 @@ def test_create_database():
 
         mock_ensure_dirs.assert_called_once()
         mock_sqlite_connect.assert_called_once_with(db_local_path)
-        mock_db_cursor.execute.assert_called_once()
+        mock_db_cursor.executescript.assert_called_once()
         mock_db_connection.commit.assert_called_once()
         mock_db_connection.close.assert_called_once()
         mock_custom_logger.assert_called_once_with(INFO_LOG_LEVEL, f"Database created at {db_local_path}")

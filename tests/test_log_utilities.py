@@ -20,7 +20,7 @@ def test_custom_logger_prefect_context_allowed_levels(log_level):
     """Test that custom_logger uses Prefect's logger when in a Prefect context."""
     prefect_message = "This is a Prefect message."
 
-    with prefect_test_harness():
+    with prefect_test_harness(server_startup_timeout=60):
 
         with patch("etl.log_utilities.get_run_logger") as mock_get_run_logger:
             mock_logger = MagicMock()
