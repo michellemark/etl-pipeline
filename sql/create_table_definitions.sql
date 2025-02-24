@@ -63,8 +63,8 @@ CREATE INDEX idx_properties_school_district_code_municipality
     ON properties (school_district_code, municipality_code);
 
 
--- Table: property_ny_assessments
-CREATE TABLE property_ny_assessments
+-- Table: ny_property_assessments
+CREATE TABLE ny_property_assessments
 (
     property_id                TEXT    NOT NULL, -- matches id in properties
     roll_year                  INTEGER NOT NULL,
@@ -83,25 +83,25 @@ CREATE TABLE property_ny_assessments
 );
 
 -- Add an index to optimize filtering by property class
-CREATE INDEX idx_property_ny_assessments_property_class
-    ON property_ny_assessments (property_class);
+CREATE INDEX idx_ny_property_assessments_property_class
+    ON ny_property_assessments (property_class);
 
 -- Add an index to optimize filtering by property description
-CREATE INDEX idx_property_ny_assessments_property_description
-    ON property_ny_assessments (property_class_description);
+CREATE INDEX idx_ny_property_assessments_property_description
+    ON ny_property_assessments (property_class_description);
 
 -- Add an index to optimize filtering by roll_year
-CREATE INDEX idx_property_ny_assessments_roll_year
-    ON property_ny_assessments (roll_year);
+CREATE INDEX idx_ny_property_assessments_roll_year
+    ON ny_property_assessments (roll_year);
 
 -- Optimize filtering by property_class and roll_year
-CREATE INDEX idx_property_ny_assessments_class_year
-    ON property_ny_assessments (property_class, roll_year);
+CREATE INDEX idx_ny_property_assessments_class_year
+    ON ny_property_assessments (property_class, roll_year);
 
 -- Optimize filtering by property_class and joining with properties
-CREATE INDEX idx_property_ny_assessments_class_property
-    ON property_ny_assessments (property_class, property_id);
+CREATE INDEX idx_ny_property_assessments_class_property
+    ON ny_property_assessments (property_class, property_id);
 
 -- Optimize join with properties on property_id
-CREATE INDEX idx_property_ny_assessments_class_year_property
-    ON property_ny_assessments (property_class, roll_year, property_id);
+CREATE INDEX idx_ny_property_assessments_class_year_property
+    ON ny_property_assessments (property_class, roll_year, property_id);
