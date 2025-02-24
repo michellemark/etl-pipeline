@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
-from etl.db_utilities import ensure_data_directories_exist, extracted_data_dir, generated_data_dir, NY_DB_TABLE, db_local_path, \
-    create_database, populate_database, sqlite_db_name, upload_database_to_s3, s3_bucket_name
+from etl.db_utilities import ensure_data_directories_exist, extracted_data_dir, generated_data_dir, db_local_path, \
+    create_database, sqlite_db_name, upload_database_to_s3, s3_bucket_name
 from etl.log_utilities import INFO_LOG_LEVEL, ERROR_LOG_LEVEL
 
 
@@ -34,31 +34,6 @@ def test_create_database():
         mock_db_connection.commit.assert_called_once()
         mock_db_connection.close.assert_called_once()
         mock_custom_logger.assert_called_once_with(INFO_LOG_LEVEL, f"Database created at {db_local_path}")
-
-
-def test_populate_database():
-    """Test populate_database makes expected calls."""
-    # TODO: will need updating when schema / function changes)
-    test_data = [
-        ("123 Test St", 250000, 3, 2),
-        ("456 Example Ave", 300000, 4, 3),
-    ]
-
-    with patch("sqlite3.connect") as mock_sqlite_connect, \
-        patch("etl.db_utilities.custom_logger") as mock_custom_logger:
-
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_sqlite_connect.return_value = mock_conn
-        mock_conn.cursor.return_value = mock_cursor
-
-        populate_database(test_data)
-
-        mock_sqlite_connect.assert_called_once_with(db_local_path)
-        mock_cursor.executemany.assert_called_once()
-        mock_conn.commit.assert_called_once()
-        mock_conn.close.assert_called_once()
-        mock_custom_logger.assert_called_once()
 
 
 def test_upload_database_to_s3_success():

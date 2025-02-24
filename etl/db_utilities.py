@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from typing import List, Tuple
 
 import boto3
 
@@ -13,7 +14,9 @@ sqlite_db_name = "cny-real-estate.db"
 db_local_path = os.path.join(generated_data_dir, sqlite_db_name)
 s3_bucket_name = "cny-realestate-data"
 
-NY_DB_TABLE = "ny_properties"
+ASSESSMENT_RATIOS_TABLE = "municipality_assessment_ratios"
+NY_PROPERTY_ASSESSMENTS_TABLE = "ny_property_assessments"
+PROPERTIES_TABLE = "properties"
 
 
 def ensure_data_directories_exist():
@@ -48,20 +51,69 @@ def create_database():
         custom_logger(ERROR_LOG_LEVEL, f"Error creating the database: {str(e)}")
 
 
-def populate_database(new_data):
+def insert_into_database(table_name: str, column_names: List[str], data: List[Tuple]) -> Tuple[int, int]:
     """
-    Add sample records to the SQLite database.
+    Insert records into a specified SQLite database table with row-by-row error handling.
+
+    Example Usage:
+        populate_database(
+            "properties",
+            ["id", "swis_code", "print_key_code", "municipality_code"],
+            [
+                ("ABC 123", "ABC", "123", "XYZ"),
+                ("ABD 124", "ABD", "124", "XYZ"),
+                ("ACE 125", "ACE", "125", "RST"),
+            ]
+        )
+
+    :param table_name: (str): Name of the target table
+    :param column_names: (list of str): The list of columns to populate
+    :param data: (list of tuple): List of data rows, where each row is a tuple of values
+    :return: (tuple of int): A tuple containing count of rows inserted and count of rows failed.
     """
-    # Establish connection
-    conn = sqlite3.connect(db_local_path)
-    cursor = conn.cursor()
-    cursor.executemany(
-        f"""INSERT INTO {NY_DB_TABLE} (address, price, bedrooms, bathrooms) VALUES (?, ?, ?, ?)""",
-        new_data
-    )
-    conn.commit()
-    conn.close()
-    custom_logger(INFO_LOG_LEVEL, f"Data inserted into {NY_DB_TABLE} in database {sqlite_db_name}")
+    rows_inserted: int = 0
+    rows_failed: int = 0
+
+    try:
+        # Build the SQL query dynamically
+        column_names_joined = ", ".join(column_names)
+        value_placeholders = ", ".join(["?"] * len(column_names))
+        sql_query = f"INSERT INTO {table_name} ({column_names_joined}) VALUES ({value_placeholders})"
+
+        # Start the database connection
+        with sqlite3.connect(db_local_path) as db_connection:
+            db_cursor = db_connection.cursor()
+
+            # Insert each row of data one at a time so if any fail the rest will still be inserted
+            for index, row in enumerate(data, start=1):
+
+                try:
+                    db_cursor.execute(sql_query, row)
+                    db_connection.commit()
+                    rows_inserted += 1
+                except sqlite3.IntegrityError as ex:
+                    custom_logger(
+                        ERROR_LOG_LEVEL,
+                        f"Row {index} failed to insert due to an integrity error: {ex}. Row data: {row}"
+                    )
+                    rows_failed += 1
+                except sqlite3.Error as ex:
+                    custom_logger(
+                        ERROR_LOG_LEVEL,
+                        f"Row {index} failed to insert due to a general database error: {ex}. Row data: {row}"
+                    )
+                    rows_failed += 1
+
+        custom_logger(
+            INFO_LOG_LEVEL,
+            f"rows_inserted: {rows_inserted}, rows_failed: {rows_failed}"
+        )
+
+    except sqlite3.Error as ex:
+        custom_logger(ERROR_LOG_LEVEL, f"Unexpected database error occurred: {ex}")
+        rows_failed = len(data)
+
+    return rows_inserted, rows_failed
 
 
 def upload_database_to_s3():
