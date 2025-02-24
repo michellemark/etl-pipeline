@@ -116,36 +116,103 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
     return rows_inserted, rows_failed
 
 
-def upload_database_to_s3():
+def _get_s3_client():
     """
-    Upload the SQLite database to S3, assuming needed environment variables are set.
+    Helper function to get an S3 client.
     """
+    s3_client = None
     AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
     AWS_REGION = os.environ.get("AWS_REGION")
 
-    if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY or not AWS_REGION:
-        custom_logger(ERROR_LOG_LEVEL, "Missing required AWS environment variables, skipping upload of db.")
-        return
+    if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_REGION:
+        aws_session = boto3.Session(
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_REGION
+        )
+        s3_client = aws_session.client("s3")
+    else:
+        if not AWS_ACCESS_KEY_ID:
+            custom_logger(ERROR_LOG_LEVEL, "Missing AWS_ACCESS_KEY_ID environment variable.")
+        if not AWS_SECRET_ACCESS_KEY:
+            custom_logger(ERROR_LOG_LEVEL, "Missing AWS_SECRET_ACCESS_KEY environment variable.")
+        if not AWS_REGION:
+            custom_logger(ERROR_LOG_LEVEL, "Missing AWS_REGION environment variable.")
 
-    aws_session = boto3.Session(
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        region_name=AWS_REGION
-    )
-    s3_client = aws_session.client("s3")
-    s3_client.upload_file(db_local_path, s3_bucket_name, sqlite_db_name)
-    custom_logger(INFO_LOG_LEVEL, f"Uploaded {db_local_path} to s3://{s3_bucket_name}/{sqlite_db_name}")
+        custom_logger(ERROR_LOG_LEVEL, "Unable to create S3 client. Skipping operation.")
+
+    return s3_client
+
+
+def download_database_from_s3():
+    """
+    Downloads the SQLite database from the specified S3 bucket to the local path.
+    """
+    s3_client = _get_s3_client()
+
+    if s3_client:
+        try:
+            s3_client.download_file(
+                Bucket=s3_bucket_name,
+                Key=sqlite_db_name,
+                Filename=db_local_path
+            )
+            custom_logger(
+                INFO_LOG_LEVEL,
+                f"Successfully downloaded {sqlite_db_name} from s3://{s3_bucket_name}/{sqlite_db_name} to {db_local_path}")
+        except Exception as ex:
+            custom_logger(
+                ERROR_LOG_LEVEL,
+                f"Failed to download database from S3: {ex}")
+
+
+def upload_database_to_s3():
+    """
+    Upload the SQLite database to S3, assuming needed environment variables are set.
+    """
+    s3_client = _get_s3_client()
+
+    if s3_client:
+        try:
+            s3_client.upload_file(
+                Filename=db_local_path,
+                Bucket=s3_bucket_name,
+                Key=sqlite_db_name
+            )
+        except Exception as ex:
+            custom_logger(
+                ERROR_LOG_LEVEL,
+                f"Failed to upload database to S3: {ex}")
+        else:
+            custom_logger(
+                INFO_LOG_LEVEL,
+                f"Successfully uploaded {db_local_path} to s3://{s3_bucket_name}/{sqlite_db_name}")
 
 
 # Test it out - TODO: remove this
 if __name__ == "__main__":
     create_database()
-    # Example data to insert
-    # sample_data = [
-    #     ("123 Maple St", 250000, 3, 2),
-    #     ("456 Oak St", 350000, 4, 3),
-    #     ("789 Pine St", 150000, 2, 1),
-    # ]
-    # populate_database(sample_data)
-    # upload_database_to_s3()
+    insert_into_database(
+        "properties",
+        [
+            "id",
+            "swis_code",
+            "print_key_code",
+            "municipality_code",
+            "municipality_name",
+            "county_name",
+            "school_district_code",
+            "school_district_name",
+            "address_number",
+            "address_street",
+            "address_state",
+            "address_zip"
+        ],
+        [
+            ("ABC 123", "ABC", "123", "XYZ", "JKL", "AC", "1", "SCH", "1", "E St.", "NY", "12345"),
+            ("ABD 124", "ABD", "124", "XYZ", "SDF", "DC", "1", "SCH", "2", "E St.", "NY", "12345"),
+            ("ACE 125", "ACE", "125", "RST", "FGH", "OZ", "2", "SCO", "3", "W St.", "NY", "12346"),
+        ]
+    )
+    upload_database_to_s3()
