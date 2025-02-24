@@ -152,6 +152,8 @@ def download_database_from_s3():
     s3_client = _get_s3_client()
 
     if s3_client:
+        ensure_data_directories_exist()
+
         try:
             s3_client.download_file(
                 Bucket=s3_bucket_name,
@@ -188,31 +190,3 @@ def upload_database_to_s3():
             custom_logger(
                 INFO_LOG_LEVEL,
                 f"Successfully uploaded {db_local_path} to s3://{s3_bucket_name}/{sqlite_db_name}")
-
-
-# Test it out - TODO: remove this
-if __name__ == "__main__":
-    create_database()
-    insert_into_database(
-        "properties",
-        [
-            "id",
-            "swis_code",
-            "print_key_code",
-            "municipality_code",
-            "municipality_name",
-            "county_name",
-            "school_district_code",
-            "school_district_name",
-            "address_number",
-            "address_street",
-            "address_state",
-            "address_zip"
-        ],
-        [
-            ("ABC 123", "ABC", "123", "XYZ", "JKL", "AC", "1", "SCH", "1", "E St.", "NY", "12345"),
-            ("ABD 124", "ABD", "124", "XYZ", "SDF", "DC", "1", "SCH", "2", "E St.", "NY", "12345"),
-            ("ACE 125", "ACE", "125", "RST", "FGH", "OZ", "2", "SCO", "3", "W St.", "NY", "12346"),
-        ]
-    )
-    upload_database_to_s3()
