@@ -56,7 +56,7 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
     Insert records into a specified SQLite database table with row-by-row error handling.
 
     Example Usage:
-        populate_database(
+        insert_into_database(
             "properties",
             ["id", "swis_code", "print_key_code", "municipality_code"],
             [
