@@ -13,7 +13,7 @@ test_table_name = "test_table"
 
 
 @pytest.fixture
-def setup_database(monkeypatch):
+def setup_database():
     """Create a test database and return its connection, clean up after testing."""
     with patch("etl.db_utilities.db_local_path", test_db_path):
         with sqlite3.connect(test_db_path) as connection:
@@ -98,8 +98,25 @@ def test_invalid_table_name(setup_database):
     assert len(rows) == 0
 
 
-def test_generic_database_error():
-    """Simulate a database-level error and ensure it is logged."""
+def test_database_connect_sqlite3_error():
+    """Simulate a sqlite3 error when connect is called and ensure it is logged."""
+    data = [(1, "Alice", 30)]
+
+    # Simulate an error in the connect function
+    with patch("etl.db_utilities.sqlite3.connect", autospec=True) as mock_connect, \
+        patch("etl.db_utilities.db_local_path", test_db_path), \
+        patch("etl.db_utilities.custom_logger") as mock_logger:
+        mock_connection = mock_connect.return_value
+        mock_connection.__enter__.side_effect = sqlite3.Error("Simulated error")
+        rows_inserted, rows_failed = insert_into_database(test_table_name, test_column_names, data)
+
+        mock_logger.assert_any_call(ERROR_LOG_LEVEL, "Unexpected database error occurred: Simulated error")
+        assert rows_inserted == 0
+        assert rows_failed == 1
+
+
+def test_database_execute_sqlite3_error():
+    """Simulate a sqlite3 error when execute is called and ensure it is logged."""
     data = [(1, "Alice", 30)]
 
     # Simulate an error in the execute function
@@ -121,6 +138,35 @@ def test_generic_database_error():
         mock_logger.assert_any_call(
             ERROR_LOG_LEVEL,
             f"Row 1 failed to insert due to a general database error: Simulated error. Row data: {data[0]}"
+        )
+        mock_logger.assert_any_call(INFO_LOG_LEVEL, "rows_inserted: 0, rows_failed: 1")
+        assert rows_inserted == 0
+        assert rows_failed == 1
+
+
+def test_database_execute_IntegrityError_error():
+    """Simulate an IntegrityError error when execute is called and ensure it is logged."""
+    data = [(1, "Alice", 30)]
+
+    # Simulate an error in the execute function
+    with patch("etl.db_utilities.sqlite3.connect", autospec=True) as mock_connect, \
+        patch("etl.db_utilities.db_local_path", test_db_path), \
+        patch("etl.db_utilities.custom_logger") as mock_logger:
+        mock_connection = mock_connect.return_value
+        mock_enter_connection = mock_connection.__enter__.return_value
+        mock_cursor = mock_enter_connection.cursor.return_value
+        mock_cursor.execute.side_effect = sqlite3.IntegrityError("Simulated error")
+        rows_inserted, rows_failed = insert_into_database(test_table_name, test_column_names, data)
+
+        mock_connect.assert_called_once_with(test_db_path)
+        mock_enter_connection.cursor.assert_called_once()
+        mock_cursor.execute.assert_called_once_with(
+            'INSERT INTO test_table (id, name, age) VALUES (?, ?, ?)',
+            data[0]
+        )
+        mock_logger.assert_any_call(
+            ERROR_LOG_LEVEL,
+            f"Row 1 failed to insert due to an integrity error: Simulated error. Row data: {data[0]}"
         )
         mock_logger.assert_any_call(INFO_LOG_LEVEL, "rows_inserted: 0, rows_failed: 1")
         assert rows_inserted == 0
