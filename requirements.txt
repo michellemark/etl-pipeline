@@ -4,9 +4,11 @@ matplotlib
 numpy
 pandas
 prefect
+pydantic
 pytest
 pytest-cov
 python-dotenv
+ratelimit
 scikit-learn
 sodapy
 tox
