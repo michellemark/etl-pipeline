@@ -104,11 +104,15 @@ def save_municipality_assessment_ratios(all_ratios: List[dict]):
 
     for municipality_assessment_ratio in all_ratios:
         try:
-            model = MunicipalityAssessmentRatio.model_validate(municipality_assessment_ratio)
+            model = MunicipalityAssessmentRatio(**municipality_assessment_ratio).model_validate()
         except ValidationError as err:
             custom_logger(
                 ERROR_LOG_LEVEL,
-                f"Failed to validate municipality assessment ratio: {municipality_assessment_ratio}. Error: {err}")
+                f"Failed to validate municipality assessment ratio {municipality_assessment_ratio} Errors:")
+            for error in err.errors():
+                custom_logger(
+                    ERROR_LOG_LEVEL,
+                    f"Error in field {error["loc"][0]}. Message: {error["msg"]}")
         else:
             ratio_data = json.loads(model.model_dump_json(by_alias=True))
             validated_ratio_data.append(tuple(ratio_data.values()))
