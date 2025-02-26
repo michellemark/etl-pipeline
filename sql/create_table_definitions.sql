@@ -2,9 +2,10 @@
 CREATE TABLE municipality_assessment_ratios
 (
     municipality_code            TEXT    NOT NULL,
-    municipality_name            TEXT    NOT NULL,
     rate_year                    INTEGER NOT NULL,
-    residential_assessment_ratio REAL        NOT NULL,
+    municipality_name            TEXT    NOT NULL,
+    county_name                  TEXT    NOT NULL,
+    residential_assessment_ratio REAL    NOT NULL,
     PRIMARY KEY (municipality_code, rate_year) -- Compound primary key
 );
 
@@ -15,6 +16,14 @@ CREATE INDEX idx_municipality_assessment_ratios_code
 -- Add an index to optimize queries that filter or sort by rate_year
 CREATE INDEX idx_municipality_assessment_ratios_year
     ON municipality_assessment_ratios (rate_year);
+
+-- Add an index to optimize queries that filter or sort by county_name
+CREATE INDEX idx_municipality_assessment_ratios_county
+    ON municipality_assessment_ratios (county_name);
+
+-- Optimize direct lookup for county_name and rate_year
+CREATE INDEX idx_municipality_ratios_county_year
+    ON municipality_assessment_ratios (county_name, rate_year);
 
 -- Optimize direct lookup for municipality_code and rate_year
 CREATE INDEX idx_municipality_ratios_code_year
