@@ -14,10 +14,6 @@ sqlite_db_name = "cny-real-estate.db"
 db_local_path = os.path.join(generated_data_dir, sqlite_db_name)
 s3_bucket_name = "cny-realestate-data"
 
-ASSESSMENT_RATIOS_TABLE = "municipality_assessment_ratios"
-NY_PROPERTY_ASSESSMENTS_TABLE = "ny_property_assessments"
-PROPERTIES_TABLE = "properties"
-
 
 def ensure_data_directories_exist():
     """
