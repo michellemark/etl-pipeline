@@ -4,7 +4,7 @@
 
 # Generic metadata about this project
 name: etl-ml-pipeline
-prefect-version: 3.1.13
+prefect-version: 3.2.1
 
 # build section allows you to manage and build docker images
 build: null
@@ -22,11 +22,10 @@ deployments:
 - name: etl-pipeline
   version: 0.0.1
   tags: ['capstone', 'bachelors']
-  description: 'ETL in capstone project for BS in computer science.'
+  description: 'ETL in capstone project for my BS in computer science.'
   schedule: {}
   flow_name: null
-  entrypoint: data_import_pipeline.py:hello_world
-  parameters: { "name": "Michelle", "goodbye": True }
+  entrypoint: etl.etl_ml_flow.py:cny_real_estate_data_workflow
   work_pool:
     name: null
     work_queue_name: null
