@@ -10,7 +10,7 @@ from sodapy import Socrata
 
 from etl.constants import *
 from etl.db_utilities import insert_into_database, create_database, upload_database_to_s3, download_database_from_s3, \
-    db_local_path
+    db_local_path, execute_select_query
 from etl.log_utilities import custom_logger, ERROR_LOG_LEVEL, INFO_LOG_LEVEL
 from etl.validation_models import MunicipalityAssessmentRatio
 
@@ -24,9 +24,27 @@ def get_open_ny_app_token():
     return app_token
 
 
+def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str):
+    """
+    County assessment ratios are unique by rate_year and county_name but do
+    not change over time.  Use this to check if we already have the data and save a call.
+    """
+    custom_logger(
+        INFO_LOG_LEVEL,
+        f"Checking if assessment ratios for rate_year: {rate_year} and county_name: {county_name} exist in database...")
+    do_county_ratios_for_year_exist = False
+    sql_query = f"SELECT * FROM {ASSESSMENT_RATIOS_TABLE} WHERE rate_year=? AND county_name=?"
+    results = execute_select_query(sql_query, params=(rate_year, county_name))
+
+    if results:
+        do_county_ratios_for_year_exist = True
+
+    return do_county_ratios_for_year_exist
+
+
 @sleep_and_retry
 @limits(calls=OPEN_NY_CALLS_PER_PERIOD, period=OPEN_NY_RATE_LIMIT_PERIOD)
-def fetch_municipality_assessment_ratio(app_token: str, rate_year: int, county_name: str):
+def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: str):
     custom_logger(
         INFO_LOG_LEVEL,
         f"Fetching municipality assessment ratios for rate_year: {rate_year} and county_name: {county_name}")
@@ -46,7 +64,8 @@ def fetch_municipality_assessment_ratios(app_token):
     """
     Fetch municipality_assessment_ratios from Open NY APIs for all counties
     in the CNY_COUNTY_LIST.  Will get assessment ratios for all years from
-    2009 to present, where data is available.
+    2009 to present, where data is available.  If the data is already in the
+    database will skip it as this data does not change over time.
     """
     assessment_ratios = []
     current_year = datetime.now().year
@@ -55,13 +74,22 @@ def fetch_municipality_assessment_ratios(app_token):
     for year in range(OPEN_NY_EARLIEST_YEAR, current_year + 1):
 
         for county in CNY_COUNTY_LIST:
-            ratio_results = fetch_municipality_assessment_ratio(app_token=app_token, rate_year=year, county_name=county)
 
-            if ratio_results and isinstance(ratio_results, list):
-                assessment_ratios.extend(ratio_results)
+            # Check if it exists before we call our rate limited function to speed up processing when we have the data
+            already_exists = check_if_county_assessment_ratio_exists(year, county)
+
+            if already_exists:
+                custom_logger(
+                    INFO_LOG_LEVEL,
+                    f"Found municipality assessment ratios for rate_year: {year} and county_name: {county}, skipping.")
             else:
-                # We have gotten to a year with no results, probably the current year, time to stop
-                break
+                ratio_results = fetch_county_assessment_ratios(
+                                    app_token=app_token,
+                                    rate_year=year,
+                                    county_name=county)
+
+                if ratio_results and isinstance(ratio_results, list):
+                    assessment_ratios.extend(ratio_results)
 
     custom_logger(INFO_LOG_LEVEL, f"Completed fetching municipality assessment ratios, {len(assessment_ratios)} found.")
 
@@ -110,11 +138,15 @@ def cny_real_estate_data_workflow():
         create_database()
 
     mar_results = fetch_municipality_assessment_ratios(open_ny_token)
-    save_municipality_assessment_ratios(mar_results)
+
+    if mar_results:
+        save_municipality_assessment_ratios(mar_results)
+
     upload_database_to_s3()
 
 
 if __name__ == "__main__":
-    cny_real_estate_data_workflow.serve(name="etl-pipeline",
-                      tags=["test-run"],
-                      interval=60)
+    # cny_real_estate_data_workflow.serve(name="etl-pipeline",
+    #                   tags=["daily-run"],
+    #                   interval=86400)
+    cny_real_estate_data_workflow()
