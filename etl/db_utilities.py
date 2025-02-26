@@ -112,6 +112,41 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
     return rows_inserted, rows_failed
 
 
+def execute_select_query(query: str, params: Tuple | None = None) -> List[Tuple] | None:
+    """
+    Executes a raw SQL SELECT query and returns the results.
+
+    Example Usages:
+    execute_select_query("SELECT * FROM table WHERE column = value")
+    execute_select_query("SELECT * FROM table WHERE column = ?", params=("value",))
+
+
+    :param query: str An SQL SELECT query to execute.
+    :param params: Tuple | None Optional parameters for a parameterized SELECT query.
+    :return: List[Tuple] | None Query results or None if there's an error.
+    """
+    result = None
+
+    try:
+        with sqlite3.connect(db_local_path) as db_connection:
+            db_cursor = db_connection.cursor()
+
+            if params:
+                db_cursor.execute(query, params)
+            else:
+                db_cursor.execute(query)
+
+            result = db_cursor.fetchall()
+
+    except sqlite3.Error as ex:
+        custom_logger(
+            ERROR_LOG_LEVEL,
+            f"Query {query} failed, database error: {ex}."
+        )
+
+    return result
+
+
 def _get_s3_client():
     """
     Helper function to get an S3 client.
