@@ -22,8 +22,7 @@ class MunicipalityAssessmentRatio(BaseModel):
     )
     county_name: str = Field(
         min_length=6,
-        description="Name of County of Municipality",
-        exclude=True
+        description="Name of County Municipality is in"
     )
     municipality_name: str = Field(
         min_length=2,
