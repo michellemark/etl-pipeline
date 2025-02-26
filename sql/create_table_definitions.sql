@@ -2,8 +2,9 @@
 CREATE TABLE municipality_assessment_ratios
 (
     municipality_code            TEXT    NOT NULL,
+    municipality_name            TEXT    NOT NULL,
     rate_year                    INTEGER NOT NULL,
-    residential_assessment_ratio NUMERIC NOT NULL,
+    residential_assessment_ratio REAL        NOT NULL,
     PRIMARY KEY (municipality_code, rate_year) -- Compound primary key
 );
 
