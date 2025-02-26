@@ -11,3 +11,4 @@ omit =
     */models/*
     */research/*
     */tests/*
+    etl/constants.py
