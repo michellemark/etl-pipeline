@@ -44,7 +44,7 @@ CREATE TABLE properties
     address_number       TEXT             NOT NULL, -- NY mailing_address_number ATTOM 1st word in address.line1
     address_street       TEXT             NOT NULL, -- NY mailing_address_street(if mailing_address_suff:<space>mailing_address_suff) ATTOM rest of address.line1
     address_state        TEXT             NOT NULL, -- NY mailing_address_state ATTOM address.countrySubd
-    address_zip          TEXT             NOT NULL, -- NY mailing_address_zip ATTOM address.postal1
+    address_zip          TEXT             NOT NULL, -- From US Census Geocoder API, confirmed with ATTOM data, (where possible)
     FOREIGN KEY (municipality_code) REFERENCES municipality_assessment_ratios (municipality_code)
 );
 
