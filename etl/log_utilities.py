@@ -1,19 +1,7 @@
 from prefect.context import get_run_context
 from prefect import get_run_logger
 
-
-CRITICAL_LOG_LEVEL = "critical"
-ERROR_LOG_LEVEL = "error"
-WARNING_LOG_LEVEL = "warning"
-INFO_LOG_LEVEL = "info"
-DEBUG_LOG_LEVEL = "debug"
-ALLOWED_LOG_LEVELS = [
-    CRITICAL_LOG_LEVEL,
-    ERROR_LOG_LEVEL,
-    WARNING_LOG_LEVEL,
-    INFO_LOG_LEVEL,
-    DEBUG_LOG_LEVEL
-]
+from etl.constants import *
 
 
 def custom_logger(level:str, message: str):

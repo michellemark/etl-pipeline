@@ -1,18 +1,10 @@
-import os
 import sqlite3
 from typing import List, Tuple
 
 import boto3
 
-from etl.log_utilities import custom_logger, INFO_LOG_LEVEL, ERROR_LOG_LEVEL
-
-current_file_path = os.path.abspath(__file__)
-project_root = os.path.dirname(os.path.dirname(current_file_path))
-extracted_data_dir = os.path.join(project_root, "extracted")
-generated_data_dir = os.path.join(project_root, "generated")
-sqlite_db_name = "cny-real-estate.db"
-db_local_path = os.path.join(generated_data_dir, sqlite_db_name)
-s3_bucket_name = "cny-realestate-data"
+from etl.constants import *
+from etl.log_utilities import custom_logger
 
 
 def ensure_data_directories_exist():
@@ -20,8 +12,8 @@ def ensure_data_directories_exist():
     Ensure needed data directories exist.
     If directories already exist will not touch or raise errors.
     """
-    os.makedirs(extracted_data_dir, exist_ok=True)
-    os.makedirs(generated_data_dir, exist_ok=True)
+    os.makedirs(EXTRACTED_DATA_DIR, exist_ok=True)
+    os.makedirs(GENERATED_DATA_DIR, exist_ok=True)
 
 
 def create_database():
@@ -29,19 +21,18 @@ def create_database():
     Create a new SQLite database and initialize it with defined schema.
     """
     ensure_data_directories_exist()
-    create_table_definitions_path = os.path.join(project_root, "sql", "create_table_definitions.sql")
 
     try:
 
-        with open(create_table_definitions_path, "r") as sql_file:
+        with open(CREATE_TABLE_DEFINITIONS_FILE_PATH, "r") as sql_file:
             sql_script = sql_file.read()
 
-        db_connection = sqlite3.connect(db_local_path)
+        db_connection = sqlite3.connect(DB_LOCAL_PATH)
         db_cursor = db_connection.cursor()
         db_cursor.executescript(sql_script)
         db_connection.commit()
         db_connection.close()
-        custom_logger(INFO_LOG_LEVEL, f"Database created at {db_local_path}")
+        custom_logger(INFO_LOG_LEVEL, f"Database created at {DB_LOCAL_PATH}")
 
     except Exception as e:
         custom_logger(ERROR_LOG_LEVEL, f"Error creating the database: {str(e)}")
@@ -77,7 +68,7 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
         sql_query = f"INSERT INTO {table_name} ({column_names_joined}) VALUES ({value_placeholders})"
 
         # Start the database connection
-        with sqlite3.connect(db_local_path) as db_connection:
+        with sqlite3.connect(DB_LOCAL_PATH) as db_connection:
             db_cursor = db_connection.cursor()
 
             # Insert each row of data one at a time so if any fail the rest will still be inserted
@@ -128,7 +119,7 @@ def execute_select_query(query: str, params: Tuple | None = None) -> List[Tuple]
     result = None
 
     try:
-        with sqlite3.connect(db_local_path) as db_connection:
+        with sqlite3.connect(DB_LOCAL_PATH) as db_connection:
             db_cursor = db_connection.cursor()
 
             if params:
@@ -187,13 +178,13 @@ def download_database_from_s3():
 
         try:
             s3_client.download_file(
-                Bucket=s3_bucket_name,
-                Key=sqlite_db_name,
-                Filename=db_local_path
+                Bucket=S3_BUCKET_NAME,
+                Key=SQLITE_DB_NAME,
+                Filename=DB_LOCAL_PATH
             )
             custom_logger(
                 INFO_LOG_LEVEL,
-                f"Successfully downloaded {sqlite_db_name} from s3://{s3_bucket_name}/{sqlite_db_name} to {db_local_path}")
+                f"Successfully downloaded {SQLITE_DB_NAME} from s3://{S3_BUCKET_NAME}/{SQLITE_DB_NAME} to {DB_LOCAL_PATH}")
         except Exception as ex:
             custom_logger(
                 ERROR_LOG_LEVEL,
@@ -209,9 +200,9 @@ def upload_database_to_s3():
     if s3_client:
         try:
             s3_client.upload_file(
-                Filename=db_local_path,
-                Bucket=s3_bucket_name,
-                Key=sqlite_db_name
+                Filename=DB_LOCAL_PATH,
+                Bucket=S3_BUCKET_NAME,
+                Key=SQLITE_DB_NAME
             )
         except Exception as ex:
             custom_logger(
@@ -220,4 +211,4 @@ def upload_database_to_s3():
         else:
             custom_logger(
                 INFO_LOG_LEVEL,
-                f"Successfully uploaded {db_local_path} to s3://{s3_bucket_name}/{sqlite_db_name}")
+                f"Successfully uploaded {DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{SQLITE_DB_NAME}")

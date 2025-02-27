@@ -1,11 +1,11 @@
 import os
 import sqlite3
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch, MagicMock
-from etl.db_utilities import execute_select_query
 
-from etl.log_utilities import ERROR_LOG_LEVEL, INFO_LOG_LEVEL
+from etl.constants import ERROR_LOG_LEVEL
+from etl.db_utilities import execute_select_query
 
 test_db_path = "test_database.db"
 test_table_name = "test_table"
@@ -14,7 +14,7 @@ test_table_name = "test_table"
 @pytest.fixture
 def setup_database():
     """Create a test database and return its connection, clean up after testing."""
-    with patch("etl.db_utilities.db_local_path", test_db_path):
+    with patch("etl.db_utilities.DB_LOCAL_PATH", test_db_path):
         with sqlite3.connect(test_db_path) as connection:
             cursor = connection.cursor()
             cursor.execute(f"""

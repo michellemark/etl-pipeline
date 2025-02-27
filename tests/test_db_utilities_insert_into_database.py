@@ -5,7 +5,8 @@ import pytest
 import sqlite3
 
 from etl.db_utilities import insert_into_database
-from etl.log_utilities import ERROR_LOG_LEVEL, INFO_LOG_LEVEL
+from etl.constants import ERROR_LOG_LEVEL
+from etl.constants import INFO_LOG_LEVEL
 
 test_column_names = ["id", "name", "age"]
 test_db_path = "test_database.db"
@@ -15,7 +16,7 @@ test_table_name = "test_table"
 @pytest.fixture
 def setup_database():
     """Create a test database and return its connection, clean up after testing."""
-    with patch("etl.db_utilities.db_local_path", test_db_path):
+    with patch("etl.db_utilities.DB_LOCAL_PATH", test_db_path):
         with sqlite3.connect(test_db_path) as connection:
             cursor = connection.cursor()
             cursor.execute(f"""
@@ -104,7 +105,7 @@ def test_database_connect_sqlite3_error():
 
     # Simulate an error in the connect function
     with patch("etl.db_utilities.sqlite3.connect", autospec=True) as mock_connect, \
-        patch("etl.db_utilities.db_local_path", test_db_path), \
+        patch("etl.db_utilities.DB_LOCAL_PATH", test_db_path), \
         patch("etl.db_utilities.custom_logger") as mock_logger:
         mock_connection = mock_connect.return_value
         mock_connection.__enter__.side_effect = sqlite3.Error("Simulated error")
@@ -121,7 +122,7 @@ def test_database_execute_sqlite3_error():
 
     # Simulate an error in the execute function
     with patch("etl.db_utilities.sqlite3.connect", autospec=True) as mock_connect, \
-        patch("etl.db_utilities.db_local_path", test_db_path), \
+        patch("etl.db_utilities.DB_LOCAL_PATH", test_db_path), \
         patch("etl.db_utilities.custom_logger") as mock_logger:
         mock_connection = mock_connect.return_value
         mock_enter_connection = mock_connection.__enter__.return_value
@@ -132,7 +133,7 @@ def test_database_execute_sqlite3_error():
         mock_connect.assert_called_once_with(test_db_path)
         mock_enter_connection.cursor.assert_called_once()
         mock_cursor.execute.assert_called_once_with(
-            'INSERT INTO test_table (id, name, age) VALUES (?, ?, ?)',
+            f"INSERT INTO {test_table_name} (id, name, age) VALUES (?, ?, ?)",
             data[0]
         )
         mock_logger.assert_any_call(
@@ -150,7 +151,7 @@ def test_database_execute_IntegrityError_error():
 
     # Simulate an error in the execute function
     with patch("etl.db_utilities.sqlite3.connect", autospec=True) as mock_connect, \
-        patch("etl.db_utilities.db_local_path", test_db_path), \
+        patch("etl.db_utilities.DB_LOCAL_PATH", test_db_path), \
         patch("etl.db_utilities.custom_logger") as mock_logger:
         mock_connection = mock_connect.return_value
         mock_enter_connection = mock_connection.__enter__.return_value
@@ -161,7 +162,7 @@ def test_database_execute_IntegrityError_error():
         mock_connect.assert_called_once_with(test_db_path)
         mock_enter_connection.cursor.assert_called_once()
         mock_cursor.execute.assert_called_once_with(
-            'INSERT INTO test_table (id, name, age) VALUES (?, ?, ?)',
+            f"INSERT INTO {test_table_name} (id, name, age) VALUES (?, ?, ?)",
             data[0]
         )
         mock_logger.assert_any_call(

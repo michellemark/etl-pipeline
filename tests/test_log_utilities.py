@@ -4,7 +4,8 @@ import pytest
 from prefect import task, flow
 from prefect.testing.utilities import prefect_test_harness
 
-from etl.log_utilities import custom_logger, ALLOWED_LOG_LEVELS
+from etl.log_utilities import custom_logger
+from etl.constants import ALLOWED_LOG_LEVELS
 
 
 def test_custom_logger_local_context():

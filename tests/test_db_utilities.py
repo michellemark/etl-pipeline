@@ -1,7 +1,10 @@
 from unittest.mock import patch, MagicMock
-from etl.db_utilities import ensure_data_directories_exist, extracted_data_dir, generated_data_dir, db_local_path, \
-    create_database, sqlite_db_name, upload_database_to_s3, s3_bucket_name, _get_s3_client, download_database_from_s3
-from etl.log_utilities import INFO_LOG_LEVEL, ERROR_LOG_LEVEL
+from etl.constants import *
+from etl.db_utilities import create_database
+from etl.db_utilities import download_database_from_s3
+from etl.db_utilities import ensure_data_directories_exist
+from etl.db_utilities import _get_s3_client
+from etl.db_utilities import upload_database_to_s3
 
 
 def test_ensure_data_directories_exist():
@@ -10,8 +13,8 @@ def test_ensure_data_directories_exist():
     with patch("os.makedirs") as mock_makedirs:
         ensure_data_directories_exist()
 
-        mock_makedirs.assert_any_call(extracted_data_dir, exist_ok=True)
-        mock_makedirs.assert_any_call(generated_data_dir, exist_ok=True)
+        mock_makedirs.assert_any_call(EXTRACTED_DATA_DIR, exist_ok=True)
+        mock_makedirs.assert_any_call(GENERATED_DATA_DIR, exist_ok=True)
 
 
 def test_create_database_success():
@@ -29,11 +32,11 @@ def test_create_database_success():
         create_database()
 
         mock_ensure_dirs.assert_called_once()
-        mock_sqlite_connect.assert_called_once_with(db_local_path)
+        mock_sqlite_connect.assert_called_once_with(DB_LOCAL_PATH)
         mock_db_cursor.executescript.assert_called_once()
         mock_db_connection.commit.assert_called_once()
         mock_db_connection.close.assert_called_once()
-        mock_custom_logger.assert_called_once_with(INFO_LOG_LEVEL, f"Database created at {db_local_path}")
+        mock_custom_logger.assert_called_once_with(INFO_LOG_LEVEL, f"Database created at {DB_LOCAL_PATH}")
 
 
 def test_create_database_fails():
@@ -155,13 +158,13 @@ def test_download_database_from_s3_success():
         download_database_from_s3()
 
         mock_s3_client.download_file.assert_called_once_with(
-            Bucket=s3_bucket_name,
-            Key=sqlite_db_name,
-            Filename=db_local_path
+            Bucket=S3_BUCKET_NAME,
+            Key=SQLITE_DB_NAME,
+            Filename=DB_LOCAL_PATH
         )
         mock_custom_logger.assert_called_once_with(
             INFO_LOG_LEVEL,
-            f"Successfully downloaded {sqlite_db_name} from s3://{s3_bucket_name}/{sqlite_db_name} to {db_local_path}"
+            f"Successfully downloaded {SQLITE_DB_NAME} from s3://{S3_BUCKET_NAME}/{SQLITE_DB_NAME} to {DB_LOCAL_PATH}"
         )
 
 
@@ -192,13 +195,13 @@ def test_upload_database_to_s3_success():
         upload_database_to_s3()
 
         mock_s3_client.upload_file.assert_called_once_with(
-            Filename=db_local_path,
-            Bucket=s3_bucket_name,
-            Key=sqlite_db_name
+            Filename=DB_LOCAL_PATH,
+            Bucket=S3_BUCKET_NAME,
+            Key=SQLITE_DB_NAME
         )
         mock_custom_logger.assert_called_once_with(
             INFO_LOG_LEVEL,
-            f"Successfully uploaded {db_local_path} to s3://{s3_bucket_name}/{sqlite_db_name}"
+            f"Successfully uploaded {DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{SQLITE_DB_NAME}"
         )
 
 

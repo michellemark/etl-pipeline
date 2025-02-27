@@ -1,17 +1,22 @@
 import json
-import os
 from datetime import datetime
 from typing import List
 
-from prefect import flow, task
+from prefect import flow
+from prefect import task
 from pydantic import ValidationError
-from ratelimit import sleep_and_retry, limits
+from ratelimit import limits
+from ratelimit import sleep_and_retry
 from sodapy import Socrata
 
 from etl.constants import *
-from etl.db_utilities import insert_into_database, create_database, upload_database_to_s3, download_database_from_s3, \
-    db_local_path, execute_select_query
-from etl.log_utilities import custom_logger, ERROR_LOG_LEVEL, INFO_LOG_LEVEL
+from etl.db_utilities import create_database
+from etl.db_utilities import download_database_from_s3
+from etl.db_utilities import execute_select_query
+from etl.db_utilities import insert_into_database
+from etl.db_utilities import upload_database_to_s3
+from etl.log_utilities import custom_logger
+
 from etl.validation_models import MunicipalityAssessmentRatio
 
 
@@ -138,7 +143,7 @@ def cny_real_estate_data_workflow():
     download_database_from_s3()
 
     # If we do not have a database file now then make one
-    if not os.path.exists(db_local_path):
+    if not os.path.exists(DB_LOCAL_PATH):
         create_database()
 
     mar_results = fetch_municipality_assessment_ratios(open_ny_token)
