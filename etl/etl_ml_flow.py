@@ -20,7 +20,7 @@ from etl.log_utilities import custom_logger
 from etl.validation_models import MunicipalityAssessmentRatio
 
 
-def get_open_ny_app_token():
+def get_open_ny_app_token() -> str or None:
     app_token = os.environ.get('OPEN_DATA_APP_TOKEN')
 
     if not app_token:
@@ -29,7 +29,7 @@ def get_open_ny_app_token():
     return app_token
 
 
-def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str):
+def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str) -> bool:
     """
     County assessment ratios are unique by rate_year and county_name but do
     not change over time.  Use this to check if we already have the data and save a call.
@@ -49,23 +49,29 @@ def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str):
 
 @sleep_and_retry
 @limits(calls=OPEN_NY_CALLS_PER_PERIOD, period=OPEN_NY_RATE_LIMIT_PERIOD)
-def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: str):
+def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: str) -> List[dict] or None:
+    """Call Open NY APIs to fetch municipality assessment ratios for a given county and year using rate limiting."""
+    assessment_ratios = None
     custom_logger(
         INFO_LOG_LEVEL,
         f"Fetching municipality assessment ratios for rate_year: {rate_year} and county_name: {county_name}")
-
-    with Socrata(OPEN_NY_BASE_URL, app_token=app_token, timeout=60) as client:
-        assessment_ratios = client.get(
-            OPEN_NY_ASSESSMENT_RATIOS_API_ID,
-            rate_year=rate_year,
-            county_name=county_name
-        )
+    try:
+        with Socrata(OPEN_NY_BASE_URL, app_token=app_token, timeout=60) as client:
+            assessment_ratios = client.get(
+                OPEN_NY_ASSESSMENT_RATIOS_API_ID,
+                rate_year=rate_year,
+                county_name=county_name
+            )
+    except Exception as err:
+        custom_logger(
+            ERROR_LOG_LEVEL,
+            f"Failed fetching municipality assessment ratios for rate_year: {rate_year} and county_name: {county_name}. Error: {err}")
 
     return assessment_ratios
 
 
 @task
-def fetch_municipality_assessment_ratios(app_token):
+def fetch_municipality_assessment_ratios(app_token: str) -> List[dict]:
     """
     Fetch municipality_assessment_ratios from Open NY APIs for all counties
     in the CNY_COUNTY_LIST.  Will get assessment ratios for all years from
@@ -109,7 +115,7 @@ def save_municipality_assessment_ratios(all_ratios: List[dict]):
 
     for municipality_assessment_ratio in all_ratios:
         try:
-            model = MunicipalityAssessmentRatio(**municipality_assessment_ratio).model_validate()
+            model = MunicipalityAssessmentRatio(**municipality_assessment_ratio)
         except ValidationError as err:
             custom_logger(
                 ERROR_LOG_LEVEL,
@@ -125,10 +131,15 @@ def save_municipality_assessment_ratios(all_ratios: List[dict]):
             if not column_names:
                 column_names = list(ratio_data.keys())
 
-    rows_inserted, rows_failed = insert_into_database(ASSESSMENT_RATIOS_TABLE, column_names, validated_ratio_data)
-    custom_logger(
-        INFO_LOG_LEVEL,
-        f"Completed saving municipality assessment ratios to database rows_inserted: {rows_inserted}, rows_failed: {rows_failed}.")
+    if validated_ratio_data:
+        rows_inserted, rows_failed = insert_into_database(ASSESSMENT_RATIOS_TABLE, column_names, validated_ratio_data)
+        custom_logger(
+            INFO_LOG_LEVEL,
+            f"Completed saving {len(validated_ratio_data)} valid municipality assessment ratios to database rows_inserted: {rows_inserted}, rows_failed: {rows_failed}.")
+    else:
+        custom_logger(
+            INFO_LOG_LEVEL,
+            "No valid municipality assessment ratios found, skipping.")
 
 @flow
 def cny_real_estate_data_workflow():
@@ -136,8 +147,8 @@ def cny_real_estate_data_workflow():
     open_ny_token = get_open_ny_app_token()
 
     if not open_ny_token:
-        custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, ending flow...")
-        return 0
+        custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
+        return
 
     # First see if we already have a database in s3 to add updated data to
     download_database_from_s3()
@@ -150,8 +161,8 @@ def cny_real_estate_data_workflow():
 
     if mar_results:
         save_municipality_assessment_ratios(mar_results)
-
-    upload_database_to_s3()
+        upload_database_to_s3()
+        custom_logger(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")
 
 
 if __name__ == "__main__":
