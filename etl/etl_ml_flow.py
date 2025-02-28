@@ -27,6 +27,29 @@ def get_open_ny_app_token() -> str or None:
     return app_token
 
 
+def get_assessment_year_to_query():
+    """
+    Get the rate year to query for all data to import.
+    If the current date is August 1st or later, return the current year.
+    Else return the previous year.
+
+    NY only re-assesses for tax purposes once a year.  That process does not fully complete
+    until the beginning of July, then municipalities can take time getting final data published.
+    The lowest rate year to be queried or possibly returned is 2024 as this is being
+    written in for first run in 2025 before new data is available.
+    """
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+
+    if current_month >= 8 or current_year == MINIMUM_ASSESSMENT_YEAR:
+        rate_year = current_year
+    else:
+        rate_year = current_year - 1
+
+    return rate_year
+
+
+
 def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str) -> bool:
     """
     County assessment ratios are unique by rate_year and county_name but do

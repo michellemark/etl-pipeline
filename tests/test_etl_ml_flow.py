@@ -1,11 +1,12 @@
 import sqlite3
+from datetime import datetime
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from etl.constants import *
 from etl.db_utilities import insert_into_database
-from etl.etl_ml_flow import check_if_county_assessment_ratio_exists
+from etl.etl_ml_flow import check_if_county_assessment_ratio_exists, get_assessment_year_to_query
 from etl.etl_ml_flow import cny_real_estate_etl_workflow
 from etl.etl_ml_flow import fetch_county_assessment_ratios
 from etl.etl_ml_flow import fetch_municipality_assessment_ratios
@@ -57,6 +58,40 @@ def test_get_open_ny_app_token_fails():
         assert token is None
         mock_custom_logger.assert_called_once_with(
             ERROR_LOG_LEVEL, "Missing OPEN_DATA_APP_TOKEN environment variable.")
+
+
+def test_get_assessment_year_to_query_before_august_minimum_assessment_year():
+    """Test get_assessment_year_to_query returns previous year when current month is before August,
+    except in the case where the current year is the minimum assessment year."""
+    with patch("etl.etl_ml_flow.datetime") as mock_datetime:
+        now = MagicMock()
+        now.year = MINIMUM_ASSESSMENT_YEAR
+        now.month = 4
+        mock_datetime.now.return_value = now
+        assessment_year = get_assessment_year_to_query()
+        assert assessment_year == MINIMUM_ASSESSMENT_YEAR
+
+
+def test_get_assessment_year_to_query_before_august():
+    """Test get_assessment_year_to_query returns previous year when current month is before August."""
+    with patch("etl.etl_ml_flow.datetime") as mock_datetime:
+        now = MagicMock()
+        now.year = 2025
+        now.month = 6
+        mock_datetime.now.return_value = now
+        assessment_year = get_assessment_year_to_query()
+        assert assessment_year == 2024
+
+
+def test_get_assessment_year_to_query_after_august():
+    """Test get_assessment_year_to_query returns current year when current month is after August."""
+    with patch("etl.etl_ml_flow.datetime") as mock_datetime:
+        now = MagicMock()
+        now.year = 2025
+        now.month = 8
+        mock_datetime.now.return_value = now
+        assessment_year = get_assessment_year_to_query()
+        assert assessment_year == 2025
 
 
 def test_check_if_county_assessment_ratio_exists_no_matching_record(setup_database):
