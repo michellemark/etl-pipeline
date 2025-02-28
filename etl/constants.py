@@ -28,15 +28,7 @@ NY_PROPERTY_ASSESSMENTS_TABLE = "ny_property_assessments"
 PROPERTIES_TABLE = "properties"
 
 # ******* Log levels **********************************************
-CRITICAL_LOG_LEVEL = "critical"
 ERROR_LOG_LEVEL = "error"
 WARNING_LOG_LEVEL = "warning"
 INFO_LOG_LEVEL = "info"
 DEBUG_LOG_LEVEL = "debug"
-ALLOWED_LOG_LEVELS = [
-    CRITICAL_LOG_LEVEL,
-    ERROR_LOG_LEVEL,
-    WARNING_LOG_LEVEL,
-    INFO_LOG_LEVEL,
-    DEBUG_LOG_LEVEL
-]
