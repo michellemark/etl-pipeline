@@ -38,4 +38,7 @@ jobs:
       # Run Python ETL script
       - name: Execute ETL Script
         working-directory: etl
+        env:
+          # Add project root to PYTHONPATH
+          PYTHONPATH: ${{ github.workspace }}
         run: python etl_ml_flow.py
