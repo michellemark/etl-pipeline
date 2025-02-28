@@ -158,7 +158,7 @@ def test_fetch_municipality_assessment_ratios_data_already_exists():
         mock_fetch_county_ratios.return_value = None
         app_token = "mock_token"
 
-        results = fetch_municipality_assessment_ratios.fn(app_token)
+        results = fetch_municipality_assessment_ratios(app_token)
 
         for year in range(OPEN_NY_EARLIEST_YEAR, 2024):
             for county in CNY_COUNTY_LIST:
@@ -207,7 +207,7 @@ def test_fetch_municipality_assessment_ratios_data_not_exists():
         mock_fetch_county_ratios.return_value = fake_response
         app_token = "mock_token"
 
-        results = fetch_municipality_assessment_ratios.fn(app_token)
+        results = fetch_municipality_assessment_ratios(app_token)
 
         # Assert `fetch_county_assessment_ratios` is called for all years and counties
         expected_call_count = len(CNY_COUNTY_LIST) * (2023 - OPEN_NY_EARLIEST_YEAR + 1)

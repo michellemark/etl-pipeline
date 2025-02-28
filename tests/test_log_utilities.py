@@ -1,51 +1,41 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
-from prefect import task, flow
-from prefect.testing.utilities import prefect_test_harness
-
+from etl.constants import DEBUG_LOG_LEVEL
+from etl.constants import ERROR_LOG_LEVEL
+from etl.constants import INFO_LOG_LEVEL
+from etl.constants import WARNING_LOG_LEVEL
 from etl.log_utilities import custom_logger
-from etl.constants import ALLOWED_LOG_LEVELS
 
 
-def test_custom_logger_local_context():
-    """Test that custom_logger falls back to print when not in a Prefect context."""
+def test_custom_logger_debug_default_annotations():
+    """Test  custom_logger defaults to debug GitHub annotations."""
     with patch("builtins.print") as mock_print:
-        local_message = "This is a local message."
-        custom_logger("info", local_message)
-        mock_print.assert_called_once_with(local_message)
+        message = "This is a message."
+        custom_logger("", message)
+        mock_print.assert_called_once_with(f"::debug::{message}")
 
 
-@pytest.mark.parametrize("log_level", ALLOWED_LOG_LEVELS)
-def test_custom_logger_prefect_context_allowed_levels(log_level):
-    """Test that custom_logger uses Prefect's logger when in a Prefect context."""
-    prefect_message = "This is a Prefect message."
-
-    with prefect_test_harness(server_startup_timeout=60):
-
-        with patch("etl.log_utilities.get_run_logger") as mock_get_run_logger:
-            mock_logger = MagicMock()
-            mock_get_run_logger.return_value = mock_logger
-            log_method = getattr(mock_logger, log_level)
-
-            @task
-            def task_with_custom_logger():
-                # Call custom logger inside a task to ensure a valid context
-                custom_logger(log_level, prefect_message)
-
-            @flow
-            def test_logging_flow():
-                task_with_custom_logger()
-
-            test_logging_flow()
-            log_method.assert_called_once_with(prefect_message)
+def test_custom_logger_debug_annotations():
+    """Test  custom_logger defaults to debug GitHub annotations."""
+    with patch("builtins.print") as mock_print:
+        message = "This is a message."
+        custom_logger(INFO_LOG_LEVEL, message)
+        mock_print.assert_any_call(f"::debug::{message}")
+        custom_logger(DEBUG_LOG_LEVEL, message)
+        mock_print.assert_any_call(f"::debug::{message}")
 
 
-def test_custom_logger_invalid_log_level():
-    """Test that custom_logger raises a ValueError for an invalid log level."""
-    invalid_log_level = "invalid_level"
-    message = "This is a test message."
+def test_custom_logger_error_annotations():
+    """Test that custom_logger uses error GitHub annotations for ERROR_LOG_LEVEL."""
+    with patch("builtins.print") as mock_print:
+        message = "This is an error message."
+        custom_logger(ERROR_LOG_LEVEL, message)
+        mock_print.assert_called_once_with(f"::error::{message}")
 
-    # Assert that a ValueError is raised with the expected message
-    with pytest.raises(ValueError, match=f"Invalid log level: {invalid_log_level} Message: {message}"):
-        custom_logger(invalid_log_level, message)
+
+def test_custom_logger_warning_annotations():
+    """Test that custom_logger uses warning GitHub annotations for WARNING_LOG_LEVEL."""
+    with patch("builtins.print") as mock_print:
+        message = "This is an error message."
+        custom_logger(WARNING_LOG_LEVEL, message)
+        mock_print.assert_called_once_with(f"::warning::{message}")
