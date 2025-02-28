@@ -1,15 +1,15 @@
 import sqlite3
-from datetime import datetime
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from etl.constants import *
 from etl.db_utilities import insert_into_database
-from etl.etl_ml_flow import check_if_county_assessment_ratio_exists, get_assessment_year_to_query
+from etl.etl_ml_flow import check_if_county_assessment_ratio_exists
 from etl.etl_ml_flow import cny_real_estate_etl_workflow
 from etl.etl_ml_flow import fetch_county_assessment_ratios
 from etl.etl_ml_flow import fetch_municipality_assessment_ratios
+from etl.etl_ml_flow import get_assessment_year_to_query
 from etl.etl_ml_flow import get_open_ny_app_token
 from etl.etl_ml_flow import save_municipality_assessment_ratios
 
@@ -57,7 +57,7 @@ def test_get_open_ny_app_token_fails():
         token = get_open_ny_app_token()
         assert token is None
         mock_custom_logger.assert_called_once_with(
-            ERROR_LOG_LEVEL, "Missing OPEN_DATA_APP_TOKEN environment variable.")
+            WARNING_LOG_LEVEL, "Missing OPEN_DATA_APP_TOKEN environment variable.")
 
 
 def test_get_assessment_year_to_query_before_august_minimum_assessment_year():
@@ -173,7 +173,7 @@ def test_fetch_county_assessment_ratios_failure():
             INFO_LOG_LEVEL,
             f"Fetching municipality assessment ratios for rate_year: {rate_year} and county_name: {county_name}")
         mock_custom_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             f"Failed fetching municipality assessment ratios for rate_year: {rate_year} and county_name: {county_name}. Error: {api_error_message}"
         )
 
@@ -337,11 +337,11 @@ def test_save_some_invalid_ratios():
             [(2024, "052000", "Cayuga", "Aurelius", 81.83)]
         )
         mock_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             "Failed to validate municipality assessment ratio {'rate_year': '1824', 'swis_code': '050100', 'type': 'City', 'county_name': 'Cayuga', 'municipality_name': 'Auburn', 'residential_assessment_ratio': '96.00'} Errors:"
         )
         mock_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             "Error in field rate_year. Message: Input should be greater than or equal to 2024")
         mock_logger.assert_any_call(
             INFO_LOG_LEVEL,

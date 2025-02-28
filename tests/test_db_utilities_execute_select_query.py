@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from etl.constants import ERROR_LOG_LEVEL
+from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import execute_select_query
 
 test_db_path = "test_database.db"
@@ -68,7 +68,7 @@ def test_execute_select_query_handles_sqlite_error(mock_custom_logger, mock_conn
     mock_connect.assert_called_once_with(test_db_path)
     assert result is None
     mock_custom_logger.assert_called_once_with(
-        ERROR_LOG_LEVEL,
+        WARNING_LOG_LEVEL,
         f"Query {query} failed, database error: Simulated error."
     )
 

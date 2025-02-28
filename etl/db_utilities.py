@@ -80,13 +80,13 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
                     rows_inserted += 1
                 except sqlite3.IntegrityError as ex:
                     custom_logger(
-                        ERROR_LOG_LEVEL,
+                        WARNING_LOG_LEVEL,
                         f"Row {index} failed to insert due to an integrity error: {ex}. Row data: {row}"
                     )
                     rows_failed += 1
                 except sqlite3.Error as ex:
                     custom_logger(
-                        ERROR_LOG_LEVEL,
+                        WARNING_LOG_LEVEL,
                         f"Row {index} failed to insert due to a general database error: {ex}. Row data: {row}"
                     )
                     rows_failed += 1
@@ -97,7 +97,7 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
         )
 
     except sqlite3.Error as ex:
-        custom_logger(ERROR_LOG_LEVEL, f"Unexpected database error occurred: {ex}")
+        custom_logger(WARNING_LOG_LEVEL, f"Unexpected database error occurred: {ex}")
         rows_failed = len(data)
 
     return rows_inserted, rows_failed
@@ -131,7 +131,7 @@ def execute_select_query(query: str, params: Tuple | None = None) -> List[Tuple]
 
     except sqlite3.Error as ex:
         custom_logger(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             f"Query {query} failed, database error: {ex}."
         )
 
@@ -156,11 +156,11 @@ def _get_s3_client():
         s3_client = aws_session.client("s3")
     else:
         if not AWS_ACCESS_KEY_ID:
-            custom_logger(ERROR_LOG_LEVEL, "Missing AWS_ACCESS_KEY_ID environment variable.")
+            custom_logger(WARNING_LOG_LEVEL, "Missing AWS_ACCESS_KEY_ID environment variable.")
         if not AWS_SECRET_ACCESS_KEY:
-            custom_logger(ERROR_LOG_LEVEL, "Missing AWS_SECRET_ACCESS_KEY environment variable.")
+            custom_logger(WARNING_LOG_LEVEL, "Missing AWS_SECRET_ACCESS_KEY environment variable.")
         if not AWS_REGION:
-            custom_logger(ERROR_LOG_LEVEL, "Missing AWS_REGION environment variable.")
+            custom_logger(WARNING_LOG_LEVEL, "Missing AWS_REGION environment variable.")
 
         custom_logger(ERROR_LOG_LEVEL, "Unable to create S3 client. Skipping operation.")
 
@@ -187,7 +187,7 @@ def download_database_from_s3():
                 f"Successfully downloaded {SQLITE_DB_NAME} from s3://{S3_BUCKET_NAME}/{SQLITE_DB_NAME} to {DB_LOCAL_PATH}")
         except Exception as ex:
             custom_logger(
-                ERROR_LOG_LEVEL,
+                WARNING_LOG_LEVEL,
                 f"Failed to download database from S3: {ex}")
 
 

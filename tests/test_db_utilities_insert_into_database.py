@@ -5,7 +5,7 @@ import pytest
 import sqlite3
 
 from etl.db_utilities import insert_into_database
-from etl.constants import ERROR_LOG_LEVEL
+from etl.constants import WARNING_LOG_LEVEL
 from etl.constants import INFO_LOG_LEVEL
 
 test_column_names = ["id", "name", "age"]
@@ -111,7 +111,7 @@ def test_database_connect_sqlite3_error():
         mock_connection.__enter__.side_effect = sqlite3.Error("Simulated error")
         rows_inserted, rows_failed = insert_into_database(test_table_name, test_column_names, data)
 
-        mock_logger.assert_any_call(ERROR_LOG_LEVEL, "Unexpected database error occurred: Simulated error")
+        mock_logger.assert_any_call(WARNING_LOG_LEVEL, "Unexpected database error occurred: Simulated error")
         assert rows_inserted == 0
         assert rows_failed == 1
 
@@ -137,7 +137,7 @@ def test_database_execute_sqlite3_error():
             data[0]
         )
         mock_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             f"Row 1 failed to insert due to a general database error: Simulated error. Row data: {data[0]}"
         )
         mock_logger.assert_any_call(INFO_LOG_LEVEL, "rows_inserted: 0, rows_failed: 1")
@@ -166,7 +166,7 @@ def test_database_execute_IntegrityError_error():
             data[0]
         )
         mock_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             f"Row 1 failed to insert due to an integrity error: Simulated error. Row data: {data[0]}"
         )
         mock_logger.assert_any_call(INFO_LOG_LEVEL, "rows_inserted: 0, rows_failed: 1")

@@ -36,4 +36,3 @@ jobs:
           OPEN_DATA_APP_TOKEN: ${{ secrets.OPEN_DATA_APP_TOKEN }}
           PYTHONPATH: ${{ github.workspace }}
         run: python etl_ml_flow.py
-        continue-on-error: true

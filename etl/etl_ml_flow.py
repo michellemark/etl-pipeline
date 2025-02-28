@@ -22,7 +22,7 @@ def get_open_ny_app_token() -> str or None:
     app_token = os.environ.get('OPEN_DATA_APP_TOKEN')
 
     if not app_token:
-        custom_logger(ERROR_LOG_LEVEL, "Missing OPEN_DATA_APP_TOKEN environment variable.")
+        custom_logger(WARNING_LOG_LEVEL, "Missing OPEN_DATA_APP_TOKEN environment variable.")
 
     return app_token
 
@@ -84,7 +84,7 @@ def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: 
             )
     except Exception as err:
         custom_logger(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             f"Failed fetching municipality assessment ratios for rate_year: {rate_year} and county_name: {county_name}. Error: {err}")
 
     return assessment_ratios
@@ -133,11 +133,11 @@ def save_municipality_assessment_ratios(all_ratios: List[dict]):
             model = MunicipalityAssessmentRatio(**municipality_assessment_ratio)
         except ValidationError as err:
             custom_logger(
-                ERROR_LOG_LEVEL,
+                WARNING_LOG_LEVEL,
                 f"Failed to validate municipality assessment ratio {municipality_assessment_ratio} Errors:")
             for error in err.errors():
                 custom_logger(
-                    ERROR_LOG_LEVEL,
+                    WARNING_LOG_LEVEL,
                     f"Error in field {error["loc"][0]}. Message: {error["msg"]}")
         else:
             ratio_data = json.loads(model.model_dump_json(by_alias=True))

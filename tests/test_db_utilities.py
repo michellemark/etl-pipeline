@@ -100,15 +100,15 @@ def test_get_s3_client_missing_env_vars():
         mock_env_get.assert_any_call("AWS_SECRET_ACCESS_KEY")
         mock_env_get.assert_any_call("AWS_REGION")
         mock_custom_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             "Missing AWS_ACCESS_KEY_ID environment variable."
         )
         mock_custom_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             "Missing AWS_SECRET_ACCESS_KEY environment variable."
         )
         mock_custom_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             "Missing AWS_REGION environment variable."
         )
         mock_custom_logger.assert_any_call(
@@ -136,7 +136,7 @@ def test_get_s3_client_partial_env_vars():
 
         assert s3_client is None
         mock_custom_logger.assert_any_call(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             "Missing AWS_REGION environment variable."
         )
         mock_custom_logger.assert_any_call(
@@ -179,7 +179,7 @@ def test_download_database_from_s3_fail():
         download_database_from_s3()
 
         mock_custom_logger.assert_called_once_with(
-            ERROR_LOG_LEVEL,
+            WARNING_LOG_LEVEL,
             "Failed to download database from S3: Mock download error"
         )
 
