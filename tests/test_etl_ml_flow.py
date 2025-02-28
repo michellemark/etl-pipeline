@@ -7,7 +7,7 @@ import pytest
 from etl.constants import *
 from etl.db_utilities import insert_into_database
 from etl.etl_ml_flow import check_if_county_assessment_ratio_exists
-from etl.etl_ml_flow import cny_real_estate_data_workflow
+from etl.etl_ml_flow import cny_real_estate_etl_workflow
 from etl.etl_ml_flow import fetch_county_assessment_ratios
 from etl.etl_ml_flow import fetch_municipality_assessment_ratios
 from etl.etl_ml_flow import get_open_ny_app_token
@@ -343,7 +343,7 @@ def test_workflow_token_failure(
     """Test workflow when token retrieval fails."""
     mock_token.return_value = None
 
-    cny_real_estate_data_workflow()
+    cny_real_estate_etl_workflow()
 
     mock_logger.assert_called_once_with(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
     mock_download.assert_not_called()
@@ -369,7 +369,7 @@ def test_workflow_with_valid_token_and_existing_db(
     mock_path_exists.return_value = True
     mock_fetch.return_value = [{"mock": "data"}]
 
-    cny_real_estate_data_workflow()
+    cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
     mock_create_db.assert_not_called()
@@ -395,7 +395,7 @@ def test_workflow_with_missing_db(
     mock_path_exists.return_value = False
     mock_fetch.return_value = None
 
-    cny_real_estate_data_workflow()
+    cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
     mock_create.assert_called_once()
@@ -420,7 +420,7 @@ def test_workflow_no_ratios_fetched(
     mock_path_exists.return_value = True
     mock_fetch.return_value = None
 
-    cny_real_estate_data_workflow()
+    cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
     mock_create.assert_not_called()
@@ -446,7 +446,7 @@ def test_workflow_ratios_fetched(
     mock_path_exists.return_value = True
     mock_fetch.return_value = mock_data
 
-    cny_real_estate_data_workflow()
+    cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
     mock_create.assert_not_called()

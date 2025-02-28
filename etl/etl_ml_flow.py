@@ -138,7 +138,7 @@ def save_municipality_assessment_ratios(all_ratios: List[dict]):
             "No valid municipality assessment ratios found, skipping.")
 
 
-def cny_real_estate_data_workflow():
+def cny_real_estate_etl_workflow():
     """Main entry point for the ETL workflow."""
     open_ny_token = get_open_ny_app_token()
 
@@ -162,4 +162,4 @@ def cny_real_estate_data_workflow():
 
 
 if __name__ == "__main__":
-    cny_real_estate_data_workflow()
+    cny_real_estate_etl_workflow()
