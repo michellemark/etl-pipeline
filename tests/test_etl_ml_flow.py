@@ -189,7 +189,7 @@ def test_fetch_municipality_assessment_ratios_data_already_exists():
         mock_fetch_county_ratios.return_value = None
         app_token = "mock_token"
 
-        results = fetch_municipality_assessment_ratios(app_token)
+        results = fetch_municipality_assessment_ratios(app_token, MINIMUM_ASSESSMENT_YEAR)
 
         for county in CNY_COUNTY_LIST:
             mock_check_exists.assert_any_call(MINIMUM_ASSESSMENT_YEAR, county)
@@ -197,7 +197,9 @@ def test_fetch_municipality_assessment_ratios_data_already_exists():
         mock_fetch_county_ratios.assert_not_called()
 
         assert mock_logger.call_count == len(CNY_COUNTY_LIST) + 2
-        mock_logger.assert_any_call(INFO_LOG_LEVEL, f"Starting fetching all municipality assessment ratios...")
+        mock_logger.assert_any_call(
+            INFO_LOG_LEVEL,
+            f"Starting fetching municipality assessment ratios for {MINIMUM_ASSESSMENT_YEAR}...")
         mock_logger.assert_any_call(INFO_LOG_LEVEL,
                                     f"Completed fetching municipality assessment ratios, {len(results)} found.")
         mock_logger.assert_any_call(
@@ -235,7 +237,7 @@ def test_fetch_municipality_assessment_ratios_data_not_exists():
         mock_fetch_county_ratios.return_value = fake_response
         app_token = "mock_token"
 
-        results = fetch_municipality_assessment_ratios(app_token)
+        results = fetch_municipality_assessment_ratios(app_token, MINIMUM_ASSESSMENT_YEAR)
 
         # Assert `fetch_county_assessment_ratios` is called for all years and counties
         expected_call_count = len(CNY_COUNTY_LIST) * (2024 - MINIMUM_ASSESSMENT_YEAR + 1)
@@ -244,7 +246,9 @@ def test_fetch_municipality_assessment_ratios_data_not_exists():
         # All responses should be returned in a single list
         assert len(results) == expected_call_count * len(fake_response)
         assert results[0] == fake_response[0]
-        mock_logger.assert_any_call(INFO_LOG_LEVEL, "Starting fetching all municipality assessment ratios...")
+        mock_logger.assert_any_call(
+            INFO_LOG_LEVEL,
+            f"Starting fetching municipality assessment ratios for {MINIMUM_ASSESSMENT_YEAR}...")
         mock_logger.assert_any_call(INFO_LOG_LEVEL, f"Completed fetching municipality assessment ratios, {len(results)} found.")
 
 
@@ -389,10 +393,15 @@ def test_workflow_token_failure(
 @patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
+@patch("etl.etl_ml_flow.datetime")
 def test_workflow_with_valid_token_and_existing_db(
-    mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
+    mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow with a valid token and existing database."""
+    now = MagicMock()
+    now.year = 2025
+    now.month = 2
+    mock_datetime.now.return_value = now
     mock_token.return_value = "valid_token"
     mock_path_exists.return_value = True
     mock_fetch.return_value = [{"mock": "data"}]
@@ -401,7 +410,7 @@ def test_workflow_with_valid_token_and_existing_db(
 
     mock_download.assert_called_once()
     mock_create_db.assert_not_called()
-    mock_fetch.assert_called_once_with("valid_token")
+    mock_fetch.assert_called_once_with("valid_token", 2024)
     mock_save.assert_called_once_with([{"mock": "data"}])
     mock_upload.assert_called_once()
     mock_logger.assert_called_once_with(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")
@@ -415,10 +424,15 @@ def test_workflow_with_valid_token_and_existing_db(
 @patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
-def test_workflow_with_missing_db(
-    mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger, mock_path_exists
+@patch("etl.etl_ml_flow.datetime")
+def test_workflow_with_valid_token_and_existing_db(
+    mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow with valid token but database not already in s3 calls to create db."""
+    now = MagicMock()
+    now.year = 2025
+    now.month = 9
+    mock_datetime.now.return_value = now
     mock_token.return_value = "valid_token"
     mock_path_exists.return_value = False
     mock_fetch.return_value = None
@@ -426,8 +440,8 @@ def test_workflow_with_missing_db(
     cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
-    mock_create.assert_called_once()
-    mock_fetch.assert_called_once_with("valid_token")
+    mock_create_db.assert_called_once()
+    mock_fetch.assert_called_once_with("valid_token", 2025)
     mock_save.assert_not_called()
     mock_upload.assert_not_called()
 
@@ -440,10 +454,15 @@ def test_workflow_with_missing_db(
 @patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
-def test_workflow_no_ratios_fetched(
-    mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger, mock_path_exists
+@patch("etl.etl_ml_flow.datetime")
+def test_workflow_with_valid_token_and_existing_db(
+    mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow when no assessment ratios are fetched."""
+    now = MagicMock()
+    now.year = 2025
+    now.month = 8
+    mock_datetime.now.return_value = now
     mock_token.return_value = "valid_token"
     mock_path_exists.return_value = True
     mock_fetch.return_value = None
@@ -451,8 +470,8 @@ def test_workflow_no_ratios_fetched(
     cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
-    mock_create.assert_not_called()
-    mock_fetch.assert_called_once_with("valid_token")
+    mock_create_db.assert_not_called()
+    mock_fetch.assert_called_once_with("valid_token", 2025)
     mock_save.assert_not_called()
     mock_upload.assert_not_called()
 
@@ -465,10 +484,15 @@ def test_workflow_no_ratios_fetched(
 @patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
-def test_workflow_ratios_fetched(
-    mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger, mock_path_exists
+@patch("etl.etl_ml_flow.datetime")
+def test_workflow_with_valid_token_and_existing_db(
+    mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow when assessment ratios are fetched."""
+    now = MagicMock()
+    now.year = 2028
+    now.month = 3
+    mock_datetime.now.return_value = now
     mock_data = [{"a": "b"}, {"c": "d"}]
     mock_token.return_value = "valid_token"
     mock_path_exists.return_value = True
@@ -477,8 +501,8 @@ def test_workflow_ratios_fetched(
     cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
-    mock_create.assert_not_called()
-    mock_fetch.assert_called_once_with("valid_token")
+    mock_create_db.assert_not_called()
+    mock_fetch.assert_called_once_with("valid_token", 2027)
     mock_save.assert_called_once_with(mock_data)
     mock_upload.assert_called_once()
     mock_logger.assert_called_once_with(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")

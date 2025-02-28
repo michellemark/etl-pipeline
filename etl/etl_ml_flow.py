@@ -49,7 +49,6 @@ def get_assessment_year_to_query():
     return rate_year
 
 
-
 def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str) -> bool:
     """
     County assessment ratios are unique by rate_year and county_name but do
@@ -91,7 +90,7 @@ def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: 
     return assessment_ratios
 
 
-def fetch_municipality_assessment_ratios(app_token: str) -> List[dict]:
+def fetch_municipality_assessment_ratios(app_token: str, query_year: int) -> List[dict]:
     """
     Fetch municipality_assessment_ratios from Open NY APIs for all counties
     in the CNY_COUNTY_LIST.  Will get assessment ratios for all years from
@@ -99,21 +98,21 @@ def fetch_municipality_assessment_ratios(app_token: str) -> List[dict]:
     database will skip it as this data does not change over time.
     """
     assessment_ratios = []
-    custom_logger(INFO_LOG_LEVEL, f"Starting fetching all municipality assessment ratios...")
+    custom_logger(INFO_LOG_LEVEL, f"Starting fetching municipality assessment ratios for {query_year}...")
 
     for county in CNY_COUNTY_LIST:
 
         # Check if it exists before we call our rate limited function to speed up processing when we have the data
-        already_exists = check_if_county_assessment_ratio_exists(MINIMUM_ASSESSMENT_YEAR, county)
+        already_exists = check_if_county_assessment_ratio_exists(query_year, county)
 
         if already_exists:
             custom_logger(
                 INFO_LOG_LEVEL,
-                f"Found municipality assessment ratios for rate_year: {MINIMUM_ASSESSMENT_YEAR} and county_name: {county}, skipping.")
+                f"Found municipality assessment ratios for rate_year: {query_year} and county_name: {county}, skipping.")
         else:
             ratio_results = fetch_county_assessment_ratios(
                                 app_token=app_token,
-                                rate_year=MINIMUM_ASSESSMENT_YEAR,
+                                rate_year=query_year,
                                 county_name=county)
 
             if ratio_results and isinstance(ratio_results, list):
@@ -166,6 +165,8 @@ def cny_real_estate_etl_workflow():
         custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
         return
 
+    query_year = get_assessment_year_to_query()
+
     # First see if we already have a database in s3 to add updated data to
     download_database_from_s3()
 
@@ -173,7 +174,7 @@ def cny_real_estate_etl_workflow():
     if not os.path.exists(DB_LOCAL_PATH):
         create_database()
 
-    mar_results = fetch_municipality_assessment_ratios(open_ny_token)
+    mar_results = fetch_municipality_assessment_ratios(open_ny_token, query_year)
 
     if mar_results:
         save_municipality_assessment_ratios(mar_results)
