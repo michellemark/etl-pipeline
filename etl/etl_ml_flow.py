@@ -2,8 +2,6 @@ import json
 from datetime import datetime
 from typing import List
 
-from prefect import flow
-from prefect import task
 from pydantic import ValidationError
 from ratelimit import limits
 from ratelimit import sleep_and_retry
@@ -70,7 +68,6 @@ def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: 
     return assessment_ratios
 
 
-@task
 def fetch_municipality_assessment_ratios(app_token: str) -> List[dict]:
     """
     Fetch municipality_assessment_ratios from Open NY APIs for all counties
@@ -107,7 +104,6 @@ def fetch_municipality_assessment_ratios(app_token: str) -> List[dict]:
     return assessment_ratios
 
 
-@task
 def save_municipality_assessment_ratios(all_ratios: List[dict]):
     """Task 2: Validate the municipality_assessment_ratios data and save valid data to database."""
     validated_ratio_data = []
@@ -141,7 +137,7 @@ def save_municipality_assessment_ratios(all_ratios: List[dict]):
             INFO_LOG_LEVEL,
             "No valid municipality assessment ratios found, skipping.")
 
-@flow
+
 def cny_real_estate_data_workflow():
     """Main entry point for the ETL workflow."""
     open_ny_token = get_open_ny_app_token()
@@ -166,7 +162,4 @@ def cny_real_estate_data_workflow():
 
 
 if __name__ == "__main__":
-    # cny_real_estate_data_workflow.serve(name="etl-pipeline",
-    #                   tags=["daily-run"],
-    #                   interval=86400)
     cny_real_estate_data_workflow()

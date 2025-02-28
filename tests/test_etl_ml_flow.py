@@ -3,7 +3,6 @@ from datetime import datetime
 from unittest.mock import patch, MagicMock
 
 import pytest
-from prefect.testing.utilities import prefect_test_harness
 
 from etl.constants import *
 from etl.db_utilities import insert_into_database
@@ -342,17 +341,16 @@ def test_workflow_token_failure(
     mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger
 ):
     """Test workflow when token retrieval fails."""
-    with prefect_test_harness():
-        mock_token.return_value = None
+    mock_token.return_value = None
 
-        cny_real_estate_data_workflow()
+    cny_real_estate_data_workflow()
 
-        mock_logger.assert_called_once_with(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
-        mock_download.assert_not_called()
-        mock_create.assert_not_called()
-        mock_fetch.assert_not_called()
-        mock_save.assert_not_called()
-        mock_upload.assert_not_called()
+    mock_logger.assert_called_once_with(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
+    mock_download.assert_not_called()
+    mock_create.assert_not_called()
+    mock_fetch.assert_not_called()
+    mock_save.assert_not_called()
+    mock_upload.assert_not_called()
 
 
 @patch("os.path.exists")
@@ -367,19 +365,18 @@ def test_workflow_with_valid_token_and_existing_db(
     mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow with a valid token and existing database."""
-    with prefect_test_harness():
-        mock_token.return_value = "valid_token"
-        mock_path_exists.return_value = True
-        mock_fetch.return_value = [{"mock": "data"}]
+    mock_token.return_value = "valid_token"
+    mock_path_exists.return_value = True
+    mock_fetch.return_value = [{"mock": "data"}]
 
-        cny_real_estate_data_workflow()
+    cny_real_estate_data_workflow()
 
-        mock_download.assert_called_once()
-        mock_create_db.assert_not_called()
-        mock_fetch.assert_called_once_with("valid_token")
-        mock_save.assert_called_once_with([{"mock": "data"}])
-        mock_upload.assert_called_once()
-        mock_logger.assert_called_once_with(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")
+    mock_download.assert_called_once()
+    mock_create_db.assert_not_called()
+    mock_fetch.assert_called_once_with("valid_token")
+    mock_save.assert_called_once_with([{"mock": "data"}])
+    mock_upload.assert_called_once()
+    mock_logger.assert_called_once_with(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")
 
 
 @patch("os.path.exists")
@@ -394,18 +391,17 @@ def test_workflow_with_missing_db(
     mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow with valid token but database not already in s3 calls to create db."""
-    with prefect_test_harness():
-        mock_token.return_value = "valid_token"
-        mock_path_exists.return_value = False
-        mock_fetch.return_value = None
+    mock_token.return_value = "valid_token"
+    mock_path_exists.return_value = False
+    mock_fetch.return_value = None
 
-        cny_real_estate_data_workflow()
+    cny_real_estate_data_workflow()
 
-        mock_download.assert_called_once()
-        mock_create.assert_called_once()
-        mock_fetch.assert_called_once_with("valid_token")
-        mock_save.assert_not_called()
-        mock_upload.assert_not_called()
+    mock_download.assert_called_once()
+    mock_create.assert_called_once()
+    mock_fetch.assert_called_once_with("valid_token")
+    mock_save.assert_not_called()
+    mock_upload.assert_not_called()
 
 
 @patch("os.path.exists")
@@ -420,18 +416,17 @@ def test_workflow_no_ratios_fetched(
     mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow when no assessment ratios are fetched."""
-    with prefect_test_harness():
-        mock_token.return_value = "valid_token"
-        mock_path_exists.return_value = True
-        mock_fetch.return_value = None
+    mock_token.return_value = "valid_token"
+    mock_path_exists.return_value = True
+    mock_fetch.return_value = None
 
-        cny_real_estate_data_workflow()
+    cny_real_estate_data_workflow()
 
-        mock_download.assert_called_once()
-        mock_create.assert_not_called()
-        mock_fetch.assert_called_once_with("valid_token")
-        mock_save.assert_not_called()
-        mock_upload.assert_not_called()
+    mock_download.assert_called_once()
+    mock_create.assert_not_called()
+    mock_fetch.assert_called_once_with("valid_token")
+    mock_save.assert_not_called()
+    mock_upload.assert_not_called()
 
 
 @patch("os.path.exists")
@@ -446,17 +441,16 @@ def test_workflow_ratios_fetched(
     mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow when assessment ratios are fetched."""
-    with prefect_test_harness():
-        mock_data = [{"a": "b"}, {"c": "d"}]
-        mock_token.return_value = "valid_token"
-        mock_path_exists.return_value = True
-        mock_fetch.return_value = mock_data
+    mock_data = [{"a": "b"}, {"c": "d"}]
+    mock_token.return_value = "valid_token"
+    mock_path_exists.return_value = True
+    mock_fetch.return_value = mock_data
 
-        cny_real_estate_data_workflow()
+    cny_real_estate_data_workflow()
 
-        mock_download.assert_called_once()
-        mock_create.assert_not_called()
-        mock_fetch.assert_called_once_with("valid_token")
-        mock_save.assert_called_once_with(mock_data)
-        mock_upload.assert_called_once()
-        mock_logger.assert_called_once_with(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")
+    mock_download.assert_called_once()
+    mock_create.assert_not_called()
+    mock_fetch.assert_called_once_with("valid_token")
+    mock_save.assert_called_once_with(mock_data)
+    mock_upload.assert_called_once()
+    mock_logger.assert_called_once_with(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")
