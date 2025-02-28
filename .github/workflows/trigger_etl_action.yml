@@ -14,15 +14,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      # Set environment variables using Secrets
-      - name: Set Environment Variables
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          OPEN_DATA_APP_TOKEN: ${{ secrets.OPEN_DATA_APP_TOKEN }}
-        run: echo "Secrets configured, proceeding to Python setup."
-
       # Set up Python environment
       - name: Set up Python 3
         uses: actions/setup-python@v4
@@ -39,6 +30,9 @@ jobs:
       - name: Execute ETL Script
         working-directory: etl
         env:
-          # Add project root to PYTHONPATH
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          OPEN_DATA_APP_TOKEN: ${{ secrets.OPEN_DATA_APP_TOKEN }}
           PYTHONPATH: ${{ github.workspace }}
         run: python etl_ml_flow.py
