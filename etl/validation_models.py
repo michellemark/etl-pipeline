@@ -2,12 +2,12 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
-from etl.constants import ASSESSMENT_YEAR_SOUGHT
+from etl.constants import MINIMUM_ASSESSMENT_YEAR
 
 
 class MunicipalityAssessmentRatio(BaseModel):
     rate_year: int = Field(
-        ge=ASSESSMENT_YEAR_SOUGHT,
+        ge=MINIMUM_ASSESSMENT_YEAR,
         description="Rate Year of assessment ratio"
     )
     swis_code: str = Field(

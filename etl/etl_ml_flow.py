@@ -81,16 +81,16 @@ def fetch_municipality_assessment_ratios(app_token: str) -> List[dict]:
     for county in CNY_COUNTY_LIST:
 
         # Check if it exists before we call our rate limited function to speed up processing when we have the data
-        already_exists = check_if_county_assessment_ratio_exists(ASSESSMENT_YEAR_SOUGHT, county)
+        already_exists = check_if_county_assessment_ratio_exists(MINIMUM_ASSESSMENT_YEAR, county)
 
         if already_exists:
             custom_logger(
                 INFO_LOG_LEVEL,
-                f"Found municipality assessment ratios for rate_year: {ASSESSMENT_YEAR_SOUGHT} and county_name: {county}, skipping.")
+                f"Found municipality assessment ratios for rate_year: {MINIMUM_ASSESSMENT_YEAR} and county_name: {county}, skipping.")
         else:
             ratio_results = fetch_county_assessment_ratios(
                                 app_token=app_token,
-                                rate_year=ASSESSMENT_YEAR_SOUGHT,
+                                rate_year=MINIMUM_ASSESSMENT_YEAR,
                                 county_name=county)
 
             if ratio_results and isinstance(ratio_results, list):

@@ -157,7 +157,7 @@ def test_fetch_municipality_assessment_ratios_data_already_exists():
         results = fetch_municipality_assessment_ratios(app_token)
 
         for county in CNY_COUNTY_LIST:
-            mock_check_exists.assert_any_call(ASSESSMENT_YEAR_SOUGHT, county)
+            mock_check_exists.assert_any_call(MINIMUM_ASSESSMENT_YEAR, county)
 
         mock_fetch_county_ratios.assert_not_called()
 
@@ -203,7 +203,7 @@ def test_fetch_municipality_assessment_ratios_data_not_exists():
         results = fetch_municipality_assessment_ratios(app_token)
 
         # Assert `fetch_county_assessment_ratios` is called for all years and counties
-        expected_call_count = len(CNY_COUNTY_LIST) * (2024 - ASSESSMENT_YEAR_SOUGHT + 1)
+        expected_call_count = len(CNY_COUNTY_LIST) * (2024 - MINIMUM_ASSESSMENT_YEAR + 1)
         assert mock_fetch_county_ratios.call_count == expected_call_count
 
         # All responses should be returned in a single list

@@ -3,7 +3,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from etl.constants import ASSESSMENT_YEAR_SOUGHT
+from etl.constants import MINIMUM_ASSESSMENT_YEAR
 from etl.validation_models import MunicipalityAssessmentRatio
 
 
@@ -118,6 +118,6 @@ def test_invalid_rate_year():
         MunicipalityAssessmentRatio(**invalid_data).model_validate()
     except ValidationError as exc_info:
         for error in exc_info.errors():
-            assert error["msg"] == f"Input should be greater than or equal to {ASSESSMENT_YEAR_SOUGHT}"
+            assert error["msg"] == f"Input should be greater than or equal to {MINIMUM_ASSESSMENT_YEAR}"
             assert error["type"] == "greater_than_equal"
             assert error["loc"][0] == "rate_year"

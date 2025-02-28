@@ -3,7 +3,7 @@ import os
 # ******* Real estate API values ********************************
 CNY_COUNTY_LIST = ["Cayuga", "Cortland", "Madison", "Onondaga", "Oswego"]
 OPEN_NY_BASE_URL = "data.ny.gov"
-ASSESSMENT_YEAR_SOUGHT = 2024
+MINIMUM_ASSESSMENT_YEAR = 2024
 OPEN_NY_ASSESSMENT_RATIOS_API_ID = "bsmp-6um6"
 OPEN_NY_CALLS_PER_PERIOD = 3
 OPEN_NY_RATE_LIMIT_PERIOD = 60
