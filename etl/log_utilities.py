@@ -10,4 +10,4 @@ def custom_logger(level:str, message: str):
     elif level == WARNING_LOG_LEVEL:
         print(f"::warning::{message}")
     else:
-        print(f"::debug::{message}")
+        print(f"::notice::{message}")
