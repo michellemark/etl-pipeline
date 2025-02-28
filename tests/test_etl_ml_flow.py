@@ -1,5 +1,4 @@
 import sqlite3
-from datetime import datetime
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -149,30 +148,26 @@ def test_fetch_municipality_assessment_ratios_data_already_exists():
 
     with patch("etl.etl_ml_flow.custom_logger") as mock_logger, \
         patch("etl.etl_ml_flow.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
-        patch("etl.etl_ml_flow.check_if_county_assessment_ratio_exists") as mock_check_exists, \
-        patch("etl.etl_ml_flow.datetime") as mock_datetime:
+        patch("etl.etl_ml_flow.check_if_county_assessment_ratio_exists") as mock_check_exists:
 
-        # Mock the test year to avoid time errors
-        mock_datetime.now.return_value = datetime(2023, 1, 1)
         mock_check_exists.return_value = True
         mock_fetch_county_ratios.return_value = None
         app_token = "mock_token"
 
         results = fetch_municipality_assessment_ratios(app_token)
 
-        for year in range(OPEN_NY_EARLIEST_YEAR, 2024):
-            for county in CNY_COUNTY_LIST:
-                mock_check_exists.assert_any_call(year, county)
+        for county in CNY_COUNTY_LIST:
+            mock_check_exists.assert_any_call(ASSESSMENT_YEAR_SOUGHT, county)
 
         mock_fetch_county_ratios.assert_not_called()
 
-        assert mock_logger.call_count == len(CNY_COUNTY_LIST) * (2023 - OPEN_NY_EARLIEST_YEAR + 1) + 2
+        assert mock_logger.call_count == len(CNY_COUNTY_LIST) + 2
         mock_logger.assert_any_call(INFO_LOG_LEVEL, f"Starting fetching all municipality assessment ratios...")
         mock_logger.assert_any_call(INFO_LOG_LEVEL,
                                     f"Completed fetching municipality assessment ratios, {len(results)} found.")
         mock_logger.assert_any_call(
             INFO_LOG_LEVEL,
-            f"Found municipality assessment ratios for rate_year: 2023 and county_name: {CNY_COUNTY_LIST[0]}, skipping."
+            f"Found municipality assessment ratios for rate_year: 2024 and county_name: {CNY_COUNTY_LIST[0]}, skipping."
         )
         assert results == []
 
@@ -182,13 +177,11 @@ def test_fetch_municipality_assessment_ratios_data_not_exists():
 
     with patch("etl.etl_ml_flow.custom_logger") as mock_logger, \
         patch("etl.etl_ml_flow.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
-        patch("etl.etl_ml_flow.check_if_county_assessment_ratio_exists") as mock_check_exists, \
-        patch("etl.etl_ml_flow.datetime") as mock_datetime:
-        mock_datetime.now.return_value = datetime(2023, 1, 1)
+        patch("etl.etl_ml_flow.check_if_county_assessment_ratio_exists") as mock_check_exists:
         mock_check_exists.return_value = False
         fake_response = [
             {
-                "rate_year": "2023",
+                "rate_year": "2024",
                 "swis_code": "050100",
                 "type": "City",
                 "county_name": "Cayuga",
@@ -196,7 +189,7 @@ def test_fetch_municipality_assessment_ratios_data_not_exists():
                 "residential_assessment_ratio": "96.00"
             },
             {
-                "rate_year": "2023",
+                "rate_year": "2024",
                 "swis_code": "052000",
                 "type": "Town",
                 "county_name": "Cayuga",
@@ -210,7 +203,7 @@ def test_fetch_municipality_assessment_ratios_data_not_exists():
         results = fetch_municipality_assessment_ratios(app_token)
 
         # Assert `fetch_county_assessment_ratios` is called for all years and counties
-        expected_call_count = len(CNY_COUNTY_LIST) * (2023 - OPEN_NY_EARLIEST_YEAR + 1)
+        expected_call_count = len(CNY_COUNTY_LIST) * (2024 - ASSESSMENT_YEAR_SOUGHT + 1)
         assert mock_fetch_county_ratios.call_count == expected_call_count
 
         # All responses should be returned in a single list
@@ -224,7 +217,7 @@ def test_save_all_valid_ratios():
     """Test saving all valid municipality ratios."""
     mock_data = [
         {
-            "rate_year": "2023",
+            "rate_year": "2024",
             "swis_code": "050100",
             "type": "City",
             "county_name": "Cayuga",
@@ -232,7 +225,7 @@ def test_save_all_valid_ratios():
             "residential_assessment_ratio": "96.00"
         },
         {
-            "rate_year": "2023",
+            "rate_year": "2024",
             "swis_code": "052000",
             "type": "Town",
             "county_name": "Cayuga",
@@ -256,8 +249,8 @@ def test_save_all_valid_ratios():
             "residential_assessment_ratio"
         ]
         assert mock_db.call_args[0][2] == [
-            (2023, "050100", "Cayuga", "Auburn", 96.00),
-            (2023, "052000", "Cayuga", "Aurelius", 81.83)
+            (2024, "050100", "Cayuga", "Auburn", 96.00),
+            (2024, "052000", "Cayuga", "Aurelius", 81.83)
         ]
         mock_logger.assert_any_call(
             INFO_LOG_LEVEL,
@@ -277,7 +270,7 @@ def test_save_some_invalid_ratios():
             "residential_assessment_ratio": "96.00"
         },
         {
-            "rate_year": "2023",
+            "rate_year": "2024",
             "swis_code": "052000",
             "type": "Town",
             "county_name": "Cayuga",
@@ -302,7 +295,7 @@ def test_save_some_invalid_ratios():
                 "municipality_name",
                 "residential_assessment_ratio"
             ],
-            [(2023, "052000", "Cayuga", "Aurelius", 81.83)]
+            [(2024, "052000", "Cayuga", "Aurelius", 81.83)]
         )
         mock_logger.assert_any_call(
             ERROR_LOG_LEVEL,
@@ -310,7 +303,7 @@ def test_save_some_invalid_ratios():
         )
         mock_logger.assert_any_call(
             ERROR_LOG_LEVEL,
-            "Error in field rate_year. Message: Input should be greater than or equal to 2009")
+            "Error in field rate_year. Message: Input should be greater than or equal to 2024")
         mock_logger.assert_any_call(
             INFO_LOG_LEVEL,
             "Completed saving 1 valid municipality assessment ratios to database rows_inserted: 1, rows_failed: 0."

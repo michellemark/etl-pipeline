@@ -76,28 +76,25 @@ def fetch_municipality_assessment_ratios(app_token: str) -> List[dict]:
     database will skip it as this data does not change over time.
     """
     assessment_ratios = []
-    current_year = datetime.now().year
     custom_logger(INFO_LOG_LEVEL, f"Starting fetching all municipality assessment ratios...")
 
-    for year in range(OPEN_NY_EARLIEST_YEAR, current_year + 1):
+    for county in CNY_COUNTY_LIST:
 
-        for county in CNY_COUNTY_LIST:
+        # Check if it exists before we call our rate limited function to speed up processing when we have the data
+        already_exists = check_if_county_assessment_ratio_exists(ASSESSMENT_YEAR_SOUGHT, county)
 
-            # Check if it exists before we call our rate limited function to speed up processing when we have the data
-            already_exists = check_if_county_assessment_ratio_exists(year, county)
+        if already_exists:
+            custom_logger(
+                INFO_LOG_LEVEL,
+                f"Found municipality assessment ratios for rate_year: {ASSESSMENT_YEAR_SOUGHT} and county_name: {county}, skipping.")
+        else:
+            ratio_results = fetch_county_assessment_ratios(
+                                app_token=app_token,
+                                rate_year=ASSESSMENT_YEAR_SOUGHT,
+                                county_name=county)
 
-            if already_exists:
-                custom_logger(
-                    INFO_LOG_LEVEL,
-                    f"Found municipality assessment ratios for rate_year: {year} and county_name: {county}, skipping.")
-            else:
-                ratio_results = fetch_county_assessment_ratios(
-                                    app_token=app_token,
-                                    rate_year=year,
-                                    county_name=county)
-
-                if ratio_results and isinstance(ratio_results, list):
-                    assessment_ratios.extend(ratio_results)
+            if ratio_results and isinstance(ratio_results, list):
+                assessment_ratios.extend(ratio_results)
 
     custom_logger(INFO_LOG_LEVEL, f"Completed fetching municipality assessment ratios, {len(assessment_ratios)} found.")
 
