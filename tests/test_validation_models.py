@@ -1,10 +1,9 @@
 import json
 
-import pytest
 from pydantic import ValidationError
 
 from etl.constants import MINIMUM_ASSESSMENT_YEAR
-from etl.validation_models import MunicipalityAssessmentRatio
+from etl.validation_models import MunicipalityAssessmentRatio, NYPropertyAssessment
 
 
 def test_valid_municipality_assessment_ratio_without_village_name():
@@ -104,7 +103,7 @@ def test_valid_municipality_assessment_ratio_with_village_dumps_to_expected_json
     )
 
 
-def test_invalid_rate_year():
+def test_invalid_municipality_assessment_ratio_rate_year():
     invalid_data = {
         "rate_year": "1980",
         "swis_code": "050100",
@@ -115,9 +114,170 @@ def test_invalid_rate_year():
     }
 
     try:
-        MunicipalityAssessmentRatio(**invalid_data).model_validate()
+        MunicipalityAssessmentRatio(**invalid_data)
     except ValidationError as exc_info:
         for error in exc_info.errors():
             assert error["msg"] == f"Input should be greater than or equal to {MINIMUM_ASSESSMENT_YEAR}"
             assert error["type"] == "greater_than_equal"
             assert error["loc"][0] == "rate_year"
+
+
+def test_valid_ny_property_record_outputs_expected_data_for_two_tables():
+    valid_data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_number": "833",
+        "parcel_address_street": "Hiawatha",
+        "parcel_address_suff": "Blvd",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+    model = NYPropertyAssessment(**valid_data)
+    properties_record = model.to_properties_row()
+    assert properties_record["id"] == "311500 001.1-01-21.0"
+    assert properties_record["swis_code"] == "311500"
+    assert properties_record["print_key_code"] == "001.1-01-21.0"
+    assert properties_record["municipality_code"] == "311500"
+    assert properties_record["municipality_name"] == "Syracuse"
+    assert properties_record["county_name"] == "Onondaga"
+    assert properties_record["school_district_code"] == "311500"
+    assert properties_record["school_district_name"] == "Syracuse"
+    assert properties_record["address_street"] == "833 Hiawatha Blvd"
+    assert properties_record["address_state"] == NYPropertyAssessment.STATE
+    assert len(properties_record) == 10
+
+    onypa_record = model.to_ny_property_assessments_row()
+    assert onypa_record["property_id"] == "311500 001.1-01-21.0"
+    assert onypa_record["roll_year"] == 2024
+    assert onypa_record["property_class"] == "311"
+    assert onypa_record["property_class_description"] == "Residential Vacant Land"
+    assert onypa_record["front"] == 29
+    assert onypa_record["depth"] == 111.7
+    assert onypa_record["full_market_value"] == 9760
+    assert len(onypa_record) == 7
+
+
+def test_ny_property_assessment_invalid_role_year():
+    invalid_data = {
+        "roll_year": "1980",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_number": "833",
+        "parcel_address_street": "Hiawatha",
+        "parcel_address_suff": "Blvd",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+
+    try:
+        NYPropertyAssessment(**invalid_data)
+    except ValidationError as exc_info:
+        for error in exc_info.errors():
+            assert error["msg"] == f"Input should be greater than or equal to {MINIMUM_ASSESSMENT_YEAR}"
+            assert error["type"] == "greater_than_equal"
+            assert error["loc"][0] == "roll_year"
+
+
+def test_ny_property_assessment_missing_required_values():
+    invalid_data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "parcel_address_number": "833",
+        "parcel_address_street": "Hiawatha Blvd",
+        "parcel_address_suff": "",
+        "front": "29",
+        "depth": "111.7"
+    }
+    try:
+        NYPropertyAssessment(**invalid_data)
+    except ValidationError as exc_info:
+        all_errors = exc_info.errors()
+        assert all_errors[0]["msg"] == "Field required"
+        assert all_errors[0]["type"] == "missing"
+        assert all_errors[0]["loc"][0] == "print_key_code"
+        assert all_errors[1]["msg"] == "Field required"
+        assert all_errors[1]["type"] == "missing"
+        assert all_errors[1]["loc"][0] == "full_market_value"
+
+
+def test_ny_property_assessment_required_primary_key_value():
+    invalid_data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_number": "833",
+        "parcel_address_street": "Hiawatha",
+        "parcel_address_suff": "Blvd",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+    try:
+        NYPropertyAssessment(**invalid_data)
+    except ValidationError as exc_info:
+        all_errors = exc_info.errors()
+        assert all_errors[0]["msg"] == "Field required"
+        assert all_errors[0]["type"] == "missing"
+        assert all_errors[0]["loc"][0] == "swis_code"
+        assert len(all_errors) == 1
+
+
+def test_ny_property_assessment_invalid_primary_key_values():
+    invalid_data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "parcel_address_number": "833",
+        "parcel_address_street": "Hiawatha",
+        "parcel_address_suff": "Blvd",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+    try:
+        NYPropertyAssessment(**invalid_data)
+    except ValidationError as exc_info:
+        all_errors = exc_info.errors()
+        assert all_errors[0]["msg"] == "String should have at least 6 characters"
+        assert all_errors[0]["type"] == "string_too_short"
+        assert all_errors[0]["loc"][0] == "swis_code"
+        assert all_errors[1]["msg"] == "Field required"
+        assert all_errors[1]["type"] == "missing"
+        assert all_errors[1]["loc"][0] == "print_key_code"
+        assert len(all_errors) == 2
