@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from typing import List
 
@@ -7,7 +8,21 @@ from ratelimit import limits
 from ratelimit import sleep_and_retry
 from sodapy import Socrata
 
-from etl.constants import *
+from etl.constants import ASSESSMENT_RATIOS_TABLE
+from etl.constants import CNY_COUNTY_LIST
+from etl.constants import DB_LOCAL_PATH
+from etl.constants import ERROR_LOG_LEVEL
+from etl.constants import INFO_LOG_LEVEL
+from etl.constants import MINIMUM_ASSESSMENT_YEAR
+from etl.constants import OPEN_NY_ASSESSMENT_RATIOS_API_ID
+from etl.constants import OPEN_NY_BASE_URL
+from etl.constants import OPEN_NY_CALLS_PER_PERIOD
+from etl.constants import OPEN_NY_LIMIT_PER_PAGE
+from etl.constants import OPEN_NY_PROPERTY_ASSESSMENTS_API_ID
+from etl.constants import OPEN_NY_RATE_LIMIT_PERIOD
+from etl.constants import PROPERTIES_TABLE
+from etl.constants import NY_PROPERTY_ASSESSMENTS_TABLE
+from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import create_database
 from etl.db_utilities import download_database_from_s3
 from etl.db_utilities import execute_select_query
@@ -313,4 +328,12 @@ def cny_real_estate_etl_workflow():
 
 
 if __name__ == "__main__":
+    start_time = datetime.now()
+    custom_logger(INFO_LOG_LEVEL, "Starting ETL workflow at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     cny_real_estate_etl_workflow()
+    end_time = datetime.now()
+    custom_logger(INFO_LOG_LEVEL, f"Completed ETL workflow at {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    elapsed_time = end_time - start_time
+    hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    custom_logger(INFO_LOG_LEVEL, f"Total time taken: {int(hours)} hours, {int(minutes)} minutes, and {int(seconds)} seconds.")
