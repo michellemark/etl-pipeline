@@ -12,7 +12,7 @@ def test_custom_logger_debug_default_annotations():
     with patch("builtins.print") as mock_print:
         message = "This is a message."
         custom_logger("", message)
-        mock_print.assert_called_once_with(f"::debug::{message}")
+        mock_print.assert_called_once_with(f"::notice::{message}")
 
 
 def test_custom_logger_debug_annotations():
@@ -20,9 +20,9 @@ def test_custom_logger_debug_annotations():
     with patch("builtins.print") as mock_print:
         message = "This is a message."
         custom_logger(INFO_LOG_LEVEL, message)
-        mock_print.assert_any_call(f"::debug::{message}")
+        mock_print.assert_any_call(f"::notice::{message}")
         custom_logger(DEBUG_LOG_LEVEL, message)
-        mock_print.assert_any_call(f"::debug::{message}")
+        mock_print.assert_any_call(f"::notice::{message}")
 
 
 def test_custom_logger_error_annotations():

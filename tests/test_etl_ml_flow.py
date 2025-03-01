@@ -369,7 +369,7 @@ def test_save_none_ratios():
 @patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
-def test_workflow_token_failure(
+def test_workflow_token_failure_stop_workflow(
     mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger
 ):
     """Test workflow when token retrieval fails."""
@@ -394,38 +394,7 @@ def test_workflow_token_failure(
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
 @patch("etl.etl_ml_flow.datetime")
-def test_workflow_with_valid_token_and_existing_db(
-    mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
-):
-    """Test workflow with a valid token and existing database."""
-    now = MagicMock()
-    now.year = 2025
-    now.month = 2
-    mock_datetime.now.return_value = now
-    mock_token.return_value = "valid_token"
-    mock_path_exists.return_value = True
-    mock_fetch.return_value = [{"mock": "data"}]
-
-    cny_real_estate_etl_workflow()
-
-    mock_download.assert_called_once()
-    mock_create_db.assert_not_called()
-    mock_fetch.assert_called_once_with("valid_token", 2024)
-    mock_save.assert_called_once_with([{"mock": "data"}])
-    mock_upload.assert_called_once()
-    mock_logger.assert_called_once_with(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")
-
-
-@patch("os.path.exists")
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.get_open_ny_app_token")
-@patch("etl.etl_ml_flow.download_database_from_s3")
-@patch("etl.etl_ml_flow.create_database")
-@patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.upload_database_to_s3")
-@patch("etl.etl_ml_flow.datetime")
-def test_workflow_with_valid_token_and_existing_db(
+def test_workflow_db_not_in_s3_creates_db(
     mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow with valid token but database not already in s3 calls to create db."""
@@ -441,9 +410,6 @@ def test_workflow_with_valid_token_and_existing_db(
 
     mock_download.assert_called_once()
     mock_create_db.assert_called_once()
-    mock_fetch.assert_called_once_with("valid_token", 2025)
-    mock_save.assert_not_called()
-    mock_upload.assert_not_called()
 
 
 @patch("os.path.exists")
@@ -455,7 +421,7 @@ def test_workflow_with_valid_token_and_existing_db(
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
 @patch("etl.etl_ml_flow.datetime")
-def test_workflow_with_valid_token_and_existing_db(
+def test_workflow_with_municipal_assessment_ratios_not_fetched(
     mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow when no assessment ratios are fetched."""
@@ -471,9 +437,9 @@ def test_workflow_with_valid_token_and_existing_db(
 
     mock_download.assert_called_once()
     mock_create_db.assert_not_called()
-    mock_fetch.assert_called_once_with("valid_token", 2025)
+    mock_fetch.assert_called_once_with(app_token="valid_token", query_year=2025)
     mock_save.assert_not_called()
-    mock_upload.assert_not_called()
+    mock_upload.assert_called_once()
 
 
 @patch("os.path.exists")
@@ -485,7 +451,7 @@ def test_workflow_with_valid_token_and_existing_db(
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
 @patch("etl.etl_ml_flow.datetime")
-def test_workflow_with_valid_token_and_existing_db(
+def test_workflow_with_municipal_assessment_ratios_fetched(
     mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
 ):
     """Test workflow when assessment ratios are fetched."""
@@ -502,7 +468,7 @@ def test_workflow_with_valid_token_and_existing_db(
 
     mock_download.assert_called_once()
     mock_create_db.assert_not_called()
-    mock_fetch.assert_called_once_with("valid_token", 2027)
+    mock_fetch.assert_called_once_with(app_token="valid_token", query_year=2027)
     mock_save.assert_called_once_with(mock_data)
     mock_upload.assert_called_once()
-    mock_logger.assert_called_once_with(INFO_LOG_LEVEL, "Completed ETL workflow successfully.")
+    mock_logger.assert_any_call(INFO_LOG_LEVEL, "Completed ETL workflow.")

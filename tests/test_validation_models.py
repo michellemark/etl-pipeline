@@ -20,7 +20,7 @@ def test_valid_municipality_assessment_ratio_without_village_name():
 
     assert mar_model.rate_year == 2024
     assert mar_model.swis_code == "050100"
-    assert mar_model.type == "City"
+    assert "type" not in mar_model
     assert mar_model.county_name == "Cayuga"
     assert mar_model.municipality_name == "Auburn"
     assert mar_model.residential_assessment_ratio == 88.00
@@ -40,11 +40,11 @@ def test_valid_municipality_assessment_ratio_with_village_name():
 
     assert mar_model.rate_year == 2024
     assert mar_model.swis_code == "050100"
-    assert mar_model.type == "City"
     assert mar_model.county_name == "Cayuga"
     assert mar_model.municipality_name == "Auburn"
     assert mar_model.residential_assessment_ratio == 88.00
-    assert mar_model.village_name == "Auburn"
+    assert "type" not in mar_model
+    assert "village_name" not in mar_model
 
 
 def test_valid_municipality_assessment_ratio_without_village_dumps_to_expected_json():
