@@ -262,7 +262,7 @@ def save_property_assessments(all_properties: List[dict]):
                 properties_column_names = list(property_data.keys())
 
             # Get data for saving to ny_property_assessments table
-            ny_property_assessment_data = model.to_ny_property_assessment_row()
+            ny_property_assessment_data = model.to_ny_property_assessments_row()
             validated_ny_property_assessment_data.append(tuple(ny_property_assessment_data.values()))
 
             if not ny_property_assessment_column_names:
