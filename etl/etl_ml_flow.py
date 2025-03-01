@@ -329,7 +329,7 @@ def cny_real_estate_etl_workflow():
 
 if __name__ == "__main__":
     start_time = datetime.now()
-    custom_logger(INFO_LOG_LEVEL, "Starting ETL workflow at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    custom_logger(INFO_LOG_LEVEL, f"Starting ETL workflow at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     cny_real_estate_etl_workflow()
     end_time = datetime.now()
     custom_logger(INFO_LOG_LEVEL, f"Completed ETL workflow at {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
