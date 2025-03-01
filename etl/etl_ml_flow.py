@@ -198,6 +198,29 @@ def fetch_property_assessments_page(app_token: str, roll_year: int, county_name:
     return properties_page
 
 
+def check_if_property_assessments_exist(roll_year: int, county_name: str) -> bool:
+    """
+    Property assessments are only published once per year for each roll year.
+    Use this to check if we already have the data and save a great many calls to the API.
+    """
+    do_property_assessments_for_year_exist = False
+    custom_logger(
+        INFO_LOG_LEVEL,
+        f"Checking if property assessments for roll_year: {roll_year} and county_name: {county_name} exist in database...")
+    sql_query = f"""SELECT COUNT(*) FROM {NY_PROPERTY_ASSESSMENTS_TABLE} AS npa
+                    JOIN {PROPERTIES_TABLE} AS p ON npa.property_id = p.id
+                    WHERE p.county_name = ? AND npa.roll_year = ?"""
+    results = execute_select_query(sql_query, params=(county_name, roll_year))
+
+    if results and isinstance(results[0], tuple) and len(results[0]) == 1:
+        count = results[0][0]
+
+        if count > 0:
+            do_property_assessments_for_year_exist = True
+
+    return do_property_assessments_for_year_exist
+
+
 def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: int) -> List[dict] or None:
     """
     Query Open NY APIs for properties and assessments for a given year for all counties
@@ -208,26 +231,34 @@ def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: in
     custom_logger(INFO_LOG_LEVEL, f"Starting fetching CNY property assessments for roll_year {query_year}...")
 
     for county in CNY_COUNTY_LIST:
-        call_again = True
-        current_offset = 0
+        # First see if we already have data for this county and roll year as it is only published once a year
+        already_exists = check_if_property_assessments_exist(query_year, county)
 
-        while call_again:
+        if already_exists:
+            custom_logger(
+                INFO_LOG_LEVEL,
+                f"Property assessments for county_name: {county} in roll year {query_year} already exist, ending.")
+        else:
+            call_again = True
+            current_offset = 0
 
-            property_results = fetch_property_assessments_page(
-                app_token=app_token,
-                roll_year=query_year,
-                county_name=county,
-                offset=current_offset
-            )
+            while call_again:
 
-            if property_results and isinstance(property_results, list):
-                all_properties.extend(property_results)
-                current_offset += OPEN_NY_LIMIT_PER_PAGE
-            else:
-                call_again = False
-                custom_logger(
-                    INFO_LOG_LEVEL,
-                    f"No more property assessments for county_name: {county}, ending.")
+                property_results = fetch_property_assessments_page(
+                    app_token=app_token,
+                    roll_year=query_year,
+                    county_name=county,
+                    offset=current_offset
+                )
+
+                if property_results and isinstance(property_results, list):
+                    all_properties.extend(property_results)
+                    current_offset += OPEN_NY_LIMIT_PER_PAGE
+                else:
+                    call_again = False
+                    custom_logger(
+                        INFO_LOG_LEVEL,
+                        f"No more property assessments for county_name: {county}, ending.")
 
     custom_logger(INFO_LOG_LEVEL, f"Completed fetching all CNY property assessments, {len(all_properties)} found.")
 

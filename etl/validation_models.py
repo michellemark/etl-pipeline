@@ -156,7 +156,6 @@ class NYPropertyAssessment(BaseModel):
              "address_street": "1325 Lemoyne Ave",
              "address_state": "NY"
          }
-
         """
         return {
             "id": self.generate_properties_id(),

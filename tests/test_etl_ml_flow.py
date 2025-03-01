@@ -6,6 +6,7 @@ import pytest
 from etl.constants import *
 from etl.db_utilities import insert_into_database
 from etl.etl_ml_flow import check_if_county_assessment_ratio_exists
+from etl.etl_ml_flow import check_if_property_assessments_exist
 from etl.etl_ml_flow import cny_real_estate_etl_workflow
 from etl.etl_ml_flow import fetch_county_assessment_ratios
 from etl.etl_ml_flow import fetch_municipality_assessment_ratios
@@ -360,6 +361,60 @@ def test_save_none_ratios():
             INFO_LOG_LEVEL,
             "No valid municipality assessment ratios found, skipping."
         )
+
+
+def test_check_check_if_property_assessments_exist_no_matching_record(setup_database):
+    """Test when there are NOT matching records for roll year and county_name."""
+    test_rate_year = 2024
+    test_county_name = "Oswego"
+    does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
+
+    assert does_county_roll_year_exist is False
+
+
+def test_check_check_if_property_assessments_exist_matching_record(setup_database):
+    """Test when there are matching records for roll year and county_name."""
+    test_rate_year = 2024
+    test_county_name = "Oswego"
+    property_column_names = [
+        "id",
+        "swis_code",
+        "print_key_code",
+        "municipality_code",
+        "municipality_name",
+        "county_name",
+        "school_district_code",
+        "school_district_name",
+        "address_street",
+        "address_state"
+    ]
+    property_row = [(
+        '350400 219.80-02-01',
+        '350400',
+        '219.80-02-01',
+        '350400',
+        'Fulton',
+        'Oswego',
+        '350400',
+        'Fulton',
+        '70 Clark St',
+        'NY'
+    )]
+    insert_into_database(PROPERTIES_TABLE, property_column_names, property_row)
+    ny_property_assessment_column_names = [
+        "property_id",
+        "roll_year",
+        "property_class",
+        "property_class_description",
+        "front",
+        "depth",
+        "full_market_value"
+    ]
+    ny_property_assessment__row = [('350400 219.80-02-01', 2024, 210, 'One Family Year-Round Residence', 80, 260, 41667)]
+    insert_into_database(NY_PROPERTY_ASSESSMENTS_TABLE, ny_property_assessment_column_names, ny_property_assessment__row)
+    does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
+
+    assert does_county_roll_year_exist is True
 
 
 @patch("etl.etl_ml_flow.custom_logger")
