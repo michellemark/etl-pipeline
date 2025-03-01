@@ -15,7 +15,7 @@ from etl.db_utilities import insert_into_database
 from etl.db_utilities import upload_database_to_s3
 from etl.log_utilities import custom_logger
 
-from etl.validation_models import MunicipalityAssessmentRatio, NYPropertyRecord
+from etl.validation_models import MunicipalityAssessmentRatio, NYPropertyAssessment
 
 
 def get_open_ny_app_token() -> str or None:
@@ -229,7 +229,7 @@ def save_property_assessments(all_properties: List[dict]):
     for property_assessment in all_properties:
 
         try:
-            model = NYPropertyRecord(**property_assessment)
+            model = NYPropertyAssessment(**property_assessment)
         except ValidationError as err:
             custom_logger(
                 WARNING_LOG_LEVEL,
