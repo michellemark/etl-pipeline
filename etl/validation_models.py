@@ -41,7 +41,7 @@ class MunicipalityAssessmentRatio(BaseModel):
         extra = "ignore"
 
 
-class NYPropertyRecord(BaseModel):
+class NYPropertyAssessment(BaseModel):
     STATE: ClassVar[str] = ALL_PROPERTIES_STATE
 
     roll_year: int = Field(
@@ -117,9 +117,6 @@ class NYPropertyRecord(BaseModel):
         Generate the primary key `id` for the `properties` table in the format:
         `{swis_code} {print_key_code}`
         """
-        if not self.swis_code or not self.print_key_code:
-            raise ValueError("Both `swis_code` and `print_key_code` are required to identify a valid property.")
-
         return f"{self.swis_code} {self.print_key_code}"
 
     def generate_address_street(self) -> str:
@@ -140,7 +137,7 @@ class NYPropertyRecord(BaseModel):
     @staticmethod
     def generate_address_state() -> str:
         """All properties are in New York."""
-        return NYPropertyRecord.STATE
+        return NYPropertyAssessment.STATE
 
     def to_properties_row(self) -> dict:
         """
