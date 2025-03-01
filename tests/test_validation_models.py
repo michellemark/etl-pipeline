@@ -166,6 +166,30 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables():
     assert len(onypa_record) == 7
 
 
+def test_valid_ny_property_record_missing_optional_parcel_address_parts():
+    """When parcel_address_number and parcel_address_suff are not present still valid and still produces address_street."""
+    valid_data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_street": "833 Hiawatha Blvd",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+    model = NYPropertyAssessment(**valid_data)
+    properties_record = model.to_properties_row()
+    assert properties_record["address_street"] == "833 Hiawatha Blvd"
+    assert len(properties_record) == 10
+
+
 def test_ny_property_assessment_invalid_role_year():
     invalid_data = {
         "roll_year": "1980",

@@ -84,8 +84,8 @@ class NYPropertyAssessment(BaseModel):
         min_length=10,
         description="Unique identifier for the parcel within a given municipality."
     )
-    parcel_address_number: str = Field(
-        min_length=1,
+    parcel_address_number: Optional[str] = Field(
+        default=None,
         description="Street number associated with physical location of property."
     )
     parcel_address_street: str = Field(
@@ -93,6 +93,7 @@ class NYPropertyAssessment(BaseModel):
         description="Street name associated with physical location of property."
     )
     parcel_address_suff: Optional[str] = Field(
+        default=None,
         description="Street suffix associated with physical location of property."
     )
     front: int | float = Field(
