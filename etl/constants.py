@@ -5,8 +5,11 @@ CNY_COUNTY_LIST = ["Cayuga", "Cortland", "Madison", "Onondaga", "Oswego"]
 OPEN_NY_BASE_URL = "data.ny.gov"
 MINIMUM_ASSESSMENT_YEAR = 2024
 OPEN_NY_ASSESSMENT_RATIOS_API_ID = "bsmp-6um6"
+OPEN_NY_PROPERTY_ASSESSMENTS_API_ID = "7vem-aaz7"
+OPEN_NY_LIMIT_PER_PAGE = 1000
 OPEN_NY_CALLS_PER_PERIOD = 3
 OPEN_NY_RATE_LIMIT_PERIOD = 60
+ALL_PROPERTIES_STATE = "NY"
 
 # ******* File paths and names ***********************************
 CURRENT_FILE_PATH = os.path.abspath(__file__)
