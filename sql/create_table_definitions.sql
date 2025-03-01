@@ -41,10 +41,9 @@ CREATE TABLE properties
     county_name          TEXT             NOT NULL,
     school_district_code TEXT             NOT NULL,
     school_district_name TEXT             NOT NULL,
-    address_number       TEXT             NOT NULL, -- NY mailing_address_number ATTOM 1st word in address.line1
-    address_street       TEXT             NOT NULL, -- NY mailing_address_street(if mailing_address_suff:<space>mailing_address_suff) ATTOM rest of address.line1
-    address_state        TEXT             NOT NULL, -- NY mailing_address_state ATTOM address.countrySubd
-    address_zip          TEXT             NOT NULL, -- From US Census Geocoder API, confirmed with ATTOM data, (where possible)
+    address_street       TEXT             NOT NULL, -- NY concatenated parcel street address ATTOM address.line1
+    address_state        TEXT             NOT NULL, -- always NY
+    address_zip          TEXT             NULL, -- From US Census Geocoder API, confirmed with ATTOM data, (where possible)
     FOREIGN KEY (municipality_code) REFERENCES municipality_assessment_ratios (municipality_code)
 );
 
@@ -83,11 +82,6 @@ CREATE TABLE ny_property_assessments
     front                      INTEGER NOT NULL,
     depth                      INTEGER NOT NULL,
     full_market_value          INTEGER NOT NULL,
-    assessment_land            INTEGER NOT NULL,
-    assessment_total           INTEGER NOT NULL,
-    county_taxable_value       INTEGER NOT NULL,
-    town_taxable_value         INTEGER NOT NULL,
-    school_taxable             INTEGER NOT NULL,
     PRIMARY KEY (property_id, roll_year), -- Compound primary key
     FOREIGN KEY (property_id) REFERENCES properties (id)
 );
@@ -103,6 +97,10 @@ CREATE INDEX idx_ny_property_assessments_property_description
 -- Add an index to optimize filtering by roll_year
 CREATE INDEX idx_ny_property_assessments_roll_year
     ON ny_property_assessments (roll_year);
+
+-- Add an index to optimize filtering by full_market_value
+CREATE INDEX idx_ny_property_assessments_full_market_value
+    ON ny_property_assessments (full_market_value);
 
 -- Optimize filtering by property_class and roll_year
 CREATE INDEX idx_ny_property_assessments_class_year
