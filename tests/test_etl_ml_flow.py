@@ -526,4 +526,3 @@ def test_workflow_with_municipal_assessment_ratios_fetched(
     mock_fetch.assert_called_once_with(app_token="valid_token", query_year=2027)
     mock_save.assert_called_once_with(mock_data)
     mock_upload.assert_called_once()
-    mock_logger.assert_any_call(INFO_LOG_LEVEL, "Completed ETL workflow.")

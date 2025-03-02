@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from pprint import pprint
 from typing import List
 
 from pydantic import ValidationError
@@ -30,7 +31,8 @@ from etl.db_utilities import insert_into_database
 from etl.db_utilities import upload_database_to_s3
 from etl.log_utilities import custom_logger
 
-from etl.validation_models import MunicipalityAssessmentRatio, NYPropertyAssessment
+from etl.validation_models import MunicipalityAssessmentRatio
+from etl.validation_models import NYPropertyAssessment
 
 
 def get_open_ny_app_token() -> str or None:
@@ -266,7 +268,7 @@ def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: in
 
 
 def save_property_assessments(all_properties: List[dict]):
-    """Task 2: Validate the properties data and save valid data to database tables."""
+    """Validate properties data and save valid data to database tables."""
     validated_properties_data = []
     validated_ny_property_assessment_data = []
     properties_column_names = None
@@ -279,11 +281,12 @@ def save_property_assessments(all_properties: List[dict]):
         except ValidationError as err:
             custom_logger(
                 WARNING_LOG_LEVEL,
-                f"Failed to validate property assessment {property} Errors:")
+                f"Failed to validate property assessment:")
+            pprint(property_assessment)
             for error in err.errors():
                 custom_logger(
                     WARNING_LOG_LEVEL,
-                    f"Error in field {error["loc"][0]}. Message: {error["msg"]}")
+                    f"- Error: Field: {error["loc"][0]}. Message: {error["msg"]}")
         else:
             # Get data for saving to properties table
             property_data = model.to_properties_row()
@@ -355,15 +358,13 @@ def cny_real_estate_etl_workflow():
     if os.path.exists(DB_LOCAL_PATH):
         upload_database_to_s3()
 
-    custom_logger(INFO_LOG_LEVEL, "Completed ETL workflow.")
-
 
 if __name__ == "__main__":
     start_time = datetime.now()
-    custom_logger(INFO_LOG_LEVEL, f"Starting ETL workflow at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    custom_logger(INFO_LOG_LEVEL, f"Starting ETL workflow at {start_time:%Y-%m-%d %H:%M:%S}")
     cny_real_estate_etl_workflow()
     end_time = datetime.now()
-    custom_logger(INFO_LOG_LEVEL, f"Completed ETL workflow at {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    custom_logger(INFO_LOG_LEVEL, f"Completed ETL workflow at {end_time:%Y-%m-%d %H:%M:%S}")
     elapsed_time = end_time - start_time
     hours, remainder = divmod(elapsed_time.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
