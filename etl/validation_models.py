@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from etl.constants import ALL_PROPERTIES_STATE
 from etl.constants import MINIMUM_ASSESSMENT_YEAR
+from etl.property_utilities import get_ny_property_category_for_property_class
 
 
 class MunicipalityAssessmentRatio(BaseModel):
@@ -72,8 +73,8 @@ class NYPropertyAssessment(BaseModel):
         min_length=6,
         description="Six-digit code that identifies subsections of a city or town, such as a village that resides within"
     )
-    property_class: str = Field(
-        min_length=3,
+    property_class: int = Field(
+        ge=0,
         description="A three digit code, established by ORPS for categorizing property by use."
     )
     property_class_description: str = Field(
@@ -81,7 +82,7 @@ class NYPropertyAssessment(BaseModel):
         description="Literal text description of property class assigned to parcel."
     )
     print_key_code: str = Field(
-        min_length=10,
+        min_length=3,
         description="Unique identifier for the parcel within a given municipality."
     )
     parcel_address_number: Optional[str] = Field(
@@ -112,6 +113,17 @@ class NYPropertyAssessment(BaseModel):
             "both of whom are knowledgeable concerning all the uses to which it is adapted and "
             "for which it is capable of being used.")
     )
+    assessment_land: Optional[int] = Field(
+        default=None,
+        description="The assessed value of only the land associated with the parcel."
+    )
+    assessment_total: Optional[int] = Field(
+        default=None,
+        description=("A figure in dollars, determined by an assessor, which reflects "
+                     "a property's worth in relation to other properties on an "
+                     "assessment roll and which; unless exempt; is used to compute a "
+                     "tax dollar obligation by multiplying it by a tax rate.")
+    )
 
     def generate_properties_id(self) -> str:
         """
@@ -119,6 +131,12 @@ class NYPropertyAssessment(BaseModel):
         `{swis_code} {print_key_code}`
         """
         return f"{self.swis_code} {self.print_key_code}"
+
+    def generate_property_category(self):
+        """
+        Look up property category for matching property_class in OPEN_NY_PROPERTY_CLASS_MAP.
+        """
+        return get_ny_property_category_for_property_class(self.property_class)
 
     def generate_address_street(self) -> str:
         """
@@ -179,9 +197,12 @@ class NYPropertyAssessment(BaseModel):
              "roll_year": 2024,
              "property_class": "210",
              "property_class_description": "One Family Year-Round Residence",
+             "property_category": "SFH",
              "front": 59.97,
              "depth": 125,
-             "full_market_value": 124800
+             "full_market_value": 124800,
+             "assessment_land": 10000,
+             "assessment_total": 98900,
          }
         """
         return {
@@ -189,9 +210,12 @@ class NYPropertyAssessment(BaseModel):
             "roll_year": self.roll_year,
             "property_class": self.property_class,
             "property_class_description": self.property_class_description,
+            "property_category": self.generate_property_category(),
             "front": self.front,
             "depth": self.depth,
-            "full_market_value": self.full_market_value
+            "full_market_value": self.full_market_value,
+            "assessment_land": self.assessment_land,
+            "assessment_total": self.assessment_total
         }
 
     class Config:
