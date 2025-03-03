@@ -1,119 +1,50 @@
+import os
 import sqlite3
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
-from etl.constants import *
+from etl.constants import ASSESSMENT_RATIOS_TABLE
+from etl.constants import CNY_COUNTY_LIST
+from etl.constants import ERROR_LOG_LEVEL
+from etl.constants import GENERATED_DATA_DIR
+from etl.constants import INFO_LOG_LEVEL
+from etl.constants import MINIMUM_ASSESSMENT_YEAR
+from etl.constants import NY_PROPERTY_ASSESSMENTS_TABLE
+from etl.constants import OPEN_NY_BASE_URL
+from etl.constants import PROJECT_ROOT
+from etl.constants import PROPERTIES_TABLE
+from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import insert_into_database
 from etl.etl_ml_flow import check_if_county_assessment_ratio_exists
 from etl.etl_ml_flow import check_if_property_assessments_exist
 from etl.etl_ml_flow import cny_real_estate_etl_workflow
 from etl.etl_ml_flow import fetch_county_assessment_ratios
 from etl.etl_ml_flow import fetch_municipality_assessment_ratios
-from etl.etl_ml_flow import get_assessment_year_to_query
-from etl.etl_ml_flow import get_open_ny_app_token
 from etl.etl_ml_flow import save_municipality_assessment_ratios
 
-test_db_path = "test_database.db"
-DB_TEST_PATH = os.path.join(GENERATED_DATA_DIR, test_db_path)
 
-
-@pytest.fixture
-def setup_database():
-    """Create a test database with real table definitions, clean up after testing."""
-    with patch("etl.db_utilities.DB_LOCAL_PATH", DB_TEST_PATH):
-        with sqlite3.connect(DB_TEST_PATH) as connection:
-            create_table_definitions_path = os.path.join(PROJECT_ROOT, "sql", "create_table_definitions.sql")
-
-            with open(create_table_definitions_path, "r") as sql_file:
-                sql_script = sql_file.read()
-
-            db_connection = sqlite3.connect(DB_TEST_PATH)
-            db_cursor = db_connection.cursor()
-            db_cursor.executescript(sql_script)
-            db_connection.commit()
-            db_connection.close()
-
-            yield
-
-    if os.path.exists(DB_TEST_PATH):
-        os.remove(DB_TEST_PATH)
-
-
-def test_get_open_ny_app_token_success():
-    """Test when the token is in the right environment variable."""
-    with patch("os.environ.get") as mock_env_get, \
-        patch("etl.db_utilities.custom_logger") as mock_custom_logger:
-        mock_env_get.side_effect = lambda key: {"OPEN_DATA_APP_TOKEN": "mock_app_token"}.get(key)
-        token = get_open_ny_app_token()
-        assert token == "mock_app_token"
-        mock_custom_logger.assert_not_called()
-
-
-def test_get_open_ny_app_token_fails():
-    """Test when the token is not in the right environment variable."""
-    with patch("os.environ.get") as mock_env_get, \
-        patch("etl.etl_ml_flow.custom_logger") as mock_custom_logger:
-        mock_env_get.return_value = None
-        token = get_open_ny_app_token()
-        assert token is None
-        mock_custom_logger.assert_called_once_with(
-            WARNING_LOG_LEVEL, "Missing OPEN_DATA_APP_TOKEN environment variable.")
-
-
-def test_get_assessment_year_to_query_before_august_minimum_assessment_year():
-    """Test get_assessment_year_to_query returns previous year when current month is before August,
-    except in the case where the current year is the minimum assessment year."""
-    with patch("etl.etl_ml_flow.datetime") as mock_datetime:
-        now = MagicMock()
-        now.year = MINIMUM_ASSESSMENT_YEAR
-        now.month = 4
-        mock_datetime.now.return_value = now
-        assessment_year = get_assessment_year_to_query()
-        assert assessment_year == MINIMUM_ASSESSMENT_YEAR
-
-
-def test_get_assessment_year_to_query_before_august():
-    """Test get_assessment_year_to_query returns previous year when current month is before August."""
-    with patch("etl.etl_ml_flow.datetime") as mock_datetime:
-        now = MagicMock()
-        now.year = 2025
-        now.month = 6
-        mock_datetime.now.return_value = now
-        assessment_year = get_assessment_year_to_query()
-        assert assessment_year == 2024
-
-
-def test_get_assessment_year_to_query_after_august():
-    """Test get_assessment_year_to_query returns current year when current month is after August."""
-    with patch("etl.etl_ml_flow.datetime") as mock_datetime:
-        now = MagicMock()
-        now.year = 2025
-        now.month = 8
-        mock_datetime.now.return_value = now
-        assessment_year = get_assessment_year_to_query()
-        assert assessment_year == 2025
-
-
-def test_check_if_county_assessment_ratio_exists_no_matching_record(setup_database):
+def test_check_if_county_assessment_ratio_exists_no_matching_record():
     """Test when rate_year and county_name have no matching records."""
-    does_ratio_exist = check_if_county_assessment_ratio_exists(2024, "Cayuga")
+    mocked_query_result = []
+
+    with patch("etl.etl_ml_flow.execute_select_query", return_value=mocked_query_result):
+        does_ratio_exist = check_if_county_assessment_ratio_exists(2024, "Cayuga")
 
     assert does_ratio_exist is False
 
 
-def test_check_if_county_assessment_ratio_exists_matching_record(setup_database):
+def test_check_if_county_assessment_ratio_exists_matching_record():
     """Test when there is a matching record for rate_year and county_name."""
     test_rate_year = 2024
     test_county_name = "Cayuga"
+    mocked_query_result = [(test_rate_year, "050100", "Auburn", test_county_name, 88.00)]
 
-    column_names = ["rate_year", "municipality_code", "municipality_name", "county_name", "residential_assessment_ratio"]
-    test_data = [(2024, "050100", "Auburn", test_county_name, 88.00)]
-    insert_into_database(ASSESSMENT_RATIOS_TABLE, column_names, test_data)
+    with patch("etl.etl_ml_flow.execute_select_query", return_value=mocked_query_result):
+        does_ratio_exist = check_if_county_assessment_ratio_exists(test_rate_year, test_county_name)
 
-    does_ratio_exist = check_if_county_assessment_ratio_exists(test_rate_year, test_county_name)
-
-    assert does_ratio_exist is True
+        assert does_ratio_exist is True
 
 
 def test_fetch_county_assessment_ratios_success():
@@ -363,81 +294,27 @@ def test_save_none_ratios():
         )
 
 
-def test_check_check_if_property_assessments_exist_no_matching_record(setup_database):
+def test_check_if_property_assessments_exist_no_matching_record():
     """Test when there are NOT matching records for roll year and county_name."""
     test_rate_year = 2024
     test_county_name = "Oswego"
-    does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
+    mocked_query_result = [(0,)]
 
-    assert does_county_roll_year_exist is False
+    with patch("etl.etl_ml_flow.execute_select_query", return_value=mocked_query_result):
+        does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
+        assert does_county_roll_year_exist is False
 
 
-def test_check_check_if_property_assessments_exist_matching_record(setup_database):
+def test_check_if_property_assessments_exist_matching_record():
     """Test when there are matching records for roll year and county_name."""
     test_rate_year = 2024
     test_county_name = "Oswego"
-    property_column_names = [
-        "id",
-        "swis_code",
-        "print_key_code",
-        "municipality_code",
-        "municipality_name",
-        "county_name",
-        "school_district_code",
-        "school_district_name",
-        "address_street",
-        "address_state"
-    ]
-    property_row = [(
-        '350400 219.80-02-01',
-        '350400',
-        '219.80-02-01',
-        '350400',
-        'Fulton',
-        'Oswego',
-        '350400',
-        'Fulton',
-        '70 Clark St',
-        'NY'
-    )]
-    insert_into_database(PROPERTIES_TABLE, property_column_names, property_row)
-    ny_property_assessment_column_names = [
-        "property_id",
-        "roll_year",
-        "property_class",
-        "property_class_description",
-        "front",
-        "depth",
-        "full_market_value"
-    ]
-    ny_property_assessment__row = [('350400 219.80-02-01', 2024, 210, 'One Family Year-Round Residence', 80, 260, 41667)]
-    insert_into_database(NY_PROPERTY_ASSESSMENTS_TABLE, ny_property_assessment_column_names, ny_property_assessment__row)
-    does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
+    mocked_query_result = [(1,)]
 
-    assert does_county_roll_year_exist is True
+    with patch("etl.etl_ml_flow.execute_select_query", return_value=mocked_query_result):
 
-
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.get_open_ny_app_token")
-@patch("etl.etl_ml_flow.download_database_from_s3")
-@patch("etl.etl_ml_flow.create_database")
-@patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.upload_database_to_s3")
-def test_workflow_token_failure_stop_workflow(
-    mock_upload, mock_save, mock_fetch, mock_create, mock_download, mock_token, mock_logger
-):
-    """Test workflow when token retrieval fails."""
-    mock_token.return_value = None
-
-    cny_real_estate_etl_workflow()
-
-    mock_logger.assert_called_once_with(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
-    mock_download.assert_not_called()
-    mock_create.assert_not_called()
-    mock_fetch.assert_not_called()
-    mock_save.assert_not_called()
-    mock_upload.assert_not_called()
+        does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
+        assert does_county_roll_year_exist is True
 
 
 @patch("os.path.exists")
@@ -445,21 +322,67 @@ def test_workflow_token_failure_stop_workflow(
 @patch("etl.etl_ml_flow.get_open_ny_app_token")
 @patch("etl.etl_ml_flow.download_database_from_s3")
 @patch("etl.etl_ml_flow.create_database")
+@patch("etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny")
 @patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
+@patch("etl.etl_ml_flow.get_assessment_year_to_query")
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
-@patch("etl.etl_ml_flow.datetime")
-def test_workflow_db_not_in_s3_creates_db(
-    mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
+def test_workflow_with_municipal_assessment_ratios_not_fetched(
+    mock_upload,
+    mock_save,
+    mock_assessment_year,
+    mock_fetch,
+    mock_fetch_properties_and_assessments,
+    mock_create_db,
+    mock_download,
+    mock_token,
+    mock_logger,
+    mock_path_exists
+):
+    """Test workflow when token retrieval fails."""
+    mock_token.return_value = None
+
+    cny_real_estate_etl_workflow()
+
+    mock_logger.assert_called_once_with(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
+    mock_assessment_year.assert_not_called()
+    mock_download.assert_not_called()
+    mock_create_db.assert_not_called()
+    mock_fetch.assert_not_called()
+    mock_fetch_properties_and_assessments.assert_not_called()
+    mock_save.assert_not_called()
+    mock_upload.assert_not_called()
+    mock_path_exists.assert_not_called()
+
+
+@patch("os.path.exists")
+@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_ml_flow.get_open_ny_app_token")
+@patch("etl.etl_ml_flow.download_database_from_s3")
+@patch("etl.etl_ml_flow.create_database")
+@patch("etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny")
+@patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
+@patch("etl.etl_ml_flow.get_assessment_year_to_query")
+@patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
+@patch("etl.etl_ml_flow.upload_database_to_s3")
+def test_workflow_with_municipal_assessment_ratios_not_fetched(
+    mock_upload,
+    mock_save,
+    mock_assessment_year,
+    mock_fetch,
+    mock_fetch_properties_and_assessments,
+    mock_create_db,
+    mock_download,
+    mock_token,
+    mock_logger,
+    mock_path_exists
 ):
     """Test workflow with valid token but database not already in s3 calls to create db."""
-    now = MagicMock()
-    now.year = 2025
-    now.month = 9
-    mock_datetime.now.return_value = now
+    mock_assessment_year.return_value = 2025
     mock_token.return_value = "valid_token"
     mock_path_exists.return_value = False
     mock_fetch.return_value = None
+    mock_fetch_properties_and_assessments.return_value = None
 
     cny_real_estate_etl_workflow()
 
@@ -472,27 +395,36 @@ def test_workflow_db_not_in_s3_creates_db(
 @patch("etl.etl_ml_flow.get_open_ny_app_token")
 @patch("etl.etl_ml_flow.download_database_from_s3")
 @patch("etl.etl_ml_flow.create_database")
+@patch("etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny")
 @patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
+@patch("etl.etl_ml_flow.get_assessment_year_to_query")
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
-@patch("etl.etl_ml_flow.datetime")
 def test_workflow_with_municipal_assessment_ratios_not_fetched(
-    mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
+    mock_upload,
+    mock_save,
+    mock_assessment_year,
+    mock_fetch,
+    mock_fetch_properties_and_assessments,
+    mock_create_db,
+    mock_download,
+    mock_token,
+    mock_logger,
+    mock_path_exists
 ):
     """Test workflow when no assessment ratios are fetched."""
-    now = MagicMock()
-    now.year = 2025
-    now.month = 8
-    mock_datetime.now.return_value = now
+    mock_assessment_year.return_value = 2025
     mock_token.return_value = "valid_token"
     mock_path_exists.return_value = True
     mock_fetch.return_value = None
+    mock_fetch_properties_and_assessments.return_value = None
 
     cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
     mock_create_db.assert_not_called()
     mock_fetch.assert_called_once_with(app_token="valid_token", query_year=2025)
+    mock_fetch_properties_and_assessments.assert_called_once_with(app_token="valid_token", query_year=2025)
     mock_save.assert_not_called()
     mock_upload.assert_called_once()
 
@@ -502,27 +434,38 @@ def test_workflow_with_municipal_assessment_ratios_not_fetched(
 @patch("etl.etl_ml_flow.get_open_ny_app_token")
 @patch("etl.etl_ml_flow.download_database_from_s3")
 @patch("etl.etl_ml_flow.create_database")
+@patch("etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny")
 @patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
+@patch("etl.etl_ml_flow.get_assessment_year_to_query")
+@patch("etl.etl_ml_flow.save_property_assessments")
 @patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
 @patch("etl.etl_ml_flow.upload_database_to_s3")
-@patch("etl.etl_ml_flow.datetime")
-def test_workflow_with_municipal_assessment_ratios_fetched(
-    mock_datetime, mock_upload, mock_save, mock_fetch, mock_create_db, mock_download, mock_token, mock_logger, mock_path_exists
+def test_workflow_with_municipal_assessment_ratios_not_fetched(
+    mock_upload,
+    mock_save_ratios,
+    mock_save_properties,
+    mock_assessment_year,
+    mock_fetch,
+    mock_fetch_properties_and_assessments,
+    mock_create_db,
+    mock_download,
+    mock_token,
+    mock_logger,
+    mock_path_exists
 ):
     """Test workflow when assessment ratios are fetched."""
-    now = MagicMock()
-    now.year = 2028
-    now.month = 3
-    mock_datetime.now.return_value = now
+    mock_assessment_year.return_value = 2027
     mock_data = [{"a": "b"}, {"c": "d"}]
     mock_token.return_value = "valid_token"
     mock_path_exists.return_value = True
     mock_fetch.return_value = mock_data
+    mock_fetch_properties_and_assessments.return_value = mock_data
 
     cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
     mock_create_db.assert_not_called()
     mock_fetch.assert_called_once_with(app_token="valid_token", query_year=2027)
-    mock_save.assert_called_once_with(mock_data)
+    mock_save_ratios.assert_called_once_with(mock_data)
+    mock_save_properties.assert_called_once_with(mock_data)
     mock_upload.assert_called_once()
