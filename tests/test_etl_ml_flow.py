@@ -626,42 +626,21 @@ def test_save_property_assessments_database_failure_handling(mock_logger, mock_i
         "Completed saving 1 valid ny_property_assessment_data rows_inserted: 0, rows_failed: 1.")
 
 
-@patch("os.path.exists")
 @patch("etl.etl_ml_flow.custom_logger")
 @patch("etl.etl_ml_flow.get_open_ny_app_token")
-@patch("etl.etl_ml_flow.download_database_from_s3")
-@patch("etl.etl_ml_flow.create_database")
-@patch("etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny")
-@patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.get_assessment_year_to_query")
-@patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.upload_database_to_s3")
-def test_workflow_with_municipal_assessment_ratios_not_fetched(
-    mock_upload,
-    mock_save,
-    mock_assessment_year,
-    mock_fetch,
-    mock_fetch_properties_and_assessments,
-    mock_create_db,
-    mock_download,
+def test_workflow_when_open_ny_app_token_fails(
     mock_token,
-    mock_logger,
-    mock_path_exists
+    mock_logger
 ):
     """Test workflow when token retrieval fails."""
     mock_token.return_value = None
 
     cny_real_estate_etl_workflow()
 
-    mock_logger.assert_called_once_with(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
-    mock_assessment_year.assert_not_called()
-    mock_download.assert_not_called()
-    mock_create_db.assert_not_called()
-    mock_fetch.assert_not_called()
-    mock_fetch_properties_and_assessments.assert_not_called()
-    mock_save.assert_not_called()
-    mock_upload.assert_not_called()
-    mock_path_exists.assert_not_called()
+    mock_logger.assert_called_once_with(
+        ERROR_LOG_LEVEL,
+        "Cannot proceed, unable to get Open NY app token, ending ETL workflow.")
+
 
 
 @patch("os.path.exists")
@@ -697,6 +676,95 @@ def test_workflow_with_municipal_assessment_ratios_not_fetched(
 
     mock_download.assert_called_once()
     mock_create_db.assert_called_once()
+
+
+@patch('etl.etl_ml_flow.upload_database_to_s3')
+@patch('etl.etl_ml_flow.save_property_assessments')
+@patch('etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny')
+@patch('etl.etl_ml_flow.save_municipality_assessment_ratios')
+@patch('etl.etl_ml_flow.fetch_municipality_assessment_ratios')
+@patch('etl.etl_ml_flow.create_database')
+@patch('etl.etl_ml_flow.download_database_from_s3')
+@patch('etl.etl_ml_flow.get_assessment_year_to_query')
+@patch('etl.etl_ml_flow.get_open_ny_app_token')
+@patch('etl.etl_ml_flow.custom_logger')
+@patch('os.path.exists')
+def test_workflow_when_database_creation_fails(
+    mock_path_exists,
+    mock_logger,
+    mock_token,
+    mock_assessment_year,
+    mock_download,
+    mock_create_db,
+    mock_fetch,
+    mock_save_ratios,
+    mock_fetch_properties_and_assessments,
+    mock_save_properties,
+    mock_upload):
+    """Test workflow when database creation fails."""
+    mock_token.return_value = "mock_token"
+    mock_assessment_year.return_value = 2023
+    mock_path_exists.return_value = False
+    mock_data = [{"mock": "data"}]
+    mock_fetch.return_value = mock_data
+    mock_fetch_properties_and_assessments.return_value = mock_data
+
+    cny_real_estate_etl_workflow()
+
+    mock_download.assert_called_once()
+    mock_create_db.assert_called_once()
+    mock_logger.assert_called_with(
+        ERROR_LOG_LEVEL,
+        "Cannot proceed, database creation failed, ending ETL workflow.")
+    mock_fetch.assert_not_called()
+    mock_save_ratios.assert_not_called()
+    mock_fetch_properties_and_assessments.assert_not_called()
+    mock_save_properties.assert_not_called()
+    mock_upload.assert_not_called()
+
+
+@patch('etl.etl_ml_flow.upload_database_to_s3')
+@patch('etl.etl_ml_flow.save_property_assessments')
+@patch('etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny')
+@patch('etl.etl_ml_flow.save_municipality_assessment_ratios')
+@patch('etl.etl_ml_flow.fetch_municipality_assessment_ratios')
+@patch('etl.etl_ml_flow.create_database')
+@patch('etl.etl_ml_flow.download_database_from_s3')
+@patch('etl.etl_ml_flow.get_assessment_year_to_query')
+@patch('etl.etl_ml_flow.get_open_ny_app_token')
+@patch('etl.etl_ml_flow.custom_logger')
+@patch('os.path.exists')
+def test_workflow_with_successful_database_creation(
+    mock_path_exists,
+    mock_logger,
+    mock_token,
+    mock_assessment_year,
+    mock_download,
+    mock_create_db,
+    mock_fetch,
+    mock_save_ratios,
+    mock_fetch_properties_and_assessments,
+    mock_save_properties,
+    mock_upload):
+    """Test workflow with successful database creation."""
+    mock_token.return_value = "mock_token"
+    mock_assessment_year.return_value = 2023
+
+    # Simulate database doesn't exist initially but is created successfully
+    mock_path_exists.side_effect = [False, True]
+    mock_data = [{"mock": "data"}]
+    mock_fetch.return_value = mock_data
+    mock_fetch_properties_and_assessments.return_value = mock_data
+
+    cny_real_estate_etl_workflow()
+
+    mock_download.assert_called_once()
+    mock_create_db.assert_called_once()
+    mock_fetch.assert_called_once()
+    mock_save_ratios.assert_called_once()
+    mock_fetch_properties_and_assessments.assert_called_once()
+    mock_save_properties.assert_called_once()
+    mock_upload.assert_called_once()
 
 
 @patch("os.path.exists")

@@ -315,34 +315,37 @@ def cny_real_estate_etl_workflow():
     """Main entry point for the ETL workflow."""
     open_ny_token = get_open_ny_app_token()
 
-    if not open_ny_token:
-        custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, ending ETL workflow.")
-        return
+    if open_ny_token:
 
-    query_year = get_assessment_year_to_query()
+        query_year = get_assessment_year_to_query()
 
-    # First see if we already have a database in s3 to add updated data to
-    download_database_from_s3()
+        # First see if we already have a database in s3 to add updated data to
+        download_database_from_s3()
 
-    # If we do not have a database file now then make one
-    if not os.path.exists(DB_LOCAL_PATH):
-        create_database()
+        # If we do not have a database file now then make one
+        if not os.path.exists(DB_LOCAL_PATH):
+            create_database()
 
-    mar_results = fetch_municipality_assessment_ratios(app_token=open_ny_token, query_year=query_year)
+        if os.path.exists(DB_LOCAL_PATH):
+            mar_results = fetch_municipality_assessment_ratios(app_token=open_ny_token, query_year=query_year)
 
-    if mar_results:
-        save_municipality_assessment_ratios(mar_results)
+            if mar_results:
+                save_municipality_assessment_ratios(mar_results)
 
-    onypa_results = fetch_properties_and_assessments_from_open_ny(app_token=open_ny_token, query_year=query_year)
+            onypa_results = fetch_properties_and_assessments_from_open_ny(app_token=open_ny_token, query_year=query_year)
 
-    if onypa_results:
-        save_property_assessments(onypa_results)
+            if onypa_results:
+                save_property_assessments(onypa_results)
+                upload_database_to_s3()
 
-    if os.path.exists(DB_LOCAL_PATH):
-        upload_database_to_s3()
+        else:
+            custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, database creation failed, ending ETL workflow.")
+
+    else:
+        custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, unable to get Open NY app token, ending ETL workflow.")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     start_time = datetime.now()
     custom_logger(INFO_LOG_LEVEL, f"Starting ETL workflow at {start_time:%Y-%m-%d %H:%M:%S}")
     cny_real_estate_etl_workflow()
