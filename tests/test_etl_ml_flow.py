@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from pydantic import ValidationError
 
 from etl.constants import ASSESSMENT_RATIOS_TABLE
 from etl.constants import CNY_COUNTY_LIST
@@ -27,6 +28,7 @@ from etl.etl_ml_flow import fetch_municipality_assessment_ratios
 from etl.etl_ml_flow import fetch_properties_and_assessments_from_open_ny
 from etl.etl_ml_flow import fetch_property_assessments_page
 from etl.etl_ml_flow import save_municipality_assessment_ratios
+from etl.etl_ml_flow import save_property_assessments
 
 
 def test_check_if_county_assessment_ratio_exists_no_matching_record():
@@ -495,6 +497,133 @@ def test_fetch_properties_and_assessments_from_open_ny_where_clause_construction
         INFO_LOG_LEVEL, "\nwhere_clause built: roll_section = 1 AND property_class IN (\"210\", \"220\")\n"
     )
     mock_get_property_classes.assert_called_once()
+
+
+@patch("etl.etl_ml_flow.NYPropertyAssessment")
+@patch("etl.etl_ml_flow.insert_into_database")
+@patch("etl.etl_ml_flow.custom_logger")
+def test_save_property_assessments_successful_validation_and_insertion(mock_logger, mock_insert_db, mock_model):
+    """Test when all properties are valid and inserted successfully."""
+    mock_instance = MagicMock()
+    mock_instance.to_properties_row.return_value = {"column1": "value1", "column2": "value2"}
+    mock_instance.to_ny_property_assessments_row.return_value = {"columnA": "valueA", "columnB": "valueB"}
+    mock_model.side_effect = lambda **kwargs: mock_instance
+    mock_insert_db.return_value = (10, 0)
+    all_properties = [{"key1": "value1"}, {"key2": "value2"}]
+
+    save_property_assessments(all_properties)
+
+    mock_model.assert_called()
+    mock_instance.to_properties_row.assert_called()
+    mock_instance.to_ny_property_assessments_row.assert_called()
+    mock_insert_db.assert_any_call(
+        PROPERTIES_TABLE,
+        ["column1", "column2"],
+        [("value1", "value2"), ("value1", "value2")])
+    mock_insert_db.assert_any_call(
+        NY_PROPERTY_ASSESSMENTS_TABLE,
+        ["columnA", "columnB"],
+        [("valueA", "valueB"), ("valueA", "valueB")])
+    mock_logger.assert_any_call(INFO_LOG_LEVEL, "Completed saving 2 valid properties rows_inserted: 10, rows_failed: 0.")
+    mock_logger.assert_any_call(
+        INFO_LOG_LEVEL,
+        "Completed saving 2 valid ny_property_assessment_data rows_inserted: 10, rows_failed: 0.")
+
+
+@patch("etl.etl_ml_flow.NYPropertyAssessment")
+@patch("etl.etl_ml_flow.insert_into_database")
+@patch("etl.etl_ml_flow.custom_logger")
+def test_save_property_assessments_partial_validation_failure(mock_logger, mock_insert_db, mock_model):
+    """Test partial validation failure, where some properties are invalid."""
+    mock_instance = MagicMock()
+    mock_instance.to_properties_row.return_value = {"column1": "value1", "column2": "value2"}
+    mock_instance.to_ny_property_assessments_row.return_value = {"columnA": "valueA", "columnB": "valueB"}
+
+    def side_effect(**kwargs):
+        if "invalid" in kwargs["key1"]:
+            raise ValidationError.from_exception_data(
+                title='Validation Error',
+                line_errors=[{
+                    'loc': ('key1',),
+                    'msg': 'Invalid field',
+                    'type': 'value_error',
+                    'ctx': {'error': 'Invalid field'}
+                }]
+            )
+
+        return mock_instance
+
+    mock_model.side_effect = side_effect
+    mock_insert_db.return_value = (1, 0)
+    all_properties = [{"key1": "valid1"}, {"key1": "valid2"}, {"key1": "invalid"}]
+
+    save_property_assessments(all_properties)
+
+    assert mock_model.call_count == 3
+    mock_logger.assert_any_call(INFO_LOG_LEVEL, "Completed saving 2 valid ny_property_assessment_data rows_inserted: 1, rows_failed: 0.")
+    mock_logger.assert_any_call(WARNING_LOG_LEVEL, "Failed to validate property assessment:")
+    mock_logger.assert_any_call(WARNING_LOG_LEVEL, "- Error: Field: key1. Message: Value error, Invalid field")
+    mock_insert_db.assert_any_call(
+        PROPERTIES_TABLE,
+        ["column1", "column2"],
+        [("value1", "value2"), ("value1", "value2")])
+
+
+@patch("etl.etl_ml_flow.NYPropertyAssessment")
+@patch("etl.etl_ml_flow.insert_into_database")
+@patch("etl.etl_ml_flow.custom_logger")
+def test_save_property_assessments_all_validation_failures(mock_logger, mock_insert_db, mock_model):
+    """Test when all properties fail validation."""
+    mock_model.side_effect = ValidationError.from_exception_data(
+        title='Validation Error',
+        line_errors=[{
+            'loc': ('key1',),
+            'msg': 'Invalid field',
+            'type': 'value_error',
+            'ctx': {'error': 'Invalid field'}
+        }]
+    )
+    all_properties = [{"key1": "invalid1"}, {"key1": "invalid2"}]
+
+    save_property_assessments(all_properties)
+
+    assert mock_model.call_count == 2
+    mock_logger.assert_any_call(INFO_LOG_LEVEL, "No valid properties found, skipping saving to database.")
+    mock_insert_db.assert_not_called()
+
+
+@patch("etl.etl_ml_flow.NYPropertyAssessment")
+@patch("etl.etl_ml_flow.insert_into_database")
+@patch("etl.etl_ml_flow.custom_logger")
+def test_save_property_assessments_empty_input_list(mock_logger, mock_insert_db, mock_model):
+    """Test when the input list is empty."""
+    save_property_assessments([])
+
+    mock_model.assert_not_called()
+    mock_insert_db.assert_not_called()
+    mock_logger.assert_any_call(INFO_LOG_LEVEL, "No valid properties found, skipping saving to database.")
+
+
+@patch("etl.etl_ml_flow.NYPropertyAssessment")
+@patch("etl.etl_ml_flow.insert_into_database")
+@patch("etl.etl_ml_flow.custom_logger")
+def test_save_property_assessments_database_failure_handling(mock_logger, mock_insert_db, mock_model):
+    """Test when database insertion fails."""
+    mock_instance = MagicMock()
+    mock_instance.to_properties_row.return_value = {"column1": "value1", "column2": "value2"}
+    mock_instance.to_ny_property_assessments_row.return_value = {"columnA": "valueA", "columnB": "valueB"}
+    mock_model.side_effect = lambda **kwargs: mock_instance
+    mock_insert_db.return_value = (0, 1)
+    all_properties = [{"key1": "valid"}]
+
+    save_property_assessments(all_properties)
+
+    mock_logger.assert_any_call(
+        INFO_LOG_LEVEL,
+        "Completed saving 1 valid properties rows_inserted: 0, rows_failed: 1.")
+    mock_logger.assert_any_call(
+        INFO_LOG_LEVEL,
+        "Completed saving 1 valid ny_property_assessment_data rows_inserted: 0, rows_failed: 1.")
 
 
 @patch("os.path.exists")
