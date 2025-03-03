@@ -139,6 +139,55 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables():
         "parcel_address_suff": "Blvd",
         "front": "29",
         "depth": "111.7",
+        "full_market_value": "9760",
+        "assessment_land": "7550",
+        "assessment_total": "0"
+    }
+    model = NYPropertyAssessment(**valid_data)
+    properties_record = model.to_properties_row()
+    assert properties_record["id"] == "311500 001.1-01-21.0"
+    assert properties_record["swis_code"] == "311500"
+    assert properties_record["print_key_code"] == "001.1-01-21.0"
+    assert properties_record["municipality_code"] == "311500"
+    assert properties_record["municipality_name"] == "Syracuse"
+    assert properties_record["county_name"] == "Onondaga"
+    assert properties_record["school_district_code"] == "311500"
+    assert properties_record["school_district_name"] == "Syracuse"
+    assert properties_record["address_street"] == "833 Hiawatha Blvd"
+    assert properties_record["address_state"] == NYPropertyAssessment.STATE
+    assert len(properties_record) == 10
+
+    onypa_record = model.to_ny_property_assessments_row()
+    assert onypa_record["property_id"] == "311500 001.1-01-21.0"
+    assert onypa_record["roll_year"] == 2024
+    assert onypa_record["property_class"] == 311
+    assert onypa_record["property_class_description"] == "Residential Vacant Land"
+    assert onypa_record["property_category"] == "LAL"
+    assert onypa_record["front"] == 29
+    assert onypa_record["depth"] == 111.7
+    assert onypa_record["full_market_value"] == 9760
+    assert onypa_record["assessment_land"] == 7550
+    assert onypa_record["assessment_total"] == 0
+    assert len(onypa_record) == 10
+
+
+def test_valid_ny_property_record_outputs_expected_data_for_two_tables_missing_assessment_totals():
+    valid_data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_number": "833",
+        "parcel_address_street": "Hiawatha",
+        "parcel_address_suff": "Blvd",
+        "front": "29",
+        "depth": "111.7",
         "full_market_value": "9760"
     }
     model = NYPropertyAssessment(**valid_data)
@@ -158,12 +207,15 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables():
     onypa_record = model.to_ny_property_assessments_row()
     assert onypa_record["property_id"] == "311500 001.1-01-21.0"
     assert onypa_record["roll_year"] == 2024
-    assert onypa_record["property_class"] == "311"
+    assert onypa_record["property_class"] == 311
     assert onypa_record["property_class_description"] == "Residential Vacant Land"
+    assert onypa_record["property_category"] == "LAL"
     assert onypa_record["front"] == 29
     assert onypa_record["depth"] == 111.7
     assert onypa_record["full_market_value"] == 9760
-    assert len(onypa_record) == 7
+    assert onypa_record["assessment_land"] is None
+    assert onypa_record["assessment_total"] is None
+    assert len(onypa_record) == 10
 
 
 def test_valid_ny_property_record_missing_optional_parcel_address_parts():
