@@ -14,7 +14,7 @@ from etl.constants import CNY_COUNTY_LIST
 from etl.constants import DB_LOCAL_PATH
 from etl.constants import ERROR_LOG_LEVEL
 from etl.constants import INFO_LOG_LEVEL
-from etl.constants import MINIMUM_ASSESSMENT_YEAR
+from etl.constants import NY_PROPERTY_ASSESSMENTS_TABLE
 from etl.constants import OPEN_NY_ASSESSMENT_RATIOS_API_ID
 from etl.constants import OPEN_NY_BASE_URL
 from etl.constants import OPEN_NY_CALLS_PER_PERIOD
@@ -22,7 +22,6 @@ from etl.constants import OPEN_NY_LIMIT_PER_PAGE
 from etl.constants import OPEN_NY_PROPERTY_ASSESSMENTS_API_ID
 from etl.constants import OPEN_NY_RATE_LIMIT_PERIOD
 from etl.constants import PROPERTIES_TABLE
-from etl.constants import NY_PROPERTY_ASSESSMENTS_TABLE
 from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import create_database
 from etl.db_utilities import download_database_from_s3
@@ -30,40 +29,11 @@ from etl.db_utilities import execute_select_query
 from etl.db_utilities import insert_into_database
 from etl.db_utilities import upload_database_to_s3
 from etl.log_utilities import custom_logger
-
+from etl.property_utilities import get_assessment_year_to_query
+from etl.property_utilities import get_ny_property_classes_for_where_clause
+from etl.property_utilities import get_open_ny_app_token
 from etl.validation_models import MunicipalityAssessmentRatio
 from etl.validation_models import NYPropertyAssessment
-
-
-def get_open_ny_app_token() -> str or None:
-    app_token = os.environ.get('OPEN_DATA_APP_TOKEN')
-
-    if not app_token:
-        custom_logger(WARNING_LOG_LEVEL, "Missing OPEN_DATA_APP_TOKEN environment variable.")
-
-    return app_token
-
-
-def get_assessment_year_to_query():
-    """
-    Get the rate year to query for all data to import.
-    If the current date is August 1st or later, return the current year.
-    Else return the previous year.
-
-    NY only re-assesses for tax purposes once a year.  That process does not fully complete
-    until the beginning of July, then municipalities can take time getting final data published.
-    The lowest rate year to be queried or possibly returned is 2024 as this is being
-    written in for first run in 2025 before new data is available.
-    """
-    current_year = datetime.now().year
-    current_month = datetime.now().month
-
-    if current_month >= 8 or current_year == MINIMUM_ASSESSMENT_YEAR:
-        rate_year = current_year
-    else:
-        rate_year = current_year - 1
-
-    return rate_year
 
 
 def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str) -> bool:
@@ -128,9 +98,9 @@ def fetch_municipality_assessment_ratios(app_token: str, query_year: int) -> Lis
                 f"Found municipality assessment ratios for rate_year: {query_year} and county_name: {county}, skipping.")
         else:
             ratio_results = fetch_county_assessment_ratios(
-                                app_token=app_token,
-                                rate_year=query_year,
-                                county_name=county)
+                app_token=app_token,
+                rate_year=query_year,
+                county_name=county)
 
             if ratio_results and isinstance(ratio_results, list):
                 assessment_ratios.extend(ratio_results)
@@ -174,9 +144,34 @@ def save_municipality_assessment_ratios(all_ratios: List[dict]):
             "No valid municipality assessment ratios found, skipping.")
 
 
+def check_if_property_assessments_exist(roll_year: int, county_name: str) -> bool:
+    """
+    Property assessments are only published once per year for each roll year.
+    Use this to check if we already have the data and save a great many calls to the API.
+    """
+    do_property_assessments_for_year_exist = False
+    custom_logger(
+        INFO_LOG_LEVEL,
+        f"Checking if property assessments for roll_year: {roll_year} and county_name: {county_name} exist in database...")
+    sql_query = f"""SELECT COUNT(*) 
+                    FROM {NY_PROPERTY_ASSESSMENTS_TABLE} AS npa
+                    JOIN {PROPERTIES_TABLE} AS p ON npa.property_id = p.id
+                    WHERE npa.roll_year = ? AND p.county_name = ?"""
+    results = execute_select_query(sql_query, params=(roll_year, county_name))
+
+    if results and isinstance(results[0], tuple) and len(results[0]) == 1:
+        count = results[0][0]
+
+        if count > 0:
+            do_property_assessments_for_year_exist = True
+
+    return do_property_assessments_for_year_exist
+
+
 @sleep_and_retry
 @limits(calls=OPEN_NY_CALLS_PER_PERIOD, period=OPEN_NY_RATE_LIMIT_PERIOD)
-def fetch_property_assessments_page(app_token: str, roll_year: int, county_name: str, offset: int) -> List[dict] or None:
+def fetch_property_assessments_page(app_token: str, roll_year: int, county_name: str, where_clause: str, offset: int) -> List[
+                                                                                                                             dict] or None:
     properties_page = None
     custom_logger(
         INFO_LOG_LEVEL,
@@ -190,7 +185,8 @@ def fetch_property_assessments_page(app_token: str, roll_year: int, county_name:
                 roll_section=1,
                 limit=OPEN_NY_LIMIT_PER_PAGE,
                 offset=offset,
-                order="swis_code,print_key_code ASC"
+                order="swis_code,print_key_code ASC",
+                where=where_clause
             )
     except Exception as err:
         custom_logger(
@@ -198,29 +194,6 @@ def fetch_property_assessments_page(app_token: str, roll_year: int, county_name:
             f"Failed fetching property assessments for county_name: {county_name} at offset {offset}. Error: {err}")
 
     return properties_page
-
-
-def check_if_property_assessments_exist(roll_year: int, county_name: str) -> bool:
-    """
-    Property assessments are only published once per year for each roll year.
-    Use this to check if we already have the data and save a great many calls to the API.
-    """
-    do_property_assessments_for_year_exist = False
-    custom_logger(
-        INFO_LOG_LEVEL,
-        f"Checking if property assessments for roll_year: {roll_year} and county_name: {county_name} exist in database...")
-    sql_query = f"""SELECT COUNT(*) FROM {NY_PROPERTY_ASSESSMENTS_TABLE} AS npa
-                    JOIN {PROPERTIES_TABLE} AS p ON npa.property_id = p.id
-                    WHERE p.county_name = ? AND npa.roll_year = ?"""
-    results = execute_select_query(sql_query, params=(county_name, roll_year))
-
-    if results and isinstance(results[0], tuple) and len(results[0]) == 1:
-        count = results[0][0]
-
-        if count > 0:
-            do_property_assessments_for_year_exist = True
-
-    return do_property_assessments_for_year_exist
 
 
 def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: int) -> List[dict] or None:
@@ -231,6 +204,15 @@ def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: in
     """
     all_properties = []
     custom_logger(INFO_LOG_LEVEL, f"Starting fetching CNY property assessments for roll_year {query_year}...")
+
+    # Initial results were getting back too many properties of not relevant types, limit results with a WHERE
+    where_clause = "roll_section = 1"
+    property_class_clause = get_ny_property_classes_for_where_clause()
+
+    if property_class_clause:
+        where_clause = f"{where_clause} AND {property_class_clause}"
+
+    custom_logger(INFO_LOG_LEVEL, f"\nwhere_clause built: {where_clause}\n")
 
     for county in CNY_COUNTY_LIST:
         # First see if we already have data for this county and roll year as it is only published once a year
@@ -250,6 +232,7 @@ def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: in
                     app_token=app_token,
                     roll_year=query_year,
                     county_name=county,
+                    where_clause=where_clause,
                     offset=current_offset
                 )
 
@@ -306,18 +289,18 @@ def save_property_assessments(all_properties: List[dict]):
     if validated_properties_data and validated_ny_property_assessment_data:
         # Save to properties table
         rows_inserted, rows_failed = insert_into_database(
-                                        PROPERTIES_TABLE,
-                                        properties_column_names,
-                                        validated_properties_data)
+            PROPERTIES_TABLE,
+            properties_column_names,
+            validated_properties_data)
         custom_logger(
             INFO_LOG_LEVEL,
             f"Completed saving {len(validated_properties_data)} valid properties rows_inserted: {rows_inserted}, rows_failed: {rows_failed}.")
 
         # Save to ny_property_assessments for related properties
         rows_inserted, rows_failed = insert_into_database(
-                                        NY_PROPERTY_ASSESSMENTS_TABLE,
-                                        ny_property_assessment_column_names,
-                                        validated_ny_property_assessment_data)
+            NY_PROPERTY_ASSESSMENTS_TABLE,
+            ny_property_assessment_column_names,
+            validated_ny_property_assessment_data)
         custom_logger(
             INFO_LOG_LEVEL,
             f"Completed saving {len(validated_ny_property_assessment_data)} valid ny_property_assessment_data rows_inserted: {rows_inserted}, rows_failed: {rows_failed}.")
