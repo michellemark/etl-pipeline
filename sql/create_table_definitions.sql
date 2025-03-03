@@ -79,9 +79,12 @@ CREATE TABLE ny_property_assessments
     roll_year                  INTEGER NOT NULL,
     property_class             INTEGER NOT NULL,
     property_class_description TEXT    NOT NULL,
-    front                      INTEGER NOT NULL,
-    depth                      INTEGER NOT NULL,
+    property_category          TEXT    NOT NULL, -- Look up from constants file mapping
+    front                      REAL    NOT NULL,
+    depth                      REAL    NOT NULL,
     full_market_value          INTEGER NOT NULL,
+    assessment_land            INTEGER NULL,
+    assessment_total           INTEGER NULL,
     PRIMARY KEY (property_id, roll_year), -- Compound primary key
     FOREIGN KEY (property_id) REFERENCES properties (id)
 );
@@ -93,6 +96,10 @@ CREATE INDEX idx_ny_property_assessments_property_class
 -- Add an index to optimize filtering by property description
 CREATE INDEX idx_ny_property_assessments_property_description
     ON ny_property_assessments (property_class_description);
+
+-- Add an index to optimize filtering by property category
+CREATE INDEX idx_ny_property_assessments_property_category
+    ON ny_property_assessments (property_category);
 
 -- Add an index to optimize filtering by roll_year
 CREATE INDEX idx_ny_property_assessments_roll_year
