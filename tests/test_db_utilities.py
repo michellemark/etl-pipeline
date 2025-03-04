@@ -3,7 +3,7 @@ from etl.constants import *
 from etl.db_utilities import create_database
 from etl.db_utilities import download_database_from_s3
 from etl.db_utilities import ensure_data_directories_exist
-from etl.db_utilities import _get_s3_client
+from etl.db_utilities import get_s3_client
 from etl.db_utilities import upload_database_to_s3
 
 
@@ -70,7 +70,7 @@ def test_get_s3_client_success():
         mock_s3_client = MagicMock()
         mock_session.client.return_value = mock_s3_client
 
-        s3_client = _get_s3_client()
+        s3_client = get_s3_client()
 
         assert s3_client == mock_s3_client
         mock_env_get.assert_any_call("AWS_ACCESS_KEY_ID")
@@ -93,7 +93,7 @@ def test_get_s3_client_missing_env_vars():
         # No environment variables set
         mock_env_get.return_value = None
 
-        s3_client = _get_s3_client()
+        s3_client = get_s3_client()
 
         assert s3_client is None
         mock_env_get.assert_any_call("AWS_ACCESS_KEY_ID")
@@ -132,7 +132,7 @@ def test_get_s3_client_partial_env_vars():
             "AWS_SECRET_ACCESS_KEY": "mock_secret_key",
         }.get(key)
 
-        s3_client = _get_s3_client()
+        s3_client = get_s3_client()
 
         assert s3_client is None
         mock_custom_logger.assert_any_call(
