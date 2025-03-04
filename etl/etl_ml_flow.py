@@ -114,7 +114,7 @@ def fetch_municipality_assessment_ratios(app_token: str, query_year: int) -> Lis
 
 
 def save_municipality_assessment_ratios(all_ratios: List[dict]):
-    """Task 2: Validate the municipality_assessment_ratios data and save valid data to database."""
+    """Validate the municipality_assessment_ratios data and save valid data to database."""
     validated_ratio_data = []
     column_names = None
 
