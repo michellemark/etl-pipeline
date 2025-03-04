@@ -6,7 +6,7 @@
 ## Central New York Real Estate Trends and Analytics App
 
 ### Goal 1:
-The purpose of this repository is to produce an automated **E**xtract **T**ransform **L**oad (ETL) 
+The purpose of this repository is to produce an **E**xtract **T**ransform **L**oad (ETL) 
 pipeline to pull in available free data on real estate in the Central New York area.  Clean and 
 normalize the data into an SQLite database and upload it into cloud storage.  
 
@@ -22,7 +22,7 @@ So data for all these filters needs to be gathered for every property here.
 
 ### Goal 2:
 
-After each automated ETL pipeline run new data is available to the user interface.
+After each ETL pipeline run new data is available to the user interface.
 
 ### Goal 3:
 
@@ -58,7 +58,9 @@ The [Central New York Regional Planning & Development Board](https://www.cnyrpdb
 GitHub Actions usage is free for standard GitHub-hosted runners in public repositories, such as this.  
 The pipeline is designed to be run in GitHub actions free runners, where it can be executed for 
 no ongoing cost. It is set up to be manually executed to save execution time, which is limited in 
-free runners, but could easily be scheduled, with a better budget.
+free runners, [but could easily be scheduled](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule).  With 
+a better budget this code could really be run most places, in fact, and could easily become a 
+fully automated pipeline.
 
 
 ### AWS Data Storage
