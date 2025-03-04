@@ -1,9 +1,18 @@
+import os
 import sqlite3
 from typing import List, Tuple
 
 import boto3
 
-from etl.constants import *
+from etl.constants import CREATE_TABLE_DEFINITIONS_FILE_PATH
+from etl.constants import DB_LOCAL_PATH
+from etl.constants import ERROR_LOG_LEVEL
+from etl.constants import EXTRACTED_DATA_DIR
+from etl.constants import GENERATED_DATA_DIR
+from etl.constants import INFO_LOG_LEVEL
+from etl.constants import S3_BUCKET_NAME
+from etl.constants import SQLITE_DB_NAME
+from etl.constants import WARNING_LOG_LEVEL
 from etl.log_utilities import custom_logger
 
 
@@ -138,7 +147,7 @@ def execute_select_query(query: str, params: Tuple | None = None) -> List[Tuple]
     return result
 
 
-def _get_s3_client():
+def get_s3_client():
     """
     Helper function to get an S3 client.
     """
@@ -171,7 +180,7 @@ def download_database_from_s3():
     """
     Downloads the SQLite database from the specified S3 bucket to the local path.
     """
-    s3_client = _get_s3_client()
+    s3_client = get_s3_client()
 
     if s3_client:
         ensure_data_directories_exist()
@@ -195,7 +204,7 @@ def upload_database_to_s3():
     """
     Upload the SQLite database to S3, assuming needed environment variables are set.
     """
-    s3_client = _get_s3_client()
+    s3_client = get_s3_client()
 
     if s3_client:
         try:
