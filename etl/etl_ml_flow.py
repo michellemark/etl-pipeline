@@ -2,9 +2,9 @@ import json
 import os
 from datetime import datetime
 from pprint import pprint
-import random
 from time import sleep
 from typing import List
+from typing import Optional
 
 from pydantic import ValidationError
 from ratelimit import limits
@@ -173,8 +173,13 @@ def check_if_property_assessments_exist(roll_year: int, county_name: str) -> boo
 
 @sleep_and_retry
 @limits(calls=OPEN_NY_CALLS_PER_PERIOD, period=OPEN_NY_RATE_LIMIT_PERIOD)
-def fetch_property_assessments_page(app_token: str, roll_year: int, county_name: str, where_clause: str, offset: int) -> Optional[
-    List[dict]]:
+def fetch_property_assessments_page(
+    app_token: str,
+    roll_year: int,
+    county_name: str,
+    where_clause: str,
+    offset: int) -> Optional[List[dict]]:
+
     result = None
     max_retries = 3
 
