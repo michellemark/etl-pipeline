@@ -6,26 +6,26 @@
 ## Central New York Real Estate Trends and Analytics App
 
 ### Goal 1:
-Build an automated ETL pipeline to pull in available free data on
-real estate in the Central New York area.  Clean and normalize the
-data into an SQLite database.  Train a machine learning
-model to draw further trends and statistics from the data,
-and add values to the database.  Present analytics in a user-friendly 
-interface that provides both graphs for visualization and filtering.  
+The purpose of this repository is to produce an automated **E**xtract **T**ransform **L**oad (ETL) 
+pipeline to pull in available free data on real estate in the Central New York area.  Clean and 
+normalize the data into an SQLite database and upload it into cloud storage.  
 
-Options to filter data should include at least:
+Another repository will focus on downloading the data from cloud storage and presenting 
+analytics in a user-friendly interface that provides graphs for visualization and filtering.
+
+Options to filter data in UI will include at least:
 1. Property type, (ie: single family vs multifamily, etc.)
 2. Zip code
 3. School district
 
+So data for all these filters needs to be gathered for every property here.
+
 ### Goal 2:
 
-After each automated ETL / ML pipeline run data is updated in user interface.
+After each automated ETL pipeline run new data is available to the user interface.
 
 ### Goal 3:
-Saving a change to main branch of repository will deploy to production environment.
 
-### Goal 4:
 Optionally, make the app available publicly with no ongoing cost.
 
 ## Implementation Choices Made
@@ -56,8 +56,9 @@ The [Central New York Regional Planning & Development Board](https://www.cnyrpdb
 ### GitHub Actions
 
 GitHub Actions usage is free for standard GitHub-hosted runners in public repositories, such as this.  
-The ETL ML Pipeline is run in GitHub actions, where it can be executed for no ongoing cost.
-It is set up to be manually executed, but it could easily be scheduled, if that were needed.
+The pipeline is designed to be run in GitHub actions free runners, where it can be executed for 
+no ongoing cost. It is set up to be manually executed to save execution time, which is limited in 
+free runners, but could easily be scheduled, with a better budget.
 
 
 ### AWS Data Storage
@@ -100,6 +101,9 @@ AWS_SECRET_ACCESS_KEY # For an AWS user with permissions on your desired s3 buck
 AWS_REGION # Region the s3 bucket you wish to use is located in
 OPEN_DATA_APP_TOKEN # Your free app token for Open NY API access
 ```
+Note: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_REGION must be set, but if you 
+do not care about backing up the database to AWS and just want to run this locally you can
+set these with dummy values and see a local database generated.
 
 Then run the ETL workflow with:
 ```
