@@ -42,4 +42,4 @@ jobs:
           FORCE_REFRESH: ${{ github.event.inputs.force_refresh }}
           OPEN_DATA_APP_TOKEN: ${{ secrets.OPEN_DATA_APP_TOKEN }}
           PYTHONPATH: ${{ github.workspace }}
-        run: python -m etl.etl_ml_flow
+        run: python -m etl.etl_pipeline

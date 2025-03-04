@@ -4,7 +4,7 @@
 .DS_Store
 .idea/
 __pycache__/
-etl_ml_pipeline.egg-info/
+etl_pipeline.egg-info/
 extracted/
 generated/
 formatted/

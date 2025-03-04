@@ -107,5 +107,5 @@ set these with dummy values and see a local database generated.
 
 Then run the ETL workflow with:
 ```
-python -m etl.etl_ml_flow
+python -m etl.etl_pipeline
 ```

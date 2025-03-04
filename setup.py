@@ -8,7 +8,7 @@ def parse_requirements(filename):
 
 
 setup(
-    name="etl_ml_pipeline",
+    name="etl_pipeline",
     version="0.1.0",
     packages=find_packages(include=["etl", "etl.*"]),
     install_requires=parse_requirements("requirements.txt"),

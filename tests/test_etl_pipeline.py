@@ -20,22 +20,22 @@ from etl.constants import PROJECT_ROOT
 from etl.constants import PROPERTIES_TABLE
 from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import insert_into_database
-from etl.etl_ml_flow import check_if_county_assessment_ratio_exists
-from etl.etl_ml_flow import check_if_property_assessments_exist
-from etl.etl_ml_flow import cny_real_estate_etl_workflow
-from etl.etl_ml_flow import fetch_county_assessment_ratios
-from etl.etl_ml_flow import fetch_municipality_assessment_ratios
-from etl.etl_ml_flow import fetch_properties_and_assessments_from_open_ny
-from etl.etl_ml_flow import fetch_property_assessments_page
-from etl.etl_ml_flow import save_municipality_assessment_ratios
-from etl.etl_ml_flow import save_property_assessments
+from etl.etl_pipeline import check_if_county_assessment_ratio_exists
+from etl.etl_pipeline import check_if_property_assessments_exist
+from etl.etl_pipeline import cny_real_estate_etl_workflow
+from etl.etl_pipeline import fetch_county_assessment_ratios
+from etl.etl_pipeline import fetch_municipality_assessment_ratios
+from etl.etl_pipeline import fetch_properties_and_assessments_from_open_ny
+from etl.etl_pipeline import fetch_property_assessments_page
+from etl.etl_pipeline import save_municipality_assessment_ratios
+from etl.etl_pipeline import save_property_assessments
 
 
 def test_check_if_county_assessment_ratio_exists_no_matching_record():
     """Test when rate_year and county_name have no matching records."""
     mocked_query_result = []
 
-    with patch("etl.etl_ml_flow.execute_db_query", return_value=mocked_query_result):
+    with patch("etl.etl_pipeline.execute_db_query", return_value=mocked_query_result):
         does_ratio_exist = check_if_county_assessment_ratio_exists(2024, "Cayuga")
 
     assert does_ratio_exist is False
@@ -47,7 +47,7 @@ def test_check_if_county_assessment_ratio_exists_matching_record():
     test_county_name = "Cayuga"
     mocked_query_result = [(test_rate_year, "050100", "Auburn", test_county_name, 88.00)]
 
-    with patch("etl.etl_ml_flow.execute_db_query", return_value=mocked_query_result):
+    with patch("etl.etl_pipeline.execute_db_query", return_value=mocked_query_result):
         does_ratio_exist = check_if_county_assessment_ratio_exists(test_rate_year, test_county_name)
 
         assert does_ratio_exist is True
@@ -55,8 +55,8 @@ def test_check_if_county_assessment_ratio_exists_matching_record():
 
 def test_fetch_county_assessment_ratios_success():
     """Test successful data retrieval from Socrata API."""
-    with patch("etl.etl_ml_flow.custom_logger") as mock_custom_logger, \
-        patch("etl.etl_ml_flow.Socrata") as mock_socrata_client:
+    with patch("etl.etl_pipeline.custom_logger") as mock_custom_logger, \
+        patch("etl.etl_pipeline.Socrata") as mock_socrata_client:
         app_token = "app_token"
         rate_year = 2024
         county_name = "Cayuga"
@@ -94,8 +94,8 @@ def test_fetch_county_assessment_ratios_success():
 
 def test_fetch_county_assessment_ratios_failure():
     """Test failure behavior when Socrata API raises an exception."""
-    with patch("etl.etl_ml_flow.custom_logger") as mock_custom_logger, \
-        patch("etl.etl_ml_flow.Socrata") as mock_socrata_client:
+    with patch("etl.etl_pipeline.custom_logger") as mock_custom_logger, \
+        patch("etl.etl_pipeline.Socrata") as mock_socrata_client:
         app_token = "app_token"
         rate_year = 2024
         county_name = "Cayuga"
@@ -119,9 +119,9 @@ def test_fetch_county_assessment_ratios_failure():
 def test_fetch_municipality_assessment_ratios_data_already_exists():
     """Test fetch_county_assessment_ratios is always skipped if records exists in db for all years and counties checked."""
 
-    with patch("etl.etl_ml_flow.custom_logger") as mock_logger, \
-        patch("etl.etl_ml_flow.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
-        patch("etl.etl_ml_flow.check_if_county_assessment_ratio_exists") as mock_check_exists:
+    with patch("etl.etl_pipeline.custom_logger") as mock_logger, \
+        patch("etl.etl_pipeline.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
+        patch("etl.etl_pipeline.check_if_county_assessment_ratio_exists") as mock_check_exists:
 
         mock_check_exists.return_value = True
         mock_fetch_county_ratios.return_value = None
@@ -150,9 +150,9 @@ def test_fetch_municipality_assessment_ratios_data_already_exists():
 def test_fetch_municipality_assessment_ratios_data_not_exists():
     """Test fetch_county_assessment_ratios is called and returns data when no preexisting data in db exists."""
 
-    with patch("etl.etl_ml_flow.custom_logger") as mock_logger, \
-        patch("etl.etl_ml_flow.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
-        patch("etl.etl_ml_flow.check_if_county_assessment_ratio_exists") as mock_check_exists:
+    with patch("etl.etl_pipeline.custom_logger") as mock_logger, \
+        patch("etl.etl_pipeline.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
+        patch("etl.etl_pipeline.check_if_county_assessment_ratio_exists") as mock_check_exists:
         mock_check_exists.return_value = False
         fake_response = [
             {
@@ -211,8 +211,8 @@ def test_save_all_valid_ratios():
         }
     ]
 
-    with patch("etl.etl_ml_flow.insert_into_database") as mock_db, \
-        patch("etl.etl_ml_flow.custom_logger") as mock_logger:
+    with patch("etl.etl_pipeline.insert_into_database") as mock_db, \
+        patch("etl.etl_pipeline.custom_logger") as mock_logger:
         mock_db.return_value = (2, 0)
 
         save_municipality_assessment_ratios(mock_data)
@@ -256,8 +256,8 @@ def test_save_some_invalid_ratios():
         }
     ]
 
-    with patch("etl.etl_ml_flow.insert_into_database") as mock_db, \
-        patch("etl.etl_ml_flow.custom_logger") as mock_logger:
+    with patch("etl.etl_pipeline.insert_into_database") as mock_db, \
+        patch("etl.etl_pipeline.custom_logger") as mock_logger:
 
         mock_db.return_value = (1, 0)
 
@@ -288,8 +288,8 @@ def test_save_some_invalid_ratios():
 
 def test_save_none_ratios():
     """Test case for empty municipality ratios."""
-    with patch("etl.etl_ml_flow.custom_logger") as mock_logger, \
-        patch("etl.etl_ml_flow.insert_into_database") as mock_db:
+    with patch("etl.etl_pipeline.custom_logger") as mock_logger, \
+        patch("etl.etl_pipeline.insert_into_database") as mock_db:
 
         save_municipality_assessment_ratios([])
 
@@ -306,7 +306,7 @@ def test_check_if_property_assessments_exist_no_matching_record():
     test_county_name = "Oswego"
     mocked_query_result = [(0,)]
 
-    with patch("etl.etl_ml_flow.execute_db_query", return_value=mocked_query_result):
+    with patch("etl.etl_pipeline.execute_db_query", return_value=mocked_query_result):
         does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
         assert does_county_roll_year_exist is False
 
@@ -317,14 +317,14 @@ def test_check_if_property_assessments_exist_matching_record():
     test_county_name = "Oswego"
     mocked_query_result = [(1,)]
 
-    with patch("etl.etl_ml_flow.execute_db_query", return_value=mocked_query_result):
+    with patch("etl.etl_pipeline.execute_db_query", return_value=mocked_query_result):
 
         does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
         assert does_county_roll_year_exist is True
 
 
-@patch("etl.etl_ml_flow.Socrata")
-@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_pipeline.Socrata")
+@patch("etl.etl_pipeline.custom_logger")
 def test_fetch_property_assessments_page_success(mock_custom_logger, mock_socrata):
     mock_response = [{"print_key_code": "123"}, {"print_key_code": "456"}]
     mock_client = MagicMock()
@@ -355,8 +355,8 @@ def test_fetch_property_assessments_page_success(mock_custom_logger, mock_socrat
     assert result == mock_response
 
 
-@patch("etl.etl_ml_flow.Socrata")
-@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_pipeline.Socrata")
+@patch("etl.etl_pipeline.custom_logger")
 def test_fetch_property_assessments_page_exception(mock_custom_logger, mock_socrata):
     mock_client = MagicMock()
     mock_client.get.side_effect = Exception("API Error")
@@ -376,8 +376,8 @@ def test_fetch_property_assessments_page_exception(mock_custom_logger, mock_socr
     assert result is None
 
 
-@patch("etl.etl_ml_flow.Socrata")
-@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_pipeline.Socrata")
+@patch("etl.etl_pipeline.custom_logger")
 def test_fetch_property_assessments_page_empty_response(mock_custom_logger, mock_socrata):
     mock_client = MagicMock()
     mock_client.get.return_value = []
@@ -397,11 +397,11 @@ def test_fetch_property_assessments_page_empty_response(mock_custom_logger, mock
     assert result == []
 
 
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.fetch_property_assessments_page")
-@patch("etl.etl_ml_flow.check_if_property_assessments_exist")
-@patch("etl.etl_ml_flow.get_ny_property_classes_for_where_clause")
-@patch("etl.etl_ml_flow.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
+@patch("etl.etl_pipeline.custom_logger")
+@patch("etl.etl_pipeline.fetch_property_assessments_page")
+@patch("etl.etl_pipeline.check_if_property_assessments_exist")
+@patch("etl.etl_pipeline.get_ny_property_classes_for_where_clause")
+@patch("etl.etl_pipeline.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
 def test_fetch_properties_and_assessments_from_open_ny_success_returns_all(
     mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test successful fetching for all counties."""
@@ -430,11 +430,11 @@ def test_fetch_properties_and_assessments_from_open_ny_success_returns_all(
     assert result == [{"key": "property1"}, {"key": "property2"}, {"key": "property3"}, {"key": "property4"}]
 
 
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.fetch_property_assessments_page")
-@patch("etl.etl_ml_flow.check_if_property_assessments_exist")
-@patch("etl.etl_ml_flow.get_ny_property_classes_for_where_clause")
-@patch("etl.etl_ml_flow.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
+@patch("etl.etl_pipeline.custom_logger")
+@patch("etl.etl_pipeline.fetch_property_assessments_page")
+@patch("etl.etl_pipeline.check_if_property_assessments_exist")
+@patch("etl.etl_pipeline.get_ny_property_classes_for_where_clause")
+@patch("etl.etl_pipeline.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
 def test_fetch_properties_and_assessments_from_open_ny_skip_counties_with_existing_data(
     mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test that counties with existing data are skipped."""
@@ -460,11 +460,11 @@ def test_fetch_properties_and_assessments_from_open_ny_skip_counties_with_existi
     assert result == [{"key": "property_from_county2"}]
 
 
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.fetch_property_assessments_page")
-@patch("etl.etl_ml_flow.check_if_property_assessments_exist")
-@patch("etl.etl_ml_flow.get_ny_property_classes_for_where_clause")
-@patch("etl.etl_ml_flow.CNY_COUNTY_LIST", new_callable=lambda: ["County1"])
+@patch("etl.etl_pipeline.custom_logger")
+@patch("etl.etl_pipeline.fetch_property_assessments_page")
+@patch("etl.etl_pipeline.check_if_property_assessments_exist")
+@patch("etl.etl_pipeline.get_ny_property_classes_for_where_clause")
+@patch("etl.etl_pipeline.CNY_COUNTY_LIST", new_callable=lambda: ["County1"])
 def test_fetch_properties_and_assessments_from_open_ny_empty_responses_end_fetching(
     mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test function handles None API responses gracefully."""
@@ -483,8 +483,8 @@ def test_fetch_properties_and_assessments_from_open_ny_empty_responses_end_fetch
     assert result == [{"key": "property1"}]
 
 
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.get_ny_property_classes_for_where_clause")
+@patch("etl.etl_pipeline.custom_logger")
+@patch("etl.etl_pipeline.get_ny_property_classes_for_where_clause")
 def test_fetch_properties_and_assessments_from_open_ny_where_clause_construction(mock_get_property_classes, mock_logger):
     """Test that 'where_clause' is constructed as expected."""
     mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
@@ -499,9 +499,9 @@ def test_fetch_properties_and_assessments_from_open_ny_where_clause_construction
     mock_get_property_classes.assert_called_once()
 
 
-@patch("etl.etl_ml_flow.NYPropertyAssessment")
-@patch("etl.etl_ml_flow.insert_into_database")
-@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_pipeline.NYPropertyAssessment")
+@patch("etl.etl_pipeline.insert_into_database")
+@patch("etl.etl_pipeline.custom_logger")
 def test_save_property_assessments_successful_validation_and_insertion(mock_logger, mock_insert_db, mock_model):
     """Test when all properties are valid and inserted successfully."""
     mock_instance = MagicMock()
@@ -530,9 +530,9 @@ def test_save_property_assessments_successful_validation_and_insertion(mock_logg
         "Completed saving 2 valid ny_property_assessment_data rows_inserted: 10, rows_failed: 0.")
 
 
-@patch("etl.etl_ml_flow.NYPropertyAssessment")
-@patch("etl.etl_ml_flow.insert_into_database")
-@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_pipeline.NYPropertyAssessment")
+@patch("etl.etl_pipeline.insert_into_database")
+@patch("etl.etl_pipeline.custom_logger")
 def test_save_property_assessments_partial_validation_failure(mock_logger, mock_insert_db, mock_model):
     """Test partial validation failure, where some properties are invalid."""
     mock_instance = MagicMock()
@@ -569,9 +569,9 @@ def test_save_property_assessments_partial_validation_failure(mock_logger, mock_
         [("value1", "value2"), ("value1", "value2")])
 
 
-@patch("etl.etl_ml_flow.NYPropertyAssessment")
-@patch("etl.etl_ml_flow.insert_into_database")
-@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_pipeline.NYPropertyAssessment")
+@patch("etl.etl_pipeline.insert_into_database")
+@patch("etl.etl_pipeline.custom_logger")
 def test_save_property_assessments_all_validation_failures(mock_logger, mock_insert_db, mock_model):
     """Test when all properties fail validation."""
     mock_model.side_effect = ValidationError.from_exception_data(
@@ -592,9 +592,9 @@ def test_save_property_assessments_all_validation_failures(mock_logger, mock_ins
     mock_insert_db.assert_not_called()
 
 
-@patch("etl.etl_ml_flow.NYPropertyAssessment")
-@patch("etl.etl_ml_flow.insert_into_database")
-@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_pipeline.NYPropertyAssessment")
+@patch("etl.etl_pipeline.insert_into_database")
+@patch("etl.etl_pipeline.custom_logger")
 def test_save_property_assessments_empty_input_list(mock_logger, mock_insert_db, mock_model):
     """Test when the input list is empty."""
     save_property_assessments([])
@@ -604,9 +604,9 @@ def test_save_property_assessments_empty_input_list(mock_logger, mock_insert_db,
     mock_logger.assert_any_call(INFO_LOG_LEVEL, "No valid properties found, skipping saving to database.")
 
 
-@patch("etl.etl_ml_flow.NYPropertyAssessment")
-@patch("etl.etl_ml_flow.insert_into_database")
-@patch("etl.etl_ml_flow.custom_logger")
+@patch("etl.etl_pipeline.NYPropertyAssessment")
+@patch("etl.etl_pipeline.insert_into_database")
+@patch("etl.etl_pipeline.custom_logger")
 def test_save_property_assessments_database_failure_handling(mock_logger, mock_insert_db, mock_model):
     """Test when database insertion fails."""
     mock_instance = MagicMock()
@@ -626,8 +626,8 @@ def test_save_property_assessments_database_failure_handling(mock_logger, mock_i
         "Completed saving 1 valid ny_property_assessment_data rows_inserted: 0, rows_failed: 1.")
 
 
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.get_open_ny_app_token")
+@patch("etl.etl_pipeline.custom_logger")
+@patch("etl.etl_pipeline.get_open_ny_app_token")
 def test_workflow_when_open_ny_app_token_fails(
     mock_token,
     mock_logger
@@ -644,15 +644,15 @@ def test_workflow_when_open_ny_app_token_fails(
 
 
 @patch("os.path.exists")
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.get_open_ny_app_token")
-@patch("etl.etl_ml_flow.download_database_from_s3")
-@patch("etl.etl_ml_flow.create_database")
-@patch("etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny")
-@patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.get_assessment_year_to_query")
-@patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.upload_database_to_s3")
+@patch("etl.etl_pipeline.custom_logger")
+@patch("etl.etl_pipeline.get_open_ny_app_token")
+@patch("etl.etl_pipeline.download_database_from_s3")
+@patch("etl.etl_pipeline.create_database")
+@patch("etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny")
+@patch("etl.etl_pipeline.fetch_municipality_assessment_ratios")
+@patch("etl.etl_pipeline.get_assessment_year_to_query")
+@patch("etl.etl_pipeline.save_municipality_assessment_ratios")
+@patch("etl.etl_pipeline.upload_database_to_s3")
 def test_workflow_with_municipal_assessment_ratios_not_fetched(
     mock_upload,
     mock_save,
@@ -678,16 +678,16 @@ def test_workflow_with_municipal_assessment_ratios_not_fetched(
     mock_create_db.assert_called_once()
 
 
-@patch('etl.etl_ml_flow.upload_database_to_s3')
-@patch('etl.etl_ml_flow.save_property_assessments')
-@patch('etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny')
-@patch('etl.etl_ml_flow.save_municipality_assessment_ratios')
-@patch('etl.etl_ml_flow.fetch_municipality_assessment_ratios')
-@patch('etl.etl_ml_flow.create_database')
-@patch('etl.etl_ml_flow.download_database_from_s3')
-@patch('etl.etl_ml_flow.get_assessment_year_to_query')
-@patch('etl.etl_ml_flow.get_open_ny_app_token')
-@patch('etl.etl_ml_flow.custom_logger')
+@patch('etl.etl_pipeline.upload_database_to_s3')
+@patch('etl.etl_pipeline.save_property_assessments')
+@patch('etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny')
+@patch('etl.etl_pipeline.save_municipality_assessment_ratios')
+@patch('etl.etl_pipeline.fetch_municipality_assessment_ratios')
+@patch('etl.etl_pipeline.create_database')
+@patch('etl.etl_pipeline.download_database_from_s3')
+@patch('etl.etl_pipeline.get_assessment_year_to_query')
+@patch('etl.etl_pipeline.get_open_ny_app_token')
+@patch('etl.etl_pipeline.custom_logger')
 @patch('os.path.exists')
 def test_workflow_when_database_creation_fails(
     mock_path_exists,
@@ -723,16 +723,16 @@ def test_workflow_when_database_creation_fails(
     mock_upload.assert_not_called()
 
 
-@patch('etl.etl_ml_flow.upload_database_to_s3')
-@patch('etl.etl_ml_flow.save_property_assessments')
-@patch('etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny')
-@patch('etl.etl_ml_flow.save_municipality_assessment_ratios')
-@patch('etl.etl_ml_flow.fetch_municipality_assessment_ratios')
-@patch('etl.etl_ml_flow.create_database')
-@patch('etl.etl_ml_flow.download_database_from_s3')
-@patch('etl.etl_ml_flow.get_assessment_year_to_query')
-@patch('etl.etl_ml_flow.get_open_ny_app_token')
-@patch('etl.etl_ml_flow.custom_logger')
+@patch('etl.etl_pipeline.upload_database_to_s3')
+@patch('etl.etl_pipeline.save_property_assessments')
+@patch('etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny')
+@patch('etl.etl_pipeline.save_municipality_assessment_ratios')
+@patch('etl.etl_pipeline.fetch_municipality_assessment_ratios')
+@patch('etl.etl_pipeline.create_database')
+@patch('etl.etl_pipeline.download_database_from_s3')
+@patch('etl.etl_pipeline.get_assessment_year_to_query')
+@patch('etl.etl_pipeline.get_open_ny_app_token')
+@patch('etl.etl_pipeline.custom_logger')
 @patch('os.path.exists')
 def test_workflow_with_successful_database_creation(
     mock_path_exists,
@@ -768,15 +768,15 @@ def test_workflow_with_successful_database_creation(
 
 
 @patch("os.path.exists")
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.get_open_ny_app_token")
-@patch("etl.etl_ml_flow.download_database_from_s3")
-@patch("etl.etl_ml_flow.create_database")
-@patch("etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny")
-@patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.get_assessment_year_to_query")
-@patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.upload_database_to_s3")
+@patch("etl.etl_pipeline.custom_logger")
+@patch("etl.etl_pipeline.get_open_ny_app_token")
+@patch("etl.etl_pipeline.download_database_from_s3")
+@patch("etl.etl_pipeline.create_database")
+@patch("etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny")
+@patch("etl.etl_pipeline.fetch_municipality_assessment_ratios")
+@patch("etl.etl_pipeline.get_assessment_year_to_query")
+@patch("etl.etl_pipeline.save_municipality_assessment_ratios")
+@patch("etl.etl_pipeline.upload_database_to_s3")
 def test_workflow_with_municipal_assessment_ratios_not_fetched(
     mock_upload,
     mock_save,
@@ -807,16 +807,16 @@ def test_workflow_with_municipal_assessment_ratios_not_fetched(
 
 
 @patch("os.path.exists")
-@patch("etl.etl_ml_flow.custom_logger")
-@patch("etl.etl_ml_flow.get_open_ny_app_token")
-@patch("etl.etl_ml_flow.download_database_from_s3")
-@patch("etl.etl_ml_flow.create_database")
-@patch("etl.etl_ml_flow.fetch_properties_and_assessments_from_open_ny")
-@patch("etl.etl_ml_flow.fetch_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.get_assessment_year_to_query")
-@patch("etl.etl_ml_flow.save_property_assessments")
-@patch("etl.etl_ml_flow.save_municipality_assessment_ratios")
-@patch("etl.etl_ml_flow.upload_database_to_s3")
+@patch("etl.etl_pipeline.custom_logger")
+@patch("etl.etl_pipeline.get_open_ny_app_token")
+@patch("etl.etl_pipeline.download_database_from_s3")
+@patch("etl.etl_pipeline.create_database")
+@patch("etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny")
+@patch("etl.etl_pipeline.fetch_municipality_assessment_ratios")
+@patch("etl.etl_pipeline.get_assessment_year_to_query")
+@patch("etl.etl_pipeline.save_property_assessments")
+@patch("etl.etl_pipeline.save_municipality_assessment_ratios")
+@patch("etl.etl_pipeline.upload_database_to_s3")
 def test_workflow_with_municipal_assessment_ratios_not_fetched(
     mock_upload,
     mock_save_ratios,
