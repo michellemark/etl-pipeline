@@ -1,5 +1,7 @@
 import os
 
+import requests
+
 # ******* Real estate API values ********************************
 CNY_COUNTY_LIST = ["Cayuga", "Cortland", "Madison", "Onondaga", "Oswego"]
 OPEN_NY_BASE_URL = "data.ny.gov"
@@ -10,6 +12,16 @@ OPEN_NY_LIMIT_PER_PAGE = 1000
 OPEN_NY_CALLS_PER_PERIOD = 3
 OPEN_NY_RATE_LIMIT_PERIOD = 60
 ALL_PROPERTIES_STATE = "NY"
+RETRYABLE_ERRORS = (
+    ConnectionError,  # Base class for connection-related errors
+    ConnectionResetError,  # Connection reset by peer
+    TimeoutError,  # Request timed out
+    requests.exceptions.Timeout,  # Requests timeout
+    requests.exceptions.ConnectionError,  # Requests connection problems
+    requests.exceptions.ReadTimeout,  # Reading from server timed out
+    requests.exceptions.ChunkedEncodingError,  # Error with chunked transfer encoding
+    requests.exceptions.RequestException,  # Base class for requests exceptions
+)
 
 # ******* File paths and names ***********************************
 CURRENT_FILE_PATH = os.path.abspath(__file__)
