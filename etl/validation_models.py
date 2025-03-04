@@ -3,6 +3,7 @@ from typing import ClassVar
 from typing import Optional
 
 from pydantic import BaseModel, Field
+from pydantic import field_serializer
 
 from etl.constants import ALL_PROPERTIES_STATE
 from etl.constants import MINIMUM_ASSESSMENT_YEAR
@@ -32,14 +33,14 @@ class MunicipalityAssessmentRatio(BaseModel):
         description="Ratio of assessed value compared to full value of that property"
     )
 
-    class Config:
-        # Ensure Decimal values are dumped as floats
-        json_encoders = {
-            Decimal: lambda v: float(v)
-        }
-
+    class ConfigDict:
         # Ignore all fields not defined
         extra = "ignore"
+
+    # Field-level serializer for the Decimal field
+    @field_serializer('residential_assessment_ratio')
+    def serialize_ratio(self, value: Decimal) -> float:
+        return float(value)
 
 
 class NYPropertyAssessment(BaseModel):
@@ -218,6 +219,6 @@ class NYPropertyAssessment(BaseModel):
             "assessment_total": self.assessment_total
         }
 
-    class Config:
+    class ConfigDict:
         # Ignore all fields not defined
         extra = "ignore"
