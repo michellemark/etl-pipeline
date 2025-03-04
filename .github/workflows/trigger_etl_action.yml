@@ -3,6 +3,13 @@ name: ETL Workflow Trigger
 on:
   # Allow workflow to only be triggered manually for now
   workflow_dispatch:
+    inputs:
+      # Flag to force refresh of all assessment data
+      force_refresh:
+        description: 'Force refresh all property assessment data'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run-etl-script:
@@ -32,6 +39,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          FORCE_REFRESH: ${{ github.event.inputs.force_refresh }}
           OPEN_DATA_APP_TOKEN: ${{ secrets.OPEN_DATA_APP_TOKEN }}
           PYTHONPATH: ${{ github.workspace }}
         run: python -m etl.etl_ml_flow

@@ -237,7 +237,13 @@ def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: in
     ordinary taxable property.
     """
     all_properties = []
-    custom_logger(INFO_LOG_LEVEL, f"Starting fetching CNY property assessments for roll_year {query_year}...")
+    force_refresh = os.getenv('FORCE_REFRESH', 'false').lower() == 'true'
+
+    custom_logger(
+        INFO_LOG_LEVEL,
+        f"Starting fetching CNY property assessments for roll_year {query_year}..."
+        + (f" Forcing refresh of all assessments." if force_refresh else "")
+    )
 
     # Initial results were getting back too many properties of not relevant types, limit results with a WHERE
     where_clause = "roll_section = 1"
@@ -252,10 +258,12 @@ def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: in
         # First see if we already have data for this county and roll year as it is only published once a year
         already_exists = check_if_property_assessments_exist(query_year, county)
 
-        if already_exists:
+        if already_exists and not force_refresh:
             custom_logger(
                 INFO_LOG_LEVEL,
                 f"Property assessments for county_name: {county} in roll year {query_year} already exist, ending.")
+            continue
+
         else:
             call_again = True
             current_offset = 0
