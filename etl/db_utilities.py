@@ -50,6 +50,8 @@ def create_database():
 def insert_into_database(table_name: str, column_names: List[str], data: List[Tuple]) -> Tuple[int, int]:
     """
     Insert records into a specified SQLite database table with row-by-row error handling.
+    Note: uses REPLACE INTO instead of INSERT INTO to avoid duplicate key errors, this
+    will cause existing rows to be deleted and replaced with new data.
 
     Example Usage:
         insert_into_database(
@@ -74,7 +76,7 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
         # Build the SQL query dynamically
         column_names_joined = ", ".join(column_names)
         value_placeholders = ", ".join(["?"] * len(column_names))
-        sql_query = f"INSERT INTO {table_name} ({column_names_joined}) VALUES ({value_placeholders})"
+        sql_query = f"REPLACE INTO {table_name} ({column_names_joined}) VALUES ({value_placeholders})"
 
         # Start the database connection
         with sqlite3.connect(DB_LOCAL_PATH) as db_connection:
