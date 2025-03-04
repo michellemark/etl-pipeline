@@ -59,20 +59,20 @@ def test_successful_insertion(setup_database):
     assert rows == data
 
 
-def test_partial_failures(setup_database):
-    """Test inserting rows where one fails due to a duplicate primary key."""
+def test_replace_existing_row(setup_database):
+    """Test inserting rows when there are duplicate primary keys."""
     data = [
         (1, "Alice", 30),
-        (1, "Duplicate", 40),  # duplicate primary key
+        (1, "Duplicate", 40),  # duplicate primary key replaces previous values for key
         (2, "Bob", 25)
     ]
     rows_inserted, rows_failed = insert_into_database(test_table_name, test_column_names, data)
-    assert rows_inserted == 2
-    assert rows_failed == 1
+    assert rows_inserted == 3
+    assert rows_failed == 0
 
     rows = get_data_in_test_database()
     assert len(rows) == 2
-    assert (1, "Alice", 30) in rows
+    assert (1, "Duplicate", 40) in rows
     assert (2, "Bob", 25) in rows
 
 
@@ -133,7 +133,7 @@ def test_database_execute_sqlite3_error():
         mock_connect.assert_called_once_with(test_db_path)
         mock_enter_connection.cursor.assert_called_once()
         mock_cursor.execute.assert_called_once_with(
-            f"INSERT INTO {test_table_name} (id, name, age) VALUES (?, ?, ?)",
+            f"REPLACE INTO {test_table_name} (id, name, age) VALUES (?, ?, ?)",
             data[0]
         )
         mock_logger.assert_any_call(
@@ -162,7 +162,7 @@ def test_database_execute_IntegrityError_error():
         mock_connect.assert_called_once_with(test_db_path)
         mock_enter_connection.cursor.assert_called_once()
         mock_cursor.execute.assert_called_once_with(
-            f"INSERT INTO {test_table_name} (id, name, age) VALUES (?, ?, ?)",
+            f"REPLACE INTO {test_table_name} (id, name, age) VALUES (?, ?, ?)",
             data[0]
         )
         mock_logger.assert_any_call(

@@ -35,7 +35,7 @@ def test_check_if_county_assessment_ratio_exists_no_matching_record():
     """Test when rate_year and county_name have no matching records."""
     mocked_query_result = []
 
-    with patch("etl.etl_ml_flow.execute_select_query", return_value=mocked_query_result):
+    with patch("etl.etl_ml_flow.execute_db_query", return_value=mocked_query_result):
         does_ratio_exist = check_if_county_assessment_ratio_exists(2024, "Cayuga")
 
     assert does_ratio_exist is False
@@ -47,7 +47,7 @@ def test_check_if_county_assessment_ratio_exists_matching_record():
     test_county_name = "Cayuga"
     mocked_query_result = [(test_rate_year, "050100", "Auburn", test_county_name, 88.00)]
 
-    with patch("etl.etl_ml_flow.execute_select_query", return_value=mocked_query_result):
+    with patch("etl.etl_ml_flow.execute_db_query", return_value=mocked_query_result):
         does_ratio_exist = check_if_county_assessment_ratio_exists(test_rate_year, test_county_name)
 
         assert does_ratio_exist is True
@@ -306,7 +306,7 @@ def test_check_if_property_assessments_exist_no_matching_record():
     test_county_name = "Oswego"
     mocked_query_result = [(0,)]
 
-    with patch("etl.etl_ml_flow.execute_select_query", return_value=mocked_query_result):
+    with patch("etl.etl_ml_flow.execute_db_query", return_value=mocked_query_result):
         does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
         assert does_county_roll_year_exist is False
 
@@ -317,7 +317,7 @@ def test_check_if_property_assessments_exist_matching_record():
     test_county_name = "Oswego"
     mocked_query_result = [(1,)]
 
-    with patch("etl.etl_ml_flow.execute_select_query", return_value=mocked_query_result):
+    with patch("etl.etl_ml_flow.execute_db_query", return_value=mocked_query_result):
 
         does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
         assert does_county_roll_year_exist is True

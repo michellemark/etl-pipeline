@@ -50,7 +50,7 @@ def create_database():
 def insert_into_database(table_name: str, column_names: List[str], data: List[Tuple]) -> Tuple[int, int]:
     """
     Insert records into a specified SQLite database table with row-by-row error handling.
-    Note: uses REPLACE INTO instead of INSERT INTO to avoid duplicate key errors, this
+    Note: uses REPLACE INTO instead of INSERT INTO to avoid duplicate key errors.  This
     will cause existing rows to be deleted and replaced with new data.
 
     Example Usage:
@@ -114,17 +114,16 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
     return rows_inserted, rows_failed
 
 
-def execute_select_query(query: str, params: Tuple | None = None) -> List[Tuple] | None:
+def execute_db_query(query: str, params: Tuple | None = None) -> List[Tuple] | None:
     """
     Executes a raw SQL SELECT query and returns the results.
 
     Example Usages:
-    execute_select_query("SELECT * FROM table WHERE column = value")
-    execute_select_query("SELECT * FROM table WHERE column = ?", params=("value",))
+    execute_db_query("SELECT * FROM table WHERE column = value")
+    execute_db_query("SELECT * FROM table WHERE column = ?", params=("value",))
 
-
-    :param query: str An SQL SELECT query to execute.
-    :param params: Tuple | None Optional parameters for a parameterized SELECT query.
+    :param query: str An SQL query to execute.
+    :param params: Tuple | None Optional parameters for a parameterized query.
     :return: List[Tuple] | None Query results or None if there's an error.
     """
     result = None

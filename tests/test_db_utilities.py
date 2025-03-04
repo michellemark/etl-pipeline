@@ -57,7 +57,7 @@ def test_create_database_fails():
 
 
 def test_get_s3_client_success():
-    """Test _get_s3_client when all environment variables are present."""
+    """Test get_s3_client when all environment variables are present."""
     with patch("os.environ.get") as mock_env_get, \
         patch("boto3.Session") as mock_boto3_session:
         mock_env_get.side_effect = lambda key: {
@@ -85,7 +85,7 @@ def test_get_s3_client_success():
 
 
 def test_get_s3_client_missing_env_vars():
-    """Test _get_s3_client when all required environment variables are missing."""
+    """Test get_s3_client when all required environment variables are missing."""
     with patch("os.environ.get") as mock_env_get, \
         patch("etl.db_utilities.custom_logger") as mock_custom_logger, \
         patch("boto3.Session") as mock_boto3_session:
@@ -121,7 +121,7 @@ def test_get_s3_client_missing_env_vars():
 
 
 def test_get_s3_client_partial_env_vars():
-    """Test _get_s3_client with some environment variables missing."""
+    """Test get_s3_client with some environment variables missing."""
     with patch("os.environ.get") as mock_env_get, \
         patch("etl.db_utilities.custom_logger") as mock_custom_logger, \
         patch("boto3.Session") as mock_boto3_session:
@@ -151,7 +151,7 @@ def test_get_s3_client_partial_env_vars():
 def test_download_database_from_s3_success():
     """Test download database from s3 when download succeeds."""
     with patch("etl.db_utilities.custom_logger") as mock_custom_logger, \
-        patch("etl.db_utilities._get_s3_client") as mock_get_s3_client:
+        patch("etl.db_utilities.get_s3_client") as mock_get_s3_client:
         mock_s3_client = MagicMock()
         mock_get_s3_client.return_value = mock_s3_client
 
@@ -171,7 +171,7 @@ def test_download_database_from_s3_success():
 def test_download_database_from_s3_fail():
     """Test download database from s3 when download fails."""
     with patch("etl.db_utilities.custom_logger") as mock_custom_logger, \
-        patch("etl.db_utilities._get_s3_client") as mock_get_s3_client:
+        patch("etl.db_utilities.get_s3_client") as mock_get_s3_client:
         mock_s3_client = MagicMock()
         mock_get_s3_client.return_value = mock_s3_client
         mock_s3_client.download_file.side_effect = Exception("Mock download error")
@@ -188,7 +188,7 @@ def test_upload_database_to_s3_success():
     """Test upload_database_to_s3 when upload succeeds."""
 
     with patch("etl.db_utilities.custom_logger") as mock_custom_logger, \
-        patch("etl.db_utilities._get_s3_client") as mock_get_s3_client:
+        patch("etl.db_utilities.get_s3_client") as mock_get_s3_client:
         mock_s3_client = MagicMock()
         mock_get_s3_client.return_value = mock_s3_client
 
@@ -208,7 +208,7 @@ def test_upload_database_to_s3_success():
 def test_upload_database_to_s3_fail():
     """Test upload_database_to_s3 when upload fails."""
     with patch("etl.db_utilities.custom_logger") as mock_custom_logger, \
-        patch("etl.db_utilities._get_s3_client") as mock_get_s3_client:
+        patch("etl.db_utilities.get_s3_client") as mock_get_s3_client:
         mock_s3_client = MagicMock()
         mock_get_s3_client.return_value = mock_s3_client
         mock_s3_client.upload_file.side_effect = Exception("Mock download error")

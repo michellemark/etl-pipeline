@@ -28,7 +28,7 @@ from etl.constants import RETRYABLE_ERRORS
 from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import create_database
 from etl.db_utilities import download_database_from_s3
-from etl.db_utilities import execute_select_query
+from etl.db_utilities import execute_db_query
 from etl.db_utilities import insert_into_database
 from etl.db_utilities import upload_database_to_s3
 from etl.log_utilities import custom_logger
@@ -49,7 +49,7 @@ def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str) ->
         f"Checking if assessment ratios for rate_year: {rate_year} and county_name: {county_name} exist in database...")
     do_county_ratios_for_year_exist = False
     sql_query = f"SELECT * FROM {ASSESSMENT_RATIOS_TABLE} WHERE rate_year=? AND county_name=?"
-    results = execute_select_query(sql_query, params=(rate_year, county_name))
+    results = execute_db_query(sql_query, params=(rate_year, county_name))
 
     if results:
         do_county_ratios_for_year_exist = True
@@ -160,7 +160,7 @@ def check_if_property_assessments_exist(roll_year: int, county_name: str) -> boo
                     FROM {NY_PROPERTY_ASSESSMENTS_TABLE} AS npa
                     JOIN {PROPERTIES_TABLE} AS p ON npa.property_id = p.id
                     WHERE npa.roll_year = ? AND p.county_name = ?"""
-    results = execute_select_query(sql_query, params=(roll_year, county_name))
+    results = execute_db_query(sql_query, params=(roll_year, county_name))
 
     if results and isinstance(results[0], tuple) and len(results[0]) == 1:
         count = results[0][0]
