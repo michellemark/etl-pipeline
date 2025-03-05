@@ -7,17 +7,17 @@ from etl.constants import INFO_LOG_LEVEL
 from etl.constants import MINIMUM_ASSESSMENT_YEAR
 from etl.constants import OPEN_NY_BASE_URL
 from etl.constants import WARNING_LOG_LEVEL
-from etl.open_ny_apis.fetch_municipality_assessment_ratios import check_if_county_assessment_ratio_exists
-from etl.open_ny_apis.fetch_municipality_assessment_ratios import fetch_county_assessment_ratios
-from etl.open_ny_apis.fetch_municipality_assessment_ratios import fetch_municipality_assessment_ratios
-from etl.open_ny_apis.fetch_municipality_assessment_ratios import save_municipality_assessment_ratios
+from etl.open_ny_apis.municipality_assessment_ratios import check_if_county_assessment_ratio_exists
+from etl.open_ny_apis.municipality_assessment_ratios import fetch_county_assessment_ratios
+from etl.open_ny_apis.municipality_assessment_ratios import fetch_municipality_assessment_ratios
+from etl.open_ny_apis.municipality_assessment_ratios import save_municipality_assessment_ratios
 
 
 def test_check_if_county_assessment_ratio_exists_no_matching_record():
     """Test when rate_year and county_name have no matching records."""
     mocked_query_result = []
 
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.execute_db_query", return_value=mocked_query_result):
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.execute_db_query", return_value=mocked_query_result):
         does_ratio_exist = check_if_county_assessment_ratio_exists(2024, "Cayuga")
 
     assert does_ratio_exist is False
@@ -29,7 +29,7 @@ def test_check_if_county_assessment_ratio_exists_matching_record():
     test_county_name = "Cayuga"
     mocked_query_result = [(test_rate_year, "050100", "Auburn", test_county_name, 88.00)]
 
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.execute_db_query", return_value=mocked_query_result):
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.execute_db_query", return_value=mocked_query_result):
         does_ratio_exist = check_if_county_assessment_ratio_exists(test_rate_year, test_county_name)
 
         assert does_ratio_exist is True
@@ -37,8 +37,8 @@ def test_check_if_county_assessment_ratio_exists_matching_record():
 
 def test_fetch_county_assessment_ratios_success():
     """Test successful data retrieval from Socrata API."""
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.custom_logger") as mock_custom_logger, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.Socrata") as mock_socrata_client:
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_custom_logger, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.Socrata") as mock_socrata_client:
         app_token = "app_token"
         rate_year = 2024
         county_name = "Cayuga"
@@ -76,8 +76,8 @@ def test_fetch_county_assessment_ratios_success():
 
 def test_fetch_county_assessment_ratios_failure():
     """Test failure behavior when Socrata API raises an exception."""
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.custom_logger") as mock_custom_logger, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.Socrata") as mock_socrata_client:
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_custom_logger, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.Socrata") as mock_socrata_client:
         app_token = "app_token"
         rate_year = 2024
         county_name = "Cayuga"
@@ -98,12 +98,12 @@ def test_fetch_county_assessment_ratios_failure():
         )
 
 
-def test_fetch_municipality_assessment_ratios_data_already_exists():
+def test_municipality_assessment_ratios_data_already_exists():
     """Test fetch_county_assessment_ratios is always skipped if records exists in db for all years and counties checked."""
 
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.custom_logger") as mock_logger, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.check_if_county_assessment_ratio_exists") as mock_check_exists:
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_logger, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.check_if_county_assessment_ratio_exists") as mock_check_exists:
 
         mock_check_exists.return_value = True
         mock_fetch_county_ratios.return_value = None
@@ -132,9 +132,9 @@ def test_fetch_municipality_assessment_ratios_data_already_exists():
 def test_fetch_municipality_assessment_ratios_data_not_exists():
     """Test fetch_county_assessment_ratios is called and returns data when no preexisting data in db exists."""
 
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.custom_logger") as mock_logger, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.check_if_county_assessment_ratio_exists") as mock_check_exists:
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_logger, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.fetch_county_assessment_ratios") as mock_fetch_county_ratios, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.check_if_county_assessment_ratio_exists") as mock_check_exists:
         mock_check_exists.return_value = False
         fake_response = [
             {
@@ -193,8 +193,8 @@ def test_save_all_valid_ratios():
         }
     ]
 
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.insert_into_database") as mock_db, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.custom_logger") as mock_logger:
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.insert_into_database") as mock_db, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_logger:
         mock_db.return_value = (2, 0)
 
         save_municipality_assessment_ratios(mock_data)
@@ -238,8 +238,8 @@ def test_save_some_invalid_ratios():
         }
     ]
 
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.insert_into_database") as mock_db, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.custom_logger") as mock_logger:
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.insert_into_database") as mock_db, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_logger:
 
         mock_db.return_value = (1, 0)
 
@@ -270,8 +270,8 @@ def test_save_some_invalid_ratios():
 
 def test_save_none_ratios():
     """Test case for empty municipality ratios."""
-    with patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.custom_logger") as mock_logger, \
-        patch("etl.open_ny_apis.fetch_municipality_assessment_ratios.insert_into_database") as mock_db:
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_logger, \
+        patch("etl.open_ny_apis.municipality_assessment_ratios.insert_into_database") as mock_db:
 
         save_municipality_assessment_ratios([])
 
