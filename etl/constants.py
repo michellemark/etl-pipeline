@@ -1,5 +1,7 @@
 import os
 
+from requests import ConnectTimeout
+from requests import HTTPError
 from requests import ReadTimeout
 from requests import RequestException
 from requests import Timeout
@@ -22,14 +24,13 @@ ALL_PROPERTIES_STATE = "NY"
 RETRYABLE_ERRORS = (
     ConnectionError,  # Base class for connection-related errors
     ConnectionResetError,  # Connection reset by peer
-    TimeoutError,  # Request timed out
-    Timeout,  # Requests timeout
-    ConnectionError,  # Requests connection problems
-    ReadTimeout,  # Reading from server timed out
-    ChunkedEncodingError,  # Error with chunked transfer encoding
-    RequestException,  # Base class for requests exceptions
+    ConnectTimeout, # Timed out while trying to connect to remote server
+    HTTPError,  # HTTP error
     ProtocolError,  # Low-level protocol errors
-    SocrataRateLimitError  # Rate limit exceeded
+    ReadTimeout,  # Reading from server timed out
+    RequestException,  # Base class for requests exceptions
+    Timeout,  # Requests timeout
+    TimeoutError,  # Request timed out
 )
 US_CENSUS_BUREAU_BATCH_SIZE = 10000
 US_CENSUS_BUREAU_BATCH_URL = "https://geocoding.geo.census.gov/geocoder/returntype/addressbatch"
