@@ -5,11 +5,7 @@ from requests import HTTPError
 from requests import ReadTimeout
 from requests import RequestException
 from requests import Timeout
-from requests.exceptions import ChunkedEncodingError
-
 from urllib3.exceptions import ProtocolError
-
-from etl.exceptions import SocrataRateLimitError
 
 # ******* Real estate API values ********************************
 CNY_COUNTY_LIST = ["Cayuga", "Cortland", "Madison", "Onondaga", "Oswego"]
