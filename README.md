@@ -42,6 +42,11 @@ The ETL pipeline will be collecting data for CNY Counties from:
 - [Property Assessment Data from Local Assessment Rolls](https://dev.socrata.com/foundry/data.ny.gov/7vem-aaz7)
 - [Residential Assessment Ratios](https://dev.socrata.com/foundry/data.ny.gov/bsmp-6um6)
 
+To get an app token, so you can run this yourself, simply:
+- [Sign up for a free Socrata account](https://support.socrata.com/hc/en-us/articles/115004055807-How-to-Sign-Up-for-a-Tyler-Data-Insights-ID)
+- [Create a free app token](https://support.socrata.com/hc/en-us/articles/210138558-Generating-App-Tokens-and-API-Keys)
+
+
 
 ### What NY counties will make up CNY for purposes of this project?
 
