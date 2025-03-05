@@ -9,10 +9,10 @@ from etl.constants import OPEN_NY_LIMIT_PER_PAGE
 from etl.constants import OPEN_NY_PROPERTY_ASSESSMENTS_API_ID
 from etl.constants import PROPERTIES_TABLE
 from etl.constants import WARNING_LOG_LEVEL
-from etl.fetch_properties_and_assessments_from_open_ny import check_if_property_assessments_exist
-from etl.fetch_properties_and_assessments_from_open_ny import fetch_properties_and_assessments_from_open_ny
-from etl.fetch_properties_and_assessments_from_open_ny import fetch_property_assessments_page
-from etl.fetch_properties_and_assessments_from_open_ny import save_property_assessments
+from etl.open_ny_apis.fetch_property_assessments import check_if_property_assessments_exist
+from etl.open_ny_apis.fetch_property_assessments import fetch_property_assessments
+from etl.open_ny_apis.fetch_property_assessments import fetch_property_assessments_page
+from etl.open_ny_apis.fetch_property_assessments import save_properties_and_assessments
 
 
 def test_check_if_property_assessments_exist_no_matching_record():
@@ -21,7 +21,7 @@ def test_check_if_property_assessments_exist_no_matching_record():
     test_county_name = "Oswego"
     mocked_query_result = [(0,)]
 
-    with patch("etl.fetch_properties_and_assessments_from_open_ny.execute_db_query", return_value=mocked_query_result):
+    with patch("etl.open_ny_apis.fetch_property_assessments.execute_db_query", return_value=mocked_query_result):
         does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
         assert does_county_roll_year_exist is False
 
@@ -32,13 +32,13 @@ def test_check_if_property_assessments_exist_matching_record():
     test_county_name = "Oswego"
     mocked_query_result = [(1,)]
 
-    with patch("etl.fetch_properties_and_assessments_from_open_ny.execute_db_query", return_value=mocked_query_result):
+    with patch("etl.open_ny_apis.fetch_property_assessments.execute_db_query", return_value=mocked_query_result):
         does_county_roll_year_exist = check_if_property_assessments_exist(test_rate_year, test_county_name)
         assert does_county_roll_year_exist is True
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.Socrata")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
+@patch("etl.open_ny_apis.fetch_property_assessments.Socrata")
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
 def test_fetch_property_assessments_page_success(mock_custom_logger, mock_socrata):
     mock_response = [{"print_key_code": "123"}, {"print_key_code": "456"}]
     mock_client = MagicMock()
@@ -69,8 +69,8 @@ def test_fetch_property_assessments_page_success(mock_custom_logger, mock_socrat
     assert result == mock_response
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.Socrata")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
+@patch("etl.open_ny_apis.fetch_property_assessments.Socrata")
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
 def test_fetch_property_assessments_page_exception(mock_custom_logger, mock_socrata):
     mock_client = MagicMock()
     mock_client.get.side_effect = Exception("API Error")
@@ -90,8 +90,8 @@ def test_fetch_property_assessments_page_exception(mock_custom_logger, mock_socr
     assert result is None
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.Socrata")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
+@patch("etl.open_ny_apis.fetch_property_assessments.Socrata")
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
 def test_fetch_property_assessments_page_empty_response(mock_custom_logger, mock_socrata):
     mock_client = MagicMock()
     mock_client.get.return_value = []
@@ -111,12 +111,12 @@ def test_fetch_property_assessments_page_empty_response(mock_custom_logger, mock
     assert result == []
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.fetch_property_assessments_page")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.check_if_property_assessments_exist")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.get_ny_property_classes_for_where_clause")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
-def test_fetch_properties_and_assessments_from_open_ny_success_returns_all(
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+@patch("etl.open_ny_apis.fetch_property_assessments.fetch_property_assessments_page")
+@patch("etl.open_ny_apis.fetch_property_assessments.check_if_property_assessments_exist")
+@patch("etl.open_ny_apis.fetch_property_assessments.get_ny_property_classes_for_where_clause")
+@patch("etl.open_ny_apis.fetch_property_assessments.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
+def test_open_ny_apis_fetch_property_assessments_success_returns_all(
     mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test successful fetching for all counties."""
     mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
@@ -132,7 +132,7 @@ def test_fetch_properties_and_assessments_from_open_ny_success_returns_all(
     app_token = "fake_token"
     query_year = 2024
 
-    result = fetch_properties_and_assessments_from_open_ny(app_token, query_year)
+    result = fetch_property_assessments(app_token, query_year)
 
     mock_logger.assert_any_call(
         INFO_LOG_LEVEL, "Starting fetching CNY property assessments for roll_year 2024..."
@@ -144,12 +144,12 @@ def test_fetch_properties_and_assessments_from_open_ny_success_returns_all(
     assert result == [{"key": "property1"}, {"key": "property2"}, {"key": "property3"}, {"key": "property4"}]
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.fetch_property_assessments_page")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.check_if_property_assessments_exist")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.get_ny_property_classes_for_where_clause")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
-def test_fetch_properties_and_assessments_from_open_ny_skip_counties_with_existing_data(
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+@patch("etl.open_ny_apis.fetch_property_assessments.fetch_property_assessments_page")
+@patch("etl.open_ny_apis.fetch_property_assessments.check_if_property_assessments_exist")
+@patch("etl.open_ny_apis.fetch_property_assessments.get_ny_property_classes_for_where_clause")
+@patch("etl.open_ny_apis.fetch_property_assessments.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
+def test_open_ny_apis_fetch_property_assessments_skip_counties_with_existing_data(
     mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test that counties with existing data are skipped."""
     mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
@@ -163,7 +163,7 @@ def test_fetch_properties_and_assessments_from_open_ny_skip_counties_with_existi
     app_token = "fake_token"
     query_year = 2024
 
-    result = fetch_properties_and_assessments_from_open_ny(app_token, query_year)
+    result = fetch_property_assessments(app_token, query_year)
 
     mock_logger.assert_any_call(
         INFO_LOG_LEVEL,
@@ -174,12 +174,12 @@ def test_fetch_properties_and_assessments_from_open_ny_skip_counties_with_existi
     assert result == [{"key": "property_from_county2"}]
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.fetch_property_assessments_page")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.check_if_property_assessments_exist")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.get_ny_property_classes_for_where_clause")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.CNY_COUNTY_LIST", new_callable=lambda: ["County1"])
-def test_fetch_properties_and_assessments_from_open_ny_empty_responses_end_fetching(
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+@patch("etl.open_ny_apis.fetch_property_assessments.fetch_property_assessments_page")
+@patch("etl.open_ny_apis.fetch_property_assessments.check_if_property_assessments_exist")
+@patch("etl.open_ny_apis.fetch_property_assessments.get_ny_property_classes_for_where_clause")
+@patch("etl.open_ny_apis.fetch_property_assessments.CNY_COUNTY_LIST", new_callable=lambda: ["County1"])
+def test_open_ny_apis_fetch_property_assessments_empty_responses_end_fetching(
     mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test function handles None API responses gracefully."""
     mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
@@ -191,21 +191,21 @@ def test_fetch_properties_and_assessments_from_open_ny_empty_responses_end_fetch
     app_token = "fake_token"
     query_year = 2024
 
-    result = fetch_properties_and_assessments_from_open_ny(app_token, query_year)
+    result = fetch_property_assessments(app_token, query_year)
 
     assert mock_fetch_page.call_count == 2
     assert result == [{"key": "property1"}]
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.get_ny_property_classes_for_where_clause")
-def test_fetch_properties_and_assessments_from_open_ny_where_clause_construction(mock_get_property_classes, mock_logger):
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+@patch("etl.open_ny_apis.fetch_property_assessments.get_ny_property_classes_for_where_clause")
+def test_open_ny_apis_fetch_property_assessments_where_clause_construction(mock_get_property_classes, mock_logger):
     """Test that 'where_clause' is constructed as expected."""
     mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
     app_token = "fake_token"
     query_year = 2024
 
-    fetch_properties_and_assessments_from_open_ny(app_token, query_year)
+    fetch_property_assessments(app_token, query_year)
 
     mock_logger.assert_any_call(
         INFO_LOG_LEVEL, "\nwhere_clause built: roll_section = 1 AND property_class IN (\"210\", \"220\")\n"
@@ -213,10 +213,10 @@ def test_fetch_properties_and_assessments_from_open_ny_where_clause_construction
     mock_get_property_classes.assert_called_once()
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.NYPropertyAssessment")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.insert_into_database")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-def test_save_property_assessments_successful_validation_and_insertion(mock_logger, mock_insert_db, mock_model):
+@patch("etl.open_ny_apis.fetch_property_assessments.NYPropertyAssessment")
+@patch("etl.open_ny_apis.fetch_property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+def test_save_properties_and_assessments_successful_validation_and_insertion(mock_logger, mock_insert_db, mock_model):
     """Test when all properties are valid and inserted successfully."""
     mock_instance = MagicMock()
     mock_instance.to_properties_row.return_value = {"column1": "value1", "column2": "value2"}
@@ -225,7 +225,7 @@ def test_save_property_assessments_successful_validation_and_insertion(mock_logg
     mock_insert_db.return_value = (10, 0)
     all_properties = [{"key1": "value1"}, {"key2": "value2"}]
 
-    save_property_assessments(all_properties)
+    save_properties_and_assessments(all_properties)
 
     mock_model.assert_called()
     mock_instance.to_properties_row.assert_called()
@@ -244,10 +244,10 @@ def test_save_property_assessments_successful_validation_and_insertion(mock_logg
         "Completed saving 2 valid ny_property_assessment_data rows_inserted: 10, rows_failed: 0.")
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.NYPropertyAssessment")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.insert_into_database")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-def test_save_property_assessments_partial_validation_failure(mock_logger, mock_insert_db, mock_model):
+@patch("etl.open_ny_apis.fetch_property_assessments.NYPropertyAssessment")
+@patch("etl.open_ny_apis.fetch_property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+def test_save_properties_and_assessments_partial_validation_failure(mock_logger, mock_insert_db, mock_model):
     """Test partial validation failure, where some properties are invalid."""
     mock_instance = MagicMock()
     mock_instance.to_properties_row.return_value = {"column1": "value1", "column2": "value2"}
@@ -271,7 +271,7 @@ def test_save_property_assessments_partial_validation_failure(mock_logger, mock_
     mock_insert_db.return_value = (1, 0)
     all_properties = [{"key1": "valid1"}, {"key1": "valid2"}, {"key1": "invalid"}]
 
-    save_property_assessments(all_properties)
+    save_properties_and_assessments(all_properties)
 
     assert mock_model.call_count == 3
     mock_logger.assert_any_call(INFO_LOG_LEVEL,
@@ -284,10 +284,10 @@ def test_save_property_assessments_partial_validation_failure(mock_logger, mock_
         [("value1", "value2"), ("value1", "value2")])
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.NYPropertyAssessment")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.insert_into_database")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-def test_save_property_assessments_all_validation_failures(mock_logger, mock_insert_db, mock_model):
+@patch("etl.open_ny_apis.fetch_property_assessments.NYPropertyAssessment")
+@patch("etl.open_ny_apis.fetch_property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+def test_save_properties_and_assessments_all_validation_failures(mock_logger, mock_insert_db, mock_model):
     """Test when all properties fail validation."""
     mock_model.side_effect = ValidationError.from_exception_data(
         title='Validation Error',
@@ -300,29 +300,29 @@ def test_save_property_assessments_all_validation_failures(mock_logger, mock_ins
     )
     all_properties = [{"key1": "invalid1"}, {"key1": "invalid2"}]
 
-    save_property_assessments(all_properties)
+    save_properties_and_assessments(all_properties)
 
     assert mock_model.call_count == 2
     mock_logger.assert_any_call(INFO_LOG_LEVEL, "No valid properties found, skipping saving to database.")
     mock_insert_db.assert_not_called()
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.NYPropertyAssessment")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.insert_into_database")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-def test_save_property_assessments_empty_input_list(mock_logger, mock_insert_db, mock_model):
+@patch("etl.open_ny_apis.fetch_property_assessments.NYPropertyAssessment")
+@patch("etl.open_ny_apis.fetch_property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+def test_save_properties_and_assessments_empty_input_list(mock_logger, mock_insert_db, mock_model):
     """Test when the input list is empty."""
-    save_property_assessments([])
+    save_properties_and_assessments([])
 
     mock_model.assert_not_called()
     mock_insert_db.assert_not_called()
     mock_logger.assert_any_call(INFO_LOG_LEVEL, "No valid properties found, skipping saving to database.")
 
 
-@patch("etl.fetch_properties_and_assessments_from_open_ny.NYPropertyAssessment")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.insert_into_database")
-@patch("etl.fetch_properties_and_assessments_from_open_ny.custom_logger")
-def test_save_property_assessments_database_failure_handling(mock_logger, mock_insert_db, mock_model):
+@patch("etl.open_ny_apis.fetch_property_assessments.NYPropertyAssessment")
+@patch("etl.open_ny_apis.fetch_property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.fetch_property_assessments.custom_logger")
+def test_save_properties_and_assessments_database_failure_handling(mock_logger, mock_insert_db, mock_model):
     """Test when database insertion fails."""
     mock_instance = MagicMock()
     mock_instance.to_properties_row.return_value = {"column1": "value1", "column2": "value2"}
@@ -331,7 +331,7 @@ def test_save_property_assessments_database_failure_handling(mock_logger, mock_i
     mock_insert_db.return_value = (0, 1)
     all_properties = [{"key1": "valid"}]
 
-    save_property_assessments(all_properties)
+    save_properties_and_assessments(all_properties)
 
     mock_logger.assert_any_call(
         INFO_LOG_LEVEL,

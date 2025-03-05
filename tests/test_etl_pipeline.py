@@ -26,7 +26,7 @@ def test_workflow_when_open_ny_app_token_fails(
 @patch("etl.etl_pipeline.get_open_ny_app_token")
 @patch("etl.etl_pipeline.download_database_from_s3")
 @patch("etl.etl_pipeline.create_database")
-@patch("etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny")
+@patch("etl.etl_pipeline.fetch_property_assessments")
 @patch("etl.etl_pipeline.fetch_municipality_assessment_ratios")
 @patch("etl.etl_pipeline.get_assessment_year_to_query")
 @patch("etl.etl_pipeline.save_municipality_assessment_ratios")
@@ -57,8 +57,8 @@ def test_workflow_with_municipal_assessment_ratios_not_fetched(
 
 
 @patch('etl.etl_pipeline.upload_database_to_s3')
-@patch('etl.etl_pipeline.save_property_assessments')
-@patch('etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny')
+@patch('etl.etl_pipeline.save_properties_and_assessments')
+@patch('etl.etl_pipeline.fetch_property_assessments')
 @patch('etl.etl_pipeline.save_municipality_assessment_ratios')
 @patch('etl.etl_pipeline.fetch_municipality_assessment_ratios')
 @patch('etl.etl_pipeline.create_database')
@@ -102,8 +102,8 @@ def test_workflow_when_database_creation_fails(
 
 
 @patch('etl.etl_pipeline.upload_database_to_s3')
-@patch('etl.etl_pipeline.save_property_assessments')
-@patch('etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny')
+@patch('etl.etl_pipeline.save_properties_and_assessments')
+@patch('etl.etl_pipeline.fetch_property_assessments')
 @patch('etl.etl_pipeline.save_municipality_assessment_ratios')
 @patch('etl.etl_pipeline.fetch_municipality_assessment_ratios')
 @patch('etl.etl_pipeline.create_database')
@@ -150,7 +150,7 @@ def test_workflow_with_successful_database_creation(
 @patch("etl.etl_pipeline.get_open_ny_app_token")
 @patch("etl.etl_pipeline.download_database_from_s3")
 @patch("etl.etl_pipeline.create_database")
-@patch("etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny")
+@patch("etl.etl_pipeline.fetch_property_assessments")
 @patch("etl.etl_pipeline.fetch_municipality_assessment_ratios")
 @patch("etl.etl_pipeline.get_assessment_year_to_query")
 @patch("etl.etl_pipeline.save_municipality_assessment_ratios")
@@ -189,10 +189,10 @@ def test_workflow_with_municipal_assessment_ratios_not_fetched(
 @patch("etl.etl_pipeline.get_open_ny_app_token")
 @patch("etl.etl_pipeline.download_database_from_s3")
 @patch("etl.etl_pipeline.create_database")
-@patch("etl.etl_pipeline.fetch_properties_and_assessments_from_open_ny")
+@patch("etl.etl_pipeline.fetch_property_assessments")
 @patch("etl.etl_pipeline.fetch_municipality_assessment_ratios")
 @patch("etl.etl_pipeline.get_assessment_year_to_query")
-@patch("etl.etl_pipeline.save_property_assessments")
+@patch("etl.etl_pipeline.save_properties_and_assessments")
 @patch("etl.etl_pipeline.save_municipality_assessment_ratios")
 @patch("etl.etl_pipeline.upload_database_to_s3")
 def test_workflow_with_municipal_assessment_ratios_not_fetched(

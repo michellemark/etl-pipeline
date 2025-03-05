@@ -7,11 +7,11 @@ from etl.constants import INFO_LOG_LEVEL
 from etl.db_utilities import create_database
 from etl.db_utilities import download_database_from_s3
 from etl.db_utilities import upload_database_to_s3
-from etl.fetch_municipality_assessment_ratios import fetch_municipality_assessment_ratios
-from etl.fetch_municipality_assessment_ratios import save_municipality_assessment_ratios
-from etl.fetch_properties_and_assessments_from_open_ny import fetch_properties_and_assessments_from_open_ny
-from etl.fetch_properties_and_assessments_from_open_ny import save_property_assessments
 from etl.log_utilities import custom_logger
+from etl.open_ny_apis.fetch_municipality_assessment_ratios import fetch_municipality_assessment_ratios
+from etl.open_ny_apis.fetch_municipality_assessment_ratios import save_municipality_assessment_ratios
+from etl.open_ny_apis.fetch_property_assessments import fetch_property_assessments
+from etl.open_ny_apis.fetch_property_assessments import save_properties_and_assessments
 from etl.property_utilities import get_assessment_year_to_query
 from etl.property_utilities import get_open_ny_app_token
 
@@ -32,15 +32,17 @@ def cny_real_estate_etl_workflow():
             create_database()
 
         if os.path.exists(DB_LOCAL_PATH):
+
+            # Fetch data from Open NY APIs
             mar_results = fetch_municipality_assessment_ratios(app_token=open_ny_token, query_year=query_year)
 
             if mar_results:
                 save_municipality_assessment_ratios(mar_results)
 
-            onypa_results = fetch_properties_and_assessments_from_open_ny(app_token=open_ny_token, query_year=query_year)
+            onypa_results = fetch_property_assessments(app_token=open_ny_token, query_year=query_year)
 
             if onypa_results:
-                save_property_assessments(onypa_results)
+                save_properties_and_assessments(onypa_results)
                 upload_database_to_s3()
 
         else:

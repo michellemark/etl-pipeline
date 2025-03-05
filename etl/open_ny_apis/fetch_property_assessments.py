@@ -98,10 +98,11 @@ def fetch_property_assessments_page(
     return result
 
 
-def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: int) -> List[dict] or None:
+def fetch_property_assessments(app_token: str, query_year: int) -> List[dict] or None:
     """
-    Query Open NY APIs for properties and assessments for a given year for all counties
-    in the CNY_COUNTY_LIST.  Only get properties with roll_section=1, meaning they are
+    Query Open NY APIs for property assessments for a given year for all counties
+    in the CNY_COUNT
+    Y_LIST.  Only get properties with roll_section=1, meaning they are
     ordinary taxable property.
     """
     all_properties = []
@@ -160,8 +161,11 @@ def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: in
     return all_properties
 
 
-def save_property_assessments(all_properties: List[dict]):
-    """Validate properties data and save valid data to database tables."""
+def save_properties_and_assessments(all_properties: List[dict]):
+    """
+    Validate properties data and saves valid data to related
+    database tables properties and ny_property_assessments.
+    """
     validated_properties_data = []
     validated_ny_property_assessment_data = []
     properties_column_names = None
