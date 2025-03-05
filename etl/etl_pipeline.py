@@ -237,7 +237,7 @@ def fetch_properties_and_assessments_from_open_ny(app_token: str, query_year: in
     ordinary taxable property.
     """
     all_properties = []
-    force_refresh = os.getenv('FORCE_REFRESH', 'false').lower() == 'true'
+    force_refresh = os.getenv('FORCE_REFRESH', False)
 
     custom_logger(
         INFO_LOG_LEVEL,
