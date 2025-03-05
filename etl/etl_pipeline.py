@@ -2,7 +2,6 @@ import json
 import os
 from datetime import datetime
 from pprint import pprint
-from time import sleep
 from typing import List
 from typing import Optional
 
@@ -10,7 +9,6 @@ from backoff import expo
 from backoff import on_exception
 from pydantic import ValidationError
 from ratelimit import limits
-from ratelimit import sleep_and_retry
 from sodapy import Socrata
 
 from etl.constants import ASSESSMENT_RATIOS_TABLE
@@ -60,7 +58,12 @@ def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str) ->
     return do_county_ratios_for_year_exist
 
 
-@sleep_and_retry
+@on_exception(
+    expo,
+    RETRYABLE_ERRORS,
+    max_tries=3,
+    on_backoff=log_retry
+)
 @limits(calls=OPEN_NY_CALLS_PER_PERIOD, period=OPEN_NY_RATE_LIMIT_PERIOD)
 def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: str) -> List[dict] or None:
     """Call Open NY APIs to fetch municipality assessment ratios for a given county and year using rate limiting."""
@@ -75,6 +78,11 @@ def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: 
                 rate_year=rate_year,
                 county_name=county_name
             )
+
+    except RETRYABLE_ERRORS:
+        # Let these propagate to be handled by the @on_exception decorator
+        raise
+
     except Exception as err:
         custom_logger(
             WARNING_LOG_LEVEL,
