@@ -71,6 +71,7 @@ def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: 
     custom_logger(
         INFO_LOG_LEVEL,
         f"Fetching municipality assessment ratios for rate_year: {rate_year} and county_name: {county_name}")
+
     try:
         with Socrata(OPEN_NY_BASE_URL, app_token=app_token, timeout=60) as client:
             assessment_ratios = client.get(
