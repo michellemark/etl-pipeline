@@ -6,6 +6,8 @@ from time import sleep
 from typing import List
 from typing import Optional
 
+from backoff import expo
+from backoff import on_exception
 from pydantic import ValidationError
 from ratelimit import limits
 from ratelimit import sleep_and_retry
@@ -32,6 +34,7 @@ from etl.db_utilities import execute_db_query
 from etl.db_utilities import insert_into_database
 from etl.db_utilities import upload_database_to_s3
 from etl.log_utilities import custom_logger
+from etl.log_utilities import log_retry
 from etl.property_utilities import get_assessment_year_to_query
 from etl.property_utilities import get_ny_property_classes_for_where_clause
 from etl.property_utilities import get_open_ny_app_token
@@ -171,7 +174,12 @@ def check_if_property_assessments_exist(roll_year: int, county_name: str) -> boo
     return do_property_assessments_for_year_exist
 
 
-@sleep_and_retry
+@on_exception(
+    expo,
+    RETRYABLE_ERRORS,
+    max_tries=3,
+    on_backoff=log_retry
+)
 @limits(calls=OPEN_NY_CALLS_PER_PERIOD, period=OPEN_NY_RATE_LIMIT_PERIOD)
 def fetch_property_assessments_page(
     app_token: str,
@@ -179,53 +187,35 @@ def fetch_property_assessments_page(
     county_name: str,
     where_clause: str,
     offset: int) -> Optional[List[dict]]:
-
     result = None
-    max_retries = 3
 
-    # Maintain Open NY rate limit of 3 requests per minute
-    wait_seconds = 20
+    try:
+        custom_logger(
+            INFO_LOG_LEVEL,
+            f"Fetching property assessments for county_name: {county_name} starting at offset {offset}..."
+        )
 
-    # Retry up to 3 times, unless successful
-    for attempt in range(max_retries):
-
-        try:
-            custom_logger(
-                INFO_LOG_LEVEL,
-                f"Fetching property assessments for county_name: {county_name} starting at offset {offset}..."
-                + (f" (Attempt {attempt + 1}/3)" if attempt > 0 else "")
+        with Socrata(OPEN_NY_BASE_URL, app_token=app_token, timeout=60) as client:
+            result = client.get(
+                OPEN_NY_PROPERTY_ASSESSMENTS_API_ID,
+                roll_year=roll_year,
+                county_name=county_name,
+                roll_section=1,
+                limit=OPEN_NY_LIMIT_PER_PAGE,
+                offset=offset,
+                order="swis_code,print_key_code ASC",
+                where=where_clause
             )
 
-            with Socrata(OPEN_NY_BASE_URL, app_token=app_token, timeout=60) as client:
-                result = client.get(
-                    OPEN_NY_PROPERTY_ASSESSMENTS_API_ID,
-                    roll_year=roll_year,
-                    county_name=county_name,
-                    roll_section=1,
-                    limit=OPEN_NY_LIMIT_PER_PAGE,
-                    offset=offset,
-                    order="swis_code,print_key_code ASC",
-                    where=where_clause
-                )
-                break
+    except RETRYABLE_ERRORS:
+        # Let these propagate to be handled by the @on_exception decorator
+        raise
 
-        except RETRYABLE_ERRORS as err:
-
-            # Don't sleep on last attempt
-            if attempt < 2:
-                sleep(wait_seconds)
-            else:
-                custom_logger(
-                    WARNING_LOG_LEVEL,
-                    f"Failed fetching property assessments for county_name: {county_name} at offset {offset}. Error: {err}"
-                )
-
-        except Exception as err:
-            custom_logger(
-                WARNING_LOG_LEVEL,
-                f"Failed fetching property assessments for county_name: {county_name} at offset {offset}. Error: {err}"
-            )
-            break
+    except Exception as err:
+        custom_logger(
+            WARNING_LOG_LEVEL,
+            f"Failed fetching property assessments for county_name: {county_name} at offset {offset}. Error: {err}"
+        )
 
     return result
 

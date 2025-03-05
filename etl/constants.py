@@ -1,6 +1,13 @@
 import os
 
-import requests
+from requests import ReadTimeout
+from requests import RequestException
+from requests import Timeout
+from requests.exceptions import ChunkedEncodingError
+
+from urllib3.exceptions import ProtocolError
+
+from etl.exceptions import SocrataRateLimitError
 
 # ******* Real estate API values ********************************
 CNY_COUNTY_LIST = ["Cayuga", "Cortland", "Madison", "Onondaga", "Oswego"]
@@ -16,12 +23,19 @@ RETRYABLE_ERRORS = (
     ConnectionError,  # Base class for connection-related errors
     ConnectionResetError,  # Connection reset by peer
     TimeoutError,  # Request timed out
-    requests.exceptions.Timeout,  # Requests timeout
-    requests.exceptions.ConnectionError,  # Requests connection problems
-    requests.exceptions.ReadTimeout,  # Reading from server timed out
-    requests.exceptions.ChunkedEncodingError,  # Error with chunked transfer encoding
-    requests.exceptions.RequestException,  # Base class for requests exceptions
+    Timeout,  # Requests timeout
+    ConnectionError,  # Requests connection problems
+    ReadTimeout,  # Reading from server timed out
+    ChunkedEncodingError,  # Error with chunked transfer encoding
+    RequestException,  # Base class for requests exceptions
+    ProtocolError,  # Low-level protocol errors
+    SocrataRateLimitError  # Rate limit exceeded
 )
+US_CENSUS_BUREAU_BATCH_SIZE = 10000
+US_CENSUS_BUREAU_BATCH_URL = "https://geocoding.geo.census.gov/geocoder/returntype/addressbatch"
+US_CENSUS_BUREAU_CALLS_PER_PERIOD = 4
+US_CENSUS_BUREAU_RATE_LIMIT_PERIOD = 60
+CREATE_BATCH_JOBS_TABLE_NAME = "batch_geocoding_jobs"
 
 # ******* File paths and names ***********************************
 CURRENT_FILE_PATH = os.path.abspath(__file__)

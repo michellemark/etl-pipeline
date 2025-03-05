@@ -1,3 +1,4 @@
+backoff
 boto3
 coverage
 pydantic
