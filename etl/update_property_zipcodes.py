@@ -13,6 +13,7 @@ from backoff import expo
 from backoff import on_exception
 from ratelimit import limits
 
+from etl.constants import DB_LOCAL_PATH
 from etl.constants import EXTRACTED_DATA_DIR
 from etl.constants import INFO_LOG_LEVEL
 from etl.constants import RETRYABLE_ERRORS
@@ -22,6 +23,7 @@ from etl.constants import US_CENSUS_BUREAU_CALLS_PER_PERIOD
 from etl.constants import US_CENSUS_BUREAU_RATE_LIMIT_PERIOD
 from etl.constants import WARNING_LOG_LEVEL
 from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
+from etl.db_utilities import download_database_from_s3
 from etl.db_utilities import download_zipcodes_cache_from_s3
 from etl.db_utilities import ensure_data_directories_exist
 from etl.db_utilities import execute_db_query
@@ -305,65 +307,73 @@ def update_null_zipcodes_workflow():
     start_time = datetime.now()
     custom_logger(INFO_LOG_LEVEL, f"Starting update null zipcodes workflow at {start_time:%Y-%m-%d %H:%M:%S}")
 
-    # Ensure any needed directories for generated files exist
-    ensure_data_directories_exist()
+    # First see if we already have a database in s3 to add updated data to
+    download_database_from_s3()
 
-    # Get current zipcode cache from S3 or an empty dict
-    zipcode_cache = get_zipcodes_cache_as_json()
+    # If we do not have a database file then nothing to do
+    if not os.path.exists(DB_LOCAL_PATH):
+        custom_logger(WARNING_LOG_LEVEL, "No database file found, exiting workflow.")
+    else:
+        custom_logger(INFO_LOG_LEVEL, "Database file found, proceeding with workflow.")
+        # Ensure any needed directories for generated files exist
+        ensure_data_directories_exist()
 
-    try:
+        # Get current zipcode cache from S3 or an empty dict
+        zipcode_cache = get_zipcodes_cache_as_json()
 
-        if zipcode_cache:
+        try:
 
-            # Update properties with missing zipcodes from zipcode cache, where possible
-            update_property_zipcodes_in_db_from_cache(zipcode_cache)
-            custom_logger(INFO_LOG_LEVEL, "Successfully updated zipcodes from cache.")
+            if zipcode_cache:
 
-        else:
-            custom_logger(INFO_LOG_LEVEL, "Failed to retrieve zipcode cache from S3, proceeding with empty cache.")
+                # Update properties with missing zipcodes from zipcode cache, where possible
+                update_property_zipcodes_in_db_from_cache(zipcode_cache)
+                custom_logger(INFO_LOG_LEVEL, "Successfully updated zipcodes from cache.")
 
-        batch_file_paths = get_all_properties_needing_zipcodes_from_database_write_as_csv()
-
-        for batch_file_path in batch_file_paths:
-
-            try:
-                raw_response = get_zipcodes_from_geocoder_as_batch(batch_file_path)
-            except Exception as error:
-                custom_logger(
-                    WARNING_LOG_LEVEL,
-                    f"Error unable to get zips for batch file {batch_file_path}: {str(error)}")
             else:
-                if raw_response:
-                    parsed_response = parse_geocoder_response(raw_response)
-                    update_property_zipcodes_with_geocoder_response(parsed_response)
+                custom_logger(INFO_LOG_LEVEL, "Failed to retrieve zipcode cache from S3, proceeding with empty cache.")
 
-                    # Update the zipcode cache - even if save to db failed next time zips are loaded from cache we want these
-                    for row in parsed_response:
-                        property_id = row.get("property_id")
-                        zip_code = row.get("zip_code")
+            batch_file_paths = get_all_properties_needing_zipcodes_from_database_write_as_csv()
 
-                        if property_id and zip_code:
-                            zipcode_cache[property_id] = zip_code
+            for batch_file_path in batch_file_paths:
 
-    except Exception as error:
-        custom_logger(WARNING_LOG_LEVEL, f"Error in update null zipcodes workflow: {str(error)}")
-    finally:
+                try:
+                    raw_response = get_zipcodes_from_geocoder_as_batch(batch_file_path)
+                except Exception as error:
+                    custom_logger(
+                        WARNING_LOG_LEVEL,
+                        f"Error unable to get zips for batch file {batch_file_path}: {str(error)}")
+                else:
+                    if raw_response:
+                        parsed_response = parse_geocoder_response(raw_response)
+                        update_property_zipcodes_with_geocoder_response(parsed_response)
 
-        if zipcode_cache:
-            # Save updated zipcode cache back to local file and upload to s3
-            try:
+                        # Update the zipcode cache - even if save to db failed next time zips are loaded from cache we want these
+                        for row in parsed_response:
+                            property_id = row.get("property_id")
+                            zip_code = row.get("zip_code")
 
-                with open(ZIPCODE_CACHE_LOCAL_PATH, "w") as cache_file:
-                    json.dump(zipcode_cache, cache_file, indent=4)
+                            if property_id and zip_code:
+                                zipcode_cache[property_id] = zip_code
 
-            except Exception as error:
-                custom_logger(WARNING_LOG_LEVEL, f"Error saving or uploading zipcodes cache: {error}")
-            else:
-                # Upload updated cache to S3
-                upload_zipcodes_cache_to_s3()
+        except Exception as error:
+            custom_logger(WARNING_LOG_LEVEL, f"Error in update null zipcodes workflow: {str(error)}")
+        finally:
 
-                # Upload database to s3 also
-                upload_database_to_s3()
+            if zipcode_cache:
+                # Save updated zipcode cache back to local file and upload to s3
+                try:
+
+                    with open(ZIPCODE_CACHE_LOCAL_PATH, "w") as cache_file:
+                        json.dump(zipcode_cache, cache_file, indent=4)
+
+                except Exception as error:
+                    custom_logger(WARNING_LOG_LEVEL, f"Error saving or uploading zipcodes cache: {error}")
+                else:
+                    # Upload updated cache to S3
+                    upload_zipcodes_cache_to_s3()
+
+                    # Upload database to s3 also
+                    upload_database_to_s3()
 
         end_time = datetime.now()
         elapsed_time = end_time - start_time
