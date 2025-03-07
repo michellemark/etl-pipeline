@@ -361,11 +361,9 @@ def update_null_zipcodes_workflow():
             else:
                 # Upload updated cache to S3
                 upload_zipcodes_cache_to_s3()
-                custom_logger(INFO_LOG_LEVEL, "Zipcodes cache successfully updated and uploaded to S3.")
 
                 # Upload database to s3 also
                 upload_database_to_s3()
-                custom_logger(INFO_LOG_LEVEL, "Database successfully uploaded to S3.")
 
         end_time = datetime.now()
         elapsed_time = end_time - start_time
