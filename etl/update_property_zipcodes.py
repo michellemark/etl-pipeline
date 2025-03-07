@@ -25,6 +25,7 @@ from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
 from etl.db_utilities import download_zipcodes_cache_from_s3
 from etl.db_utilities import ensure_data_directories_exist
 from etl.db_utilities import execute_db_query
+from etl.db_utilities import upload_database_to_s3
 from etl.db_utilities import upload_zipcodes_cache_to_s3
 from etl.log_utilities import custom_logger
 from etl.log_utilities import log_retry
@@ -361,6 +362,10 @@ def update_null_zipcodes_workflow():
                 # Upload updated cache to S3
                 upload_zipcodes_cache_to_s3()
                 custom_logger(INFO_LOG_LEVEL, "Zipcodes cache successfully updated and uploaded to S3.")
+
+                # Upload database to s3 also
+                upload_database_to_s3()
+                custom_logger(INFO_LOG_LEVEL, "Database successfully uploaded to S3.")
 
         end_time = datetime.now()
         elapsed_time = end_time - start_time
