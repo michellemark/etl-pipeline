@@ -42,7 +42,7 @@ def setup_database():
 @patch("etl.db_utilities.custom_logger")
 def test_execute_db_query_success_no_params(mock_custom_logger, setup_database):
     query = f"SELECT * FROM {test_table_name}"
-    result = execute_db_query(query)
+    result = execute_db_query(query, fetch_results=True)
     assert result == [(1234, 'Marty', 42), (5678, 'Mary', 34)]
     mock_custom_logger.assert_not_called()
 
@@ -51,7 +51,7 @@ def test_execute_db_query_success_no_params(mock_custom_logger, setup_database):
 def test_execute_db_query_success_with_params(mock_custom_logger, setup_database):
     query = f"SELECT * FROM {test_table_name} WHERE name = ?"
     params = ("Mary",)
-    result = execute_db_query(query, params)
+    result = execute_db_query(query, params, fetch_results=True)
     assert result == [(5678, 'Mary', 34)]
     mock_custom_logger.assert_not_called()
 
@@ -64,7 +64,7 @@ def test_execute_db_query_handles_sqlite_error(mock_custom_logger, mock_connect,
     mock_cursor = mock_enter_connection.cursor.return_value
     mock_cursor.execute.side_effect = sqlite3.Error("Simulated error")
     query = f"SELECT * FROM {test_table_name}"
-    result = execute_db_query(query)
+    result = execute_db_query(query, fetch_results=True)
     mock_connect.assert_called_once_with(test_db_path)
     assert result is None
     mock_custom_logger.assert_called_once_with(
@@ -77,6 +77,6 @@ def test_execute_db_query_handles_sqlite_error(mock_custom_logger, mock_connect,
 def test_execute_db_query_no_results(mock_custom_logger, setup_database):
     query = f"SELECT * FROM {test_table_name} WHERE name = ?"
     params = ("Henry",)
-    result = execute_db_query(query, params)
+    result = execute_db_query(query, params, fetch_results=True)
     assert result == []
     mock_custom_logger.assert_not_called()

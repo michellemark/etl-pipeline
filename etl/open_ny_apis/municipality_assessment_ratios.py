@@ -33,7 +33,7 @@ def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str) ->
         f"Checking if assessment ratios for rate_year: {rate_year} and county_name: {county_name} exist in database...")
     do_county_ratios_for_year_exist = False
     sql_query = f"SELECT * FROM {ASSESSMENT_RATIOS_TABLE} WHERE rate_year=? AND county_name=?"
-    results = execute_db_query(sql_query, params=(rate_year, county_name))
+    results = execute_db_query(sql_query, params=(rate_year, county_name), fetch_results=True)
 
     if results:
         do_county_ratios_for_year_exist = True

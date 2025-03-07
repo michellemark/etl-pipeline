@@ -28,11 +28,12 @@ RETRYABLE_ERRORS = (
     Timeout,  # Requests timeout
     TimeoutError,  # Request timed out
 )
-US_CENSUS_BUREAU_BATCH_SIZE = 10000
-US_CENSUS_BUREAU_BATCH_URL = "https://geocoding.geo.census.gov/geocoder/returntype/addressbatch"
-US_CENSUS_BUREAU_CALLS_PER_PERIOD = 4
+
+# Census Bureau Batch size must be 10,000 - 1 for header row else api responds with 500
+US_CENSUS_BUREAU_BATCH_SIZE = 9999
+US_CENSUS_BUREAU_BATCH_URL = "https://geocoding.geo.census.gov/geocoder/locations/addressbatch"
+US_CENSUS_BUREAU_CALLS_PER_PERIOD = 3
 US_CENSUS_BUREAU_RATE_LIMIT_PERIOD = 60
-CREATE_BATCH_JOBS_TABLE_NAME = "batch_geocoding_jobs"
 
 # ******* File paths and names ***********************************
 CURRENT_FILE_PATH = os.path.abspath(__file__)
@@ -47,6 +48,8 @@ CREATE_TABLE_DEFINITIONS_FILE_PATH = os.path.join(
     "sql",
     "create_table_definitions.sql"
 )
+ZIPCODE_CACHE_KEY = "zipcodes_cache.json"
+ZIPCODE_CACHE_LOCAL_PATH = os.path.join(GENERATED_DATA_DIR, ZIPCODE_CACHE_KEY)
 
 # ******* Table names *********************************************
 ASSESSMENT_RATIOS_TABLE = "municipality_assessment_ratios"

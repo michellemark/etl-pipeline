@@ -41,7 +41,7 @@ def check_if_property_assessments_exist(roll_year: int, county_name: str) -> boo
                     FROM {NY_PROPERTY_ASSESSMENTS_TABLE} AS npa
                     JOIN {PROPERTIES_TABLE} AS p ON npa.property_id = p.id
                     WHERE npa.roll_year = ? AND p.county_name = ?"""
-    results = execute_db_query(sql_query, params=(roll_year, county_name))
+    results = execute_db_query(sql_query, params=(roll_year, county_name), fetch_results=True)
 
     if results and isinstance(results[0], tuple) and len(results[0]) == 1:
         count = results[0][0]

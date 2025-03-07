@@ -1,3 +1,4 @@
+import json
 import os
 import sqlite3
 from typing import List, Tuple
@@ -13,6 +14,8 @@ from etl.constants import INFO_LOG_LEVEL
 from etl.constants import S3_BUCKET_NAME
 from etl.constants import SQLITE_DB_NAME
 from etl.constants import WARNING_LOG_LEVEL
+from etl.constants import ZIPCODE_CACHE_KEY
+from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
 from etl.log_utilities import custom_logger
 
 
@@ -114,16 +117,30 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
     return rows_inserted, rows_failed
 
 
-def execute_db_query(query: str, params: Tuple | None = None) -> List[Tuple] | None:
+def execute_db_query(
+        query: str,
+        params: Tuple | None = None,
+        fetch_results: bool = True) -> List[Tuple] | int | bool | None:
     """
-    Executes a raw SQL SELECT query and returns the results.
+   Executes a raw SQL query. Depending on the query type, either fetches the results (for SELECT)
+    or returns the number of affected rows (for UPDATE, INSERT, DELETE) or True for schema-altering queries.
 
     Example Usages:
-    execute_db_query("SELECT * FROM table WHERE column = value")
-    execute_db_query("SELECT * FROM table WHERE column = ?", params=("value",))
+    - SELECT queries:
+        results = execute_db_query(
+            "SELECT * FROM table WHERE column = ?",
+            params=("value",),
+            fetch_results=True)
+    - Non-SELECT queries:
+        rows_affected = execute_db_query(
+            "UPDATE table SET column = ? WHERE column = ?",
+            params=("new_value", "value"),
+            fetch_results=False)
+
 
     :param query: str An SQL query to execute.
     :param params: Tuple | None Optional parameters for a parameterized query.
+    :param fetch_results: bool Whether to fetch results for SELECT queries or return rows affected for others.
     :return: List[Tuple] | None Query results or None if there's an error.
     """
     result = None
@@ -137,7 +154,16 @@ def execute_db_query(query: str, params: Tuple | None = None) -> List[Tuple] | N
             else:
                 db_cursor.execute(query)
 
-            result = db_cursor.fetchall()
+            if fetch_results:
+                result = db_cursor.fetchall()
+            else:
+                # Schema-altering queries return True for success
+                if query.strip().upper().startswith(("CREATE", "DROP", "ALTER")):
+                    result = True
+                else:
+                    # Return number of rows affected
+                    result = db_cursor.rowcount
+
 
     except sqlite3.Error as ex:
         custom_logger(
@@ -178,9 +204,7 @@ def get_s3_client():
 
 
 def download_database_from_s3():
-    """
-    Downloads the SQLite database from the specified S3 bucket to the local path.
-    """
+    """Download SQLite database from S3 bucket to local path."""
     s3_client = get_s3_client()
 
     if s3_client:
@@ -202,12 +226,11 @@ def download_database_from_s3():
 
 
 def upload_database_to_s3():
-    """
-    Upload the SQLite database to S3, assuming needed environment variables are set.
-    """
+    """Upload SQLite database to S3."""
     s3_client = get_s3_client()
 
     if s3_client:
+
         try:
             s3_client.upload_file(
                 Filename=DB_LOCAL_PATH,
@@ -222,3 +245,47 @@ def upload_database_to_s3():
             custom_logger(
                 INFO_LOG_LEVEL,
                 f"Successfully uploaded {DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{SQLITE_DB_NAME}")
+
+
+def download_zipcodes_cache_from_s3() -> dict | None:
+    """Download zipcodes cache from S3 bucket to local path."""
+    s3_client = get_s3_client()
+
+    if s3_client:
+        ensure_data_directories_exist()
+
+        try:
+            s3_client.download_file(
+                Bucket=S3_BUCKET_NAME,
+                Key=ZIPCODE_CACHE_KEY,
+                Filename=ZIPCODE_CACHE_LOCAL_PATH
+            )
+            custom_logger(
+                INFO_LOG_LEVEL,
+                f"Successfully downloaded {ZIPCODE_CACHE_KEY} from s3://{S3_BUCKET_NAME}/{ZIPCODE_CACHE_KEY} to {ZIPCODE_CACHE_LOCAL_PATH}")
+        except Exception as ex:
+            custom_logger(
+                WARNING_LOG_LEVEL,
+                f"Failed to download zipcodes cache from S3: {ex}")
+
+
+def upload_zipcodes_cache_to_s3():
+    """Upload zipcodes cache to S3."""
+    s3_client = get_s3_client()
+
+    if s3_client:
+
+        try:
+            s3_client.upload_file(
+                Filename=ZIPCODE_CACHE_LOCAL_PATH,
+                Bucket=S3_BUCKET_NAME,
+                Key=ZIPCODE_CACHE_KEY
+            )
+        except Exception as ex:
+            custom_logger(
+                ERROR_LOG_LEVEL,
+                f"Failed to upload zipcodes cache to S3: {ex}")
+        else:
+            custom_logger(
+                INFO_LOG_LEVEL,
+                f"Successfully uploaded {ZIPCODE_CACHE_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{ZIPCODE_CACHE_KEY}")
