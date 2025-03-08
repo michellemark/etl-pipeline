@@ -164,7 +164,6 @@ def execute_db_query(
                     # Return number of rows affected
                     result = db_cursor.rowcount
 
-
     except sqlite3.Error as ex:
         custom_logger(
             WARNING_LOG_LEVEL,

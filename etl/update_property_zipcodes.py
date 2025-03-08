@@ -16,6 +16,7 @@ from ratelimit import limits
 from etl.constants import DB_LOCAL_PATH
 from etl.constants import EXTRACTED_DATA_DIR
 from etl.constants import INFO_LOG_LEVEL
+from etl.constants import PROPERTIES_TABLE
 from etl.constants import RETRYABLE_ERRORS
 from etl.constants import US_CENSUS_BUREAU_BATCH_SIZE
 from etl.constants import US_CENSUS_BUREAU_BATCH_URL
@@ -44,6 +45,8 @@ def get_zipcodes_cache_as_json() -> dict | None:
         download_zipcodes_cache_from_s3()
 
         if os.path.exists(ZIPCODE_CACHE_LOCAL_PATH):
+            custom_logger(INFO_LOG_LEVEL, "Loading zipcodes cache from S3 as JSON...")
+
             with open(ZIPCODE_CACHE_LOCAL_PATH, "r") as zipcodes_file:
                 zipcodes_cache = json.load(zipcodes_file)
 
@@ -62,10 +65,10 @@ def update_property_zipcodes_in_db_from_cache(zipcodes_cache: Dict[str, str]) ->
     :return: int - Number of properties updated.
     """
     number_updated = 0
-    query = """
-    UPDATE properties
+    query = f"""
+    UPDATE {PROPERTIES_TABLE} 
     SET address_zip = ?
-    WHERE id = ? AND (address_zip IS NULL OR address_zip = '')
+    WHERE id = ? 
     """
 
     for property_id, zipcode in zipcodes_cache.items():
@@ -150,9 +153,9 @@ def get_all_properties_needing_zipcodes_from_database_write_as_csv() -> List[str
     batch_file_paths = []
     offset = 0
     batch_number = 1
-    query = """
+    query = f"""
         SELECT id, address_street, municipality_name, address_state
-        FROM properties
+        FROM {PROPERTIES_TABLE} 
         WHERE address_zip IS NULL OR address_zip = ''
         ORDER BY id
         LIMIT ? OFFSET ?
@@ -279,10 +282,10 @@ def update_property_zipcodes_with_geocoder_response(parsed_geo_response: List[Di
     number_updated = 0
 
     try:
-        query = """
-        UPDATE properties
+        query = f"""
+        UPDATE {PROPERTIES_TABLE} 
         SET address_zip = ?
-        WHERE id = ? AND (address_zip IS NULL OR address_zip = '')
+        WHERE id = ? 
         """
 
         for row in parsed_geo_response:
