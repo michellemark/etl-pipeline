@@ -99,7 +99,7 @@ accurately match 95,699 out of 311964 records, leaving almost 70%, without a zip
 
 There are other services that would be better for gathering zipcode information, and given a 
 better budget something like Google's Geocoder API, for example, could fill in all those data gaps. For now 
-the user interface I will be building will not be able to filter by zipcodes due of this issue.
+the user interface I will be building will not be able to filter by zipcodes due to this issue.
 
 ## Development
 This repository has been developed using Python 3.12.  
