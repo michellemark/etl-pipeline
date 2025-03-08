@@ -28,7 +28,7 @@ RETRYABLE_ERRORS = (
     TimeoutError,  # Request timed out
 )
 
-# Census Bureau Batch size must be 10,000 - 1 for header row else api responds with 500
+# Census Bureau Batch size must be 10,000 - 1 so we send 10000
 US_CENSUS_BUREAU_BATCH_SIZE = 9999
 US_CENSUS_BUREAU_BATCH_URL = "https://geocoding.geo.census.gov/geocoder/locations/addressbatch"
 US_CENSUS_BUREAU_CALLS_PER_PERIOD = 3

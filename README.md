@@ -82,6 +82,25 @@ Database estimated to stay below 250Mb in size, so an estimate of ongoing costs 
     0.2441 * 0.023 ≈ 0.0056 per month (about half of a cent)
     0.0056 * 12 ≈ 0.07 cents per year
 
+
+## Zipcode Update Limitations Found
+
+The Open NY property assessment data only returns the zipcode for the mailing address of the property 
+owner.  However, it is very common that the owner of the property does not live at the address of the 
+parcel.  Far too often the only zipcode provided is for an address not even in the same state as the 
+parcel we have assessment data for.
+
+Given the purpose of collecting zipcodes is so we can filter by zipcode in a later user interface and view 
+related statistics on CNY properties, I created a secondary workflow to go back and get the missing zipcodes 
+and update the database.  It uses batch calls to the 
+[US Census Bureau Geocoder API](https://geocoding.geo.census.gov/geocoder/returntype/addressbatch) to
+send csv files with 10,000 addresses at a time.  **This works, except that API was only able to 
+accurately match 95,699 out of 311964 records, leaving almost 70%, without a zipcode.**
+
+There are other services that would be better for gathering zipcode information, and given a 
+better budget something like Google's Geocoder API, for example, could fill in all those data gaps. For now 
+the user interface I will be building will not be able to filter by zipcodes due of this issue.
+
 ## Development
 This repository has been developed using Python 3.12.  
 To install all required modules in your Python 3.12 virtual environment run command:
@@ -115,4 +134,9 @@ set these with dummy values and see a local database generated.
 Then run the ETL workflow with:
 ```
 python -m etl.etl_pipeline
+```
+     
+To run the follow-up workflow, to update zipcodes, which is designed to not be run until after the ETL workflow has completed, run:
+```
+python -m etl.update_property_zipcodes
 ```
