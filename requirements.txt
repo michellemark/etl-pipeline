@@ -1,9 +1,9 @@
 backoff
 boto3
 coverage
+limits
 pydantic
 pytest
 pytest-cov
-ratelimit
 sodapy
 tox

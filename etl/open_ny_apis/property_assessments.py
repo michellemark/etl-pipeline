@@ -6,7 +6,6 @@ from typing import Optional
 from backoff import expo
 from backoff import on_exception
 from pydantic import ValidationError
-from ratelimit import limits
 from sodapy import Socrata
 
 from etl.constants import CNY_COUNTY_LIST
@@ -16,7 +15,6 @@ from etl.constants import OPEN_NY_BASE_URL
 from etl.constants import OPEN_NY_CALLS_PER_PERIOD
 from etl.constants import OPEN_NY_LIMIT_PER_PAGE
 from etl.constants import OPEN_NY_PROPERTY_ASSESSMENTS_API_ID
-from etl.constants import OPEN_NY_RATE_LIMIT_PERIOD
 from etl.constants import PROPERTIES_TABLE
 from etl.constants import RETRYABLE_ERRORS
 from etl.constants import WARNING_LOG_LEVEL
@@ -25,6 +23,7 @@ from etl.db_utilities import insert_into_database
 from etl.log_utilities import custom_logger
 from etl.log_utilities import log_retry
 from etl.property_utilities import get_ny_property_classes_for_where_clause
+from etl.rate_limits import rate_per_minute
 from etl.validation_models import NYPropertyAssessment
 
 
@@ -55,10 +54,11 @@ def check_if_property_assessments_exist(roll_year: int, county_name: str) -> boo
 @on_exception(
     expo,
     RETRYABLE_ERRORS,
+    factor=20,
     max_tries=3,
     on_backoff=log_retry
 )
-@limits(calls=OPEN_NY_CALLS_PER_PERIOD, period=OPEN_NY_RATE_LIMIT_PERIOD)
+@rate_per_minute(calls_per_minute=OPEN_NY_CALLS_PER_PERIOD)
 def fetch_property_assessments_page(
     app_token: str,
     roll_year: int,

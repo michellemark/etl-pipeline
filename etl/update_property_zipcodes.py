@@ -11,7 +11,6 @@ from typing import Optional
 import requests
 from backoff import expo
 from backoff import on_exception
-from ratelimit import limits
 
 from etl.constants import DB_LOCAL_PATH
 from etl.constants import EXTRACTED_DATA_DIR
@@ -21,7 +20,6 @@ from etl.constants import RETRYABLE_ERRORS
 from etl.constants import US_CENSUS_BUREAU_BATCH_SIZE
 from etl.constants import US_CENSUS_BUREAU_BATCH_URL
 from etl.constants import US_CENSUS_BUREAU_CALLS_PER_PERIOD
-from etl.constants import US_CENSUS_BUREAU_RATE_LIMIT_PERIOD
 from etl.constants import WARNING_LOG_LEVEL
 from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
 from etl.db_utilities import download_database_from_s3
@@ -32,6 +30,7 @@ from etl.db_utilities import upload_database_to_s3
 from etl.db_utilities import upload_zipcodes_cache_to_s3
 from etl.log_utilities import custom_logger
 from etl.log_utilities import log_retry
+from etl.rate_limits import rate_per_minute
 
 
 def get_zipcodes_cache_as_json() -> dict | None:
@@ -93,7 +92,7 @@ def create_csv_batch_file(data: List[Dict[str, Any]]) -> Optional[str]:
     Write properties without ZIP codes as batch CSV file to send to geocoder batch api.
     Returns name of created CSV file or None if no csv written.
     """
-    batch_file_path = None
+    # batch_file_path = None
 
     try:
 
@@ -241,10 +240,11 @@ def parse_geocoder_response(raw_response: str) -> List[Dict]:
 @on_exception(
     expo,
     RETRYABLE_ERRORS,
+    factor=20,
     max_tries=3,
     on_backoff=log_retry
 )
-@limits(calls=US_CENSUS_BUREAU_CALLS_PER_PERIOD, period=US_CENSUS_BUREAU_RATE_LIMIT_PERIOD)
+@rate_per_minute(calls_per_minute=US_CENSUS_BUREAU_CALLS_PER_PERIOD)
 def get_zipcodes_from_geocoder_as_batch(batch_file_path) -> Optional[str]:
     """
     Submit csv batch file to Census Bureau Geocoding API.

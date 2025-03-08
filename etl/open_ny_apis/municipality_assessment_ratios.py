@@ -4,7 +4,6 @@ from typing import List
 from backoff import expo
 from backoff import on_exception
 from pydantic import ValidationError
-from ratelimit import limits
 from sodapy import Socrata
 
 from etl.constants import ASSESSMENT_RATIOS_TABLE
@@ -13,13 +12,13 @@ from etl.constants import INFO_LOG_LEVEL
 from etl.constants import OPEN_NY_ASSESSMENT_RATIOS_API_ID
 from etl.constants import OPEN_NY_BASE_URL
 from etl.constants import OPEN_NY_CALLS_PER_PERIOD
-from etl.constants import OPEN_NY_RATE_LIMIT_PERIOD
 from etl.constants import RETRYABLE_ERRORS
 from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import execute_db_query
 from etl.db_utilities import insert_into_database
 from etl.log_utilities import custom_logger
 from etl.log_utilities import log_retry
+from etl.rate_limits import rate_per_minute
 from etl.validation_models import MunicipalityAssessmentRatio
 
 
@@ -44,10 +43,11 @@ def check_if_county_assessment_ratio_exists(rate_year: int, county_name: str) ->
 @on_exception(
     expo,
     RETRYABLE_ERRORS,
+    factor=20,
     max_tries=3,
     on_backoff=log_retry
 )
-@limits(calls=OPEN_NY_CALLS_PER_PERIOD, period=OPEN_NY_RATE_LIMIT_PERIOD)
+@rate_per_minute(calls_per_minute=OPEN_NY_CALLS_PER_PERIOD)
 def fetch_county_assessment_ratios(app_token: str, rate_year: int, county_name: str) -> List[dict] or None:
     """Call Open NY APIs to fetch municipality assessment ratios for a given county and year using rate limiting."""
     assessment_ratios = None

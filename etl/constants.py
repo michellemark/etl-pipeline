@@ -15,12 +15,11 @@ OPEN_NY_ASSESSMENT_RATIOS_API_ID = "bsmp-6um6"
 OPEN_NY_PROPERTY_ASSESSMENTS_API_ID = "7vem-aaz7"
 OPEN_NY_LIMIT_PER_PAGE = 1000
 OPEN_NY_CALLS_PER_PERIOD = 3
-OPEN_NY_RATE_LIMIT_PERIOD = 60
 ALL_PROPERTIES_STATE = "NY"
 RETRYABLE_ERRORS = (
     ConnectionError,  # Base class for connection-related errors
     ConnectionResetError,  # Connection reset by peer
-    ConnectTimeout, # Timed out while trying to connect to remote server
+    ConnectTimeout,  # Timed out while trying to connect to remote server
     HTTPError,  # HTTP error
     ProtocolError,  # Low-level protocol errors
     ReadTimeout,  # Reading from server timed out
@@ -33,7 +32,6 @@ RETRYABLE_ERRORS = (
 US_CENSUS_BUREAU_BATCH_SIZE = 9999
 US_CENSUS_BUREAU_BATCH_URL = "https://geocoding.geo.census.gov/geocoder/locations/addressbatch"
 US_CENSUS_BUREAU_CALLS_PER_PERIOD = 3
-US_CENSUS_BUREAU_RATE_LIMIT_PERIOD = 60
 
 # ******* File paths and names ***********************************
 CURRENT_FILE_PATH = os.path.abspath(__file__)
