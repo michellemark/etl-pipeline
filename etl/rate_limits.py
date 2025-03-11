@@ -19,7 +19,7 @@ def rate_per_minute(calls_per_minute):
         @wraps(func)
         def wrapper(*args, **kwargs):
 
-            # Use unique key for decorated function (e.g., based on function name)
+            # Use unique key, based on function name
             key = f"rate_limiter:{func.__name__}"
 
             try:
@@ -27,7 +27,7 @@ def rate_per_minute(calls_per_minute):
                 # Increment rate limit
                 if not storage_backend.incr(key=key, expiry=limit.get_expiry(), elastic_expiry=False):
 
-                    # Exceeded d rate limit, calculate remaining time
+                    # Exceeded rate limit, calculate remaining time
                     time_to_reset = max(0, int(storage_backend.get_expiry(key) - time.time()))
 
                     # Instead of raising an exception, wait for limit to reset
@@ -38,7 +38,8 @@ def rate_per_minute(calls_per_minute):
                 return func(*args, **kwargs)
 
             except Exception as ex:
-                custom_logger(WARNING_LOG_LEVEL, "Unexpected error rate limiting call: ", ex)
+                # Raise exception to allow backoff to retry if it is a retryable error
+                raise ex
 
         return wrapper
 
