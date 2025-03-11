@@ -3,8 +3,10 @@ from datetime import datetime
 
 from etl.constants import DESIRED_PROPERTY_CATEGORIES
 from etl.constants import MINIMUM_ASSESSMENT_YEAR
+from etl.constants import OPC_DESCRIPTION
 from etl.constants import OPEN_NY_PROPERTY_CLASS_MAP
 from etl.constants import OTHER_PROPERTY_CATEGORY
+from etl.constants import PROPERTY_CATEGORY_DESCRIPTIONS
 from etl.constants import WARNING_LOG_LEVEL
 from etl.log_utilities import custom_logger
 
@@ -35,12 +37,13 @@ def get_ny_property_category_for_property_class(property_class: int):
     """
     Look up property category for matching property_class in OPEN_NY_PROPERTY_CLASS_MAP.
     """
-    return_property_category = OTHER_PROPERTY_CATEGORY
+    return_property_category = OPC_DESCRIPTION
 
     for item in OPEN_NY_PROPERTY_CLASS_MAP:
 
         if item.get("property_class") == property_class:
-            return_property_category = item.get("property_category", OTHER_PROPERTY_CATEGORY)
+            property_category = item.get("property_category", OTHER_PROPERTY_CATEGORY)
+            return_property_category = PROPERTY_CATEGORY_DESCRIPTIONS.get(property_category, OPC_DESCRIPTION)
             break
 
     return return_property_category

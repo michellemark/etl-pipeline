@@ -36,6 +36,16 @@ OPEN_NY_PROPERTY_CLASS_MAP = [
     },
 ]
 DESIRED_PROPERTY_CATEGORIES = [SINGLE_FAMILY_HOUSE, MULTI_FAMILY_RESIDENCE]
+SFH_DESCRIPTION = "Single Family House"
+MFR_DESCRIPTION = "Multi Family Residence"
+CP_DESCRIPTION = "Commercial Property"
+OPC_DESCRIPTION = "Other Property Category"
+PROPERTY_CATEGORY_DESCRIPTIONS = {
+    SINGLE_FAMILY_HOUSE: SFH_DESCRIPTION,
+    MULTI_FAMILY_RESIDENCE: MFR_DESCRIPTION,
+    COMMERCIAL_PROPERTY: CP_DESCRIPTION,
+    OTHER_PROPERTY_CATEGORY: OPC_DESCRIPTION
+}
 
 
 @pytest.fixture(autouse=True, scope="function")
@@ -43,31 +53,32 @@ def patch_constants(monkeypatch):
     monkeypatch.setattr("etl.property_utilities.OPEN_NY_PROPERTY_CLASS_MAP", OPEN_NY_PROPERTY_CLASS_MAP)
     monkeypatch.setattr("etl.property_utilities.OTHER_PROPERTY_CATEGORY", OTHER_PROPERTY_CATEGORY)
     monkeypatch.setattr("etl.property_utilities.DESIRED_PROPERTY_CATEGORIES", DESIRED_PROPERTY_CATEGORIES)
+    monkeypatch.setattr("etl.property_utilities.PROPERTY_CATEGORY_DESCRIPTIONS", PROPERTY_CATEGORY_DESCRIPTIONS)
 
 
 def test_ny_property_category_for_property_class_valid_property_class():
     """Test property_class in ny class map returns mapped category."""
-    assert get_ny_property_category_for_property_class(SFH_CLASS) == SINGLE_FAMILY_HOUSE
-    assert get_ny_property_category_for_property_class(MFR_CLASS) == MULTI_FAMILY_RESIDENCE
-    assert get_ny_property_category_for_property_class(CP_CLASS) == COMMERCIAL_PROPERTY
+    assert get_ny_property_category_for_property_class(SFH_CLASS) == SFH_DESCRIPTION
+    assert get_ny_property_category_for_property_class(MFR_CLASS) == MFR_DESCRIPTION
+    assert get_ny_property_category_for_property_class(CP_CLASS) == CP_DESCRIPTION
 
 
 def test_ny_property_category_for_property_class_invalid_property_class():
     """Test property_class does not exist in ny class map category defaults to other."""
-    assert get_ny_property_category_for_property_class(999) == OTHER_PROPERTY_CATEGORY
+    assert get_ny_property_category_for_property_class(999) == OPC_DESCRIPTION
 
 
 def test_ny_property_category_for_property_class_missing_category():
     """Test when property_category key is missing in ny class map category defaults to other."""
     OPEN_NY_PROPERTY_CLASS_MAP.append({"property_class": 400})
-    assert get_ny_property_category_for_property_class(400) == OTHER_PROPERTY_CATEGORY
+    assert get_ny_property_category_for_property_class(400) == OPC_DESCRIPTION
     OPEN_NY_PROPERTY_CLASS_MAP.pop()  # Clean up
 
 
 def test_ny_property_category_for_property_class_empty_property_class_map(monkeypatch):
     """Test when ny class map is empty category defaults to other."""
     monkeypatch.setattr("etl.property_utilities.OPEN_NY_PROPERTY_CLASS_MAP", [])
-    assert get_ny_property_category_for_property_class(SFH_CLASS) == OTHER_PROPERTY_CATEGORY
+    assert get_ny_property_category_for_property_class(SFH_CLASS) == OPC_DESCRIPTION
 
 
 def test_ny_property_category_for_property_class_valid_where_clause():

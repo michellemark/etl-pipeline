@@ -162,7 +162,7 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables():
     assert onypa_record["roll_year"] == 2024
     assert onypa_record["property_class"] == 311
     assert onypa_record["property_class_description"] == "Residential Vacant Land"
-    assert onypa_record["property_category"] == "LAL"
+    assert onypa_record["property_category"] == "Lots and Land"
     assert onypa_record["front"] == 29
     assert onypa_record["depth"] == 111.7
     assert onypa_record["full_market_value"] == 9760
@@ -209,7 +209,7 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables_missing_a
     assert onypa_record["roll_year"] == 2024
     assert onypa_record["property_class"] == 311
     assert onypa_record["property_class_description"] == "Residential Vacant Land"
-    assert onypa_record["property_category"] == "LAL"
+    assert onypa_record["property_category"] == "Lots and Land"
     assert onypa_record["front"] == 29
     assert onypa_record["depth"] == 111.7
     assert onypa_record["full_market_value"] == 9760

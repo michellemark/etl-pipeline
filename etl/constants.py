@@ -79,14 +79,21 @@ DESIRED_PROPERTY_CATEGORIES = [
     MANUFACTURED_HOMES
 ]
 # Map UI display text to simple category code
+SFH_DESCRIPTION = "Single Family House"
+MFR_DESCRIPTION = "Multi Family Residence"
+ATC_DESCRIPTION = "Apartment, Townhouse, Condo, Row House"
+CP_DESCRIPTION = "Commercial Property"
+LAL_DESCRIPTION = "Lots and Land"
+MH_DESCRIPTION = "Manufactured Homes"
+OPC_DESCRIPTION = "Other Property Category"
 PROPERTY_CATEGORY_DESCRIPTIONS = {
-    SINGLE_FAMILY_HOUSE: "Single Family House",
-    MULTI_FAMILY_RESIDENCE: "Multi Family Residence",
-    APARTMENT_TOWNHOUSE: "Apartment, Townhouse, Condo, Row House",
-    COMMERCIAL_PROPERTY: "Commercial Property",
-    LOTS_AND_LAND: "Lots and Land",
-    MANUFACTURED_HOMES: "Manufactured Homes",
-    OTHER_PROPERTY_CATEGORY: "Other Property Category"
+    SINGLE_FAMILY_HOUSE: SFH_DESCRIPTION,
+    MULTI_FAMILY_RESIDENCE: MFR_DESCRIPTION,
+    APARTMENT_TOWNHOUSE: ATC_DESCRIPTION,
+    COMMERCIAL_PROPERTY: CP_DESCRIPTION,
+    LOTS_AND_LAND: LAL_DESCRIPTION,
+    MANUFACTURED_HOMES: MH_DESCRIPTION,
+    OTHER_PROPERTY_CATEGORY: OPC_DESCRIPTION
 }
 # Map these categories to values returned by Open NY property assessments API
 OPEN_NY_PROPERTY_CLASS_MAP = [
