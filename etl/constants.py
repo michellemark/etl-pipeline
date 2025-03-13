@@ -270,7 +270,7 @@ OPEN_NY_PROPERTY_CLASS_MAP = [
     {
         "property_class": 271,
         "property_class_description": "Multiple Mobile Homes",
-        "property_category": MANUFACTURED_HOMES
+        "property_category": OTHER_PROPERTY_CATEGORY
     },
     {
         "property_class": 280,
