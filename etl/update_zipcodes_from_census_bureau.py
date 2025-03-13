@@ -23,7 +23,6 @@ from etl.constants import US_CENSUS_BUREAU_CALLS_PER_PERIOD
 from etl.constants import WARNING_LOG_LEVEL
 from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
 from etl.db_utilities import download_database_from_s3
-from etl.db_utilities import download_zipcodes_cache_from_s3
 from etl.db_utilities import ensure_data_directories_exist
 from etl.db_utilities import execute_db_query
 from etl.db_utilities import upload_database_to_s3
@@ -31,52 +30,8 @@ from etl.db_utilities import upload_zipcodes_cache_to_s3
 from etl.log_utilities import custom_logger
 from etl.log_utilities import log_retry
 from etl.rate_limits import rate_per_minute
-
-
-def get_zipcodes_cache_as_json() -> dict | None:
-    """
-    Download zipcodes cache from S3 bucket to local path, and if successful,
-    return all values as a JSON dictionary, else empty dictionary.
-    """
-    zipcodes_cache = {}
-
-    try:
-        download_zipcodes_cache_from_s3()
-
-        if os.path.exists(ZIPCODE_CACHE_LOCAL_PATH):
-            custom_logger(INFO_LOG_LEVEL, "Loading zipcodes cache from S3 as JSON...")
-
-            with open(ZIPCODE_CACHE_LOCAL_PATH, "r") as zipcodes_file:
-                zipcodes_cache = json.load(zipcodes_file)
-
-    except (OSError, json.JSONDecodeError) as error:
-        custom_logger(WARNING_LOG_LEVEL, f"Error loading zipcodes cache: {error}")
-
-    return zipcodes_cache
-
-
-def update_property_zipcodes_in_db_from_cache(zipcodes_cache: Dict[str, str]) -> int:
-    """
-    Update properties table with ZIP codes from zipcodes cache for properties
-    where address_zip null or an empty string and return number of updated properties.
-
-    :param cache: dict - Mapping of property IDs to ZIP codes.
-    :return: int - Number of properties updated.
-    """
-    number_updated = 0
-    query = f"""
-    UPDATE {PROPERTIES_TABLE} 
-    SET address_zip = ?
-    WHERE id = ? 
-    """
-
-    for property_id, zipcode in zipcodes_cache.items():
-        rowcount = execute_db_query(query, (zipcode, property_id), fetch_results=False)
-
-        if rowcount:
-            number_updated += rowcount
-
-    return number_updated
+from etl.update_zipcodes_from_cache import get_zipcodes_cache_as_json
+from etl.update_zipcodes_from_cache import update_property_zipcodes_in_db_from_cache
 
 
 def get_csv_file_path() -> str:
@@ -321,19 +276,13 @@ def update_null_zipcodes_workflow():
         # Ensure any needed directories for generated files exist
         ensure_data_directories_exist()
 
-        # Get current zipcode cache from S3 or an empty dict
-        zipcode_cache = get_zipcodes_cache_as_json()
-
         try:
+            # Get current zipcode cache from S3 or an empty dict
+            zipcode_cache = get_zipcodes_cache_as_json()
 
-            if zipcode_cache:
-
-                # Update properties with missing zipcodes from zipcode cache, where possible
-                update_property_zipcodes_in_db_from_cache(zipcode_cache)
-                custom_logger(INFO_LOG_LEVEL, "Successfully updated zipcodes from cache.")
-
-            else:
-                custom_logger(INFO_LOG_LEVEL, "Failed to retrieve zipcode cache from S3, proceeding with empty cache.")
+            # Redundant, given also done at end of etl pipeline, but balanced by potential to save even one batch call
+            number_updated = update_property_zipcodes_in_db_from_cache(zipcode_cache)
+            custom_logger(INFO_LOG_LEVEL, f"Updated {number_updated} zipcodes from cache.")
 
             batch_file_paths = get_all_properties_needing_zipcodes_from_database_write_as_csv()
 

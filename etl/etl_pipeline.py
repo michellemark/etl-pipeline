@@ -14,6 +14,8 @@ from etl.open_ny_apis.property_assessments import fetch_property_assessments
 from etl.open_ny_apis.property_assessments import save_properties_and_assessments
 from etl.property_utilities import get_assessment_year_to_query
 from etl.property_utilities import get_open_ny_app_token
+from etl.update_zipcodes_from_cache import get_zipcodes_cache_as_json
+from etl.update_zipcodes_from_cache import update_property_zipcodes_in_db_from_cache
 
 
 def cny_real_estate_etl_workflow():
@@ -44,6 +46,14 @@ def cny_real_estate_etl_workflow():
             if onypa_results:
                 save_properties_and_assessments(onypa_results)
                 upload_database_to_s3()
+
+                # Get current zipcode cache from S3 or an empty dict
+                zipcode_cache = get_zipcodes_cache_as_json()
+
+                # Update any null zipcodes we can from zipcode cache
+                number_updated = update_property_zipcodes_in_db_from_cache(zipcode_cache)
+                custom_logger(INFO_LOG_LEVEL, f"Updated {number_updated} zipcodes from cache.")
+
 
         else:
             custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, database creation failed, ending ETL workflow.")
