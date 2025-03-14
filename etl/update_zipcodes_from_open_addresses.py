@@ -46,9 +46,13 @@ else:
         except ClientError as e:
             custom_logger(INFO_LOG_LEVEL,f"Failed to fetch file from S3: {e}")
         else:
-            geojson_data = json.loads(response['Body'].read().decode('utf-8'))
-            custom_logger(INFO_LOG_LEVEL,
-                          f"Successfully loaded {GEOJSON_FILE_NAME} into memory from S3 bucket '{S3_BUCKET_NAME}'.")
+
+            try:
+                geojson_data = json.loads(response['Body'].read().decode('utf-8'))
+            except json.JSONDecodeError as ex:
+                custom_logger(WARNING_LOG_LEVEL, f"JSON decoding failed: {ex}")
+            else:
+                custom_logger(INFO_LOG_LEVEL,f"Successfully loaded {GEOJSON_FILE_NAME} into memory from S3 bucket.")
 
     if geojson_data:
         custom_logger(INFO_LOG_LEVEL, f"Looking for zipcodes matching property records in GeoJSON data...")
@@ -93,7 +97,7 @@ else:
                 # Could be more efficient not keeping stats, should need arise.
                 # For now only finding 13536 matches, all new and I know that because of this code
                 current_value = zipcode_cache[prop_id] if prop_id in zipcode_cache else None
-                update_query = f"UPDATE {PROPERTIES_TABLE} SET address_zip = '{postcode}' WHERE id = '{prop_id}'"
+                update_query = f"UPDATE {PROPERTIES_TABLE} SET address_zip = ? WHERE id = ?"
 
                 # Keep some stats on change being made and update if needed
                 if current_value:  # Existing value present
@@ -105,11 +109,11 @@ else:
                         existing_value_matches += 1
                     else:
                         discrepancy_count += 1
-                        execute_db_query(update_query, fetch_results=False)
+                        execute_db_query(update_query, params=(postcode, prop_id), fetch_results=False)
                         zipcode_cache[prop_id] = postcode
                 else:
                     new_zipcodes_found += 1
-                    execute_db_query(update_query, fetch_results=False)
+                    execute_db_query(update_query, params=(postcode, prop_id), fetch_results=False)
                     zipcode_cache[prop_id] = postcode
 
         # Save updated zipcode cache to s3
