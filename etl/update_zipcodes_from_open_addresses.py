@@ -132,7 +132,7 @@ else:
         except ClientError as e:
             custom_logger(WARNING_LOG_LEVEL, f"Error uploading to S3: {e}")
 
-    custom_logger(INFO_LOG_LEVEL, f"Total number of matches: {count_matches}")
-    custom_logger(INFO_LOG_LEVEL, f"Total Existing ZIP matches: {existing_value_matches}")
-    custom_logger(INFO_LOG_LEVEL, f"Total ZIP discrepancies found: {discrepancy_count}")
-    custom_logger(INFO_LOG_LEVEL, f"Total new ZIP codes populated (previously empty): {new_zipcodes_found}")
+        custom_logger(INFO_LOG_LEVEL, f"Total number of matches: {count_matches}")
+        custom_logger(INFO_LOG_LEVEL, f"Total Existing ZIP matches: {existing_value_matches}")
+        custom_logger(INFO_LOG_LEVEL, f"Total ZIP discrepancies found: {discrepancy_count}")
+        custom_logger(INFO_LOG_LEVEL, f"Total new ZIP codes populated (previously empty): {new_zipcodes_found}")
