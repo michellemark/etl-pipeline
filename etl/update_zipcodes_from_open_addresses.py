@@ -1,7 +1,7 @@
 """
 Downloaded GeoJSON file of NY addresses from https://batch.openaddresses.io/job/554779#map=0/0/0
 Then filtered to only include addresses for a CNY county and saved it in a new JSON file.
-This was then manually saved to s3, as even filtered it is too large to check into the repo.
+This was then manually uploaded to s3, as even filtered it is too large to want to check into the repo.
 Sadly this only resulted in 13536 new zipcodes, but it's something more.
 """
 import json
