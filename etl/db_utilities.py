@@ -50,14 +50,14 @@ def create_database():
         custom_logger(ERROR_LOG_LEVEL, f"Error creating the database: {str(e)}")
 
 
-def insert_into_database(table_name: str, column_names: List[str], data: List[Tuple]) -> Tuple[int, int]:
+def insert_or_replace_into_database(table_name: str, column_names: List[str], data: List[Tuple]) -> Tuple[int, int]:
     """
     Insert records into a specified SQLite database table with row-by-row error handling.
     Note: uses REPLACE INTO instead of INSERT INTO to avoid duplicate key errors.  This
     will cause existing rows to be deleted and replaced with new data.
 
     Example Usage:
-        insert_into_database(
+        insert_or_replace_into_database(
             "properties",
             ["id", "swis_code", "print_key_code", "municipality_code"],
             [
@@ -105,10 +105,10 @@ def insert_into_database(table_name: str, column_names: List[str], data: List[Tu
                     )
                     rows_failed += 1
 
-        custom_logger(
-            INFO_LOG_LEVEL,
-            f"rows_inserted: {rows_inserted}, rows_failed: {rows_failed}"
-        )
+        # custom_logger(
+        #     INFO_LOG_LEVEL,
+        #     f"rows_inserted: {rows_inserted}, rows_failed: {rows_failed}"
+        # )
 
     except sqlite3.Error as ex:
         custom_logger(WARNING_LOG_LEVEL, f"Unexpected database error occurred: {ex}")

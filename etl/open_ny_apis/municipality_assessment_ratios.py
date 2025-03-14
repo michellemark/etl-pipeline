@@ -15,7 +15,7 @@ from etl.constants import OPEN_NY_CALLS_PER_PERIOD
 from etl.constants import RETRYABLE_ERRORS
 from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import execute_db_query
-from etl.db_utilities import insert_into_database
+from etl.db_utilities import insert_or_replace_into_database
 from etl.log_utilities import custom_logger
 from etl.log_utilities import log_retry
 from etl.rate_limits import rate_per_minute
@@ -132,7 +132,7 @@ def save_municipality_assessment_ratios(all_ratios: List[dict]):
                 column_names = list(ratio_data.keys())
 
     if validated_ratio_data:
-        rows_inserted, rows_failed = insert_into_database(ASSESSMENT_RATIOS_TABLE, column_names, validated_ratio_data)
+        rows_inserted, rows_failed = insert_or_replace_into_database(ASSESSMENT_RATIOS_TABLE, column_names, validated_ratio_data)
         custom_logger(
             INFO_LOG_LEVEL,
             f"Completed saving {len(validated_ratio_data)} valid municipality assessment ratios to database rows_inserted: {rows_inserted}, rows_failed: {rows_failed}.")

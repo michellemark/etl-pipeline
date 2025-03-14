@@ -193,7 +193,7 @@ def test_save_all_valid_ratios():
         }
     ]
 
-    with patch("etl.open_ny_apis.municipality_assessment_ratios.insert_into_database") as mock_db, \
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.insert_or_replace_into_database") as mock_db, \
         patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_logger:
         mock_db.return_value = (2, 0)
 
@@ -238,7 +238,7 @@ def test_save_some_invalid_ratios():
         }
     ]
 
-    with patch("etl.open_ny_apis.municipality_assessment_ratios.insert_into_database") as mock_db, \
+    with patch("etl.open_ny_apis.municipality_assessment_ratios.insert_or_replace_into_database") as mock_db, \
         patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_logger:
 
         mock_db.return_value = (1, 0)
@@ -271,7 +271,7 @@ def test_save_some_invalid_ratios():
 def test_save_none_ratios():
     """Test case for empty municipality ratios."""
     with patch("etl.open_ny_apis.municipality_assessment_ratios.custom_logger") as mock_logger, \
-        patch("etl.open_ny_apis.municipality_assessment_ratios.insert_into_database") as mock_db:
+        patch("etl.open_ny_apis.municipality_assessment_ratios.insert_or_replace_into_database") as mock_db:
 
         save_municipality_assessment_ratios([])
 

@@ -19,7 +19,7 @@ from etl.constants import PROPERTIES_TABLE
 from etl.constants import RETRYABLE_ERRORS
 from etl.constants import WARNING_LOG_LEVEL
 from etl.db_utilities import execute_db_query
-from etl.db_utilities import insert_into_database
+from etl.db_utilities import insert_or_replace_into_database
 from etl.log_utilities import custom_logger
 from etl.log_utilities import log_retry
 from etl.property_utilities import get_ny_property_classes_for_where_clause
@@ -141,7 +141,7 @@ def save_properties_and_assessments(all_properties: List[dict]) -> int:
     # Insert into two related tables
     if validated_properties_data and validated_ny_property_assessment_data:
         # Save to properties table
-        rows_inserted, rows_failed = insert_into_database(
+        rows_inserted, rows_failed = insert_or_replace_into_database(
             PROPERTIES_TABLE,
             properties_column_names,
             validated_properties_data)
@@ -151,7 +151,7 @@ def save_properties_and_assessments(all_properties: List[dict]) -> int:
             f"Completed saving {len(validated_properties_data)} valid properties rows_inserted: {rows_inserted}, rows_failed: {rows_failed}.")
 
         # Save to ny_property_assessments for related properties
-        rows_inserted, rows_failed = insert_into_database(
+        rows_inserted, rows_failed = insert_or_replace_into_database(
             NY_PROPERTY_ASSESSMENTS_TABLE,
             ny_property_assessment_column_names,
             validated_ny_property_assessment_data)

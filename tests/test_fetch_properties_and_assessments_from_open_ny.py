@@ -220,7 +220,7 @@ def test_open_ny_apis_fetch_property_assessments_where_clause_construction(mock_
 
 
 @patch("etl.open_ny_apis.property_assessments.NYPropertyAssessment")
-@patch("etl.open_ny_apis.property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.property_assessments.insert_or_replace_into_database")
 @patch("etl.open_ny_apis.property_assessments.custom_logger")
 def test_save_properties_and_assessments_successful_validation_and_insertion(mock_logger, mock_insert_db, mock_model):
     """Test when all properties are valid and inserted successfully."""
@@ -251,7 +251,7 @@ def test_save_properties_and_assessments_successful_validation_and_insertion(moc
 
 
 @patch("etl.open_ny_apis.property_assessments.NYPropertyAssessment")
-@patch("etl.open_ny_apis.property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.property_assessments.insert_or_replace_into_database")
 @patch("etl.open_ny_apis.property_assessments.custom_logger")
 def test_save_properties_and_assessments_partial_validation_failure(mock_logger, mock_insert_db, mock_model):
     """Test partial validation failure, where some properties are invalid."""
@@ -291,7 +291,7 @@ def test_save_properties_and_assessments_partial_validation_failure(mock_logger,
 
 
 @patch("etl.open_ny_apis.property_assessments.NYPropertyAssessment")
-@patch("etl.open_ny_apis.property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.property_assessments.insert_or_replace_into_database")
 @patch("etl.open_ny_apis.property_assessments.custom_logger")
 def test_save_properties_and_assessments_all_validation_failures(mock_logger, mock_insert_db, mock_model):
     """Test when all properties fail validation."""
@@ -314,7 +314,7 @@ def test_save_properties_and_assessments_all_validation_failures(mock_logger, mo
 
 
 @patch("etl.open_ny_apis.property_assessments.NYPropertyAssessment")
-@patch("etl.open_ny_apis.property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.property_assessments.insert_or_replace_into_database")
 @patch("etl.open_ny_apis.property_assessments.custom_logger")
 def test_save_properties_and_assessments_empty_input_list(mock_logger, mock_insert_db, mock_model):
     """Test when the input list is empty."""
@@ -326,7 +326,7 @@ def test_save_properties_and_assessments_empty_input_list(mock_logger, mock_inse
 
 
 @patch("etl.open_ny_apis.property_assessments.NYPropertyAssessment")
-@patch("etl.open_ny_apis.property_assessments.insert_into_database")
+@patch("etl.open_ny_apis.property_assessments.insert_or_replace_into_database")
 @patch("etl.open_ny_apis.property_assessments.custom_logger")
 def test_save_properties_and_assessments_database_failure_handling(mock_logger, mock_insert_db, mock_model):
     """Test when database insertion fails."""
