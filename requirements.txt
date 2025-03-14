@@ -1,6 +1,7 @@
 backoff
 boto3
 coverage
+ijson
 limits
 pydantic
 pytest

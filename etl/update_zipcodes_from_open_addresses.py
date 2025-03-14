@@ -7,6 +7,7 @@ Sadly this only resulted in 13536 new zipcodes, but it's something more.
 import json
 import os
 
+import ijson
 from botocore.exceptions import ClientError
 
 from etl.constants import DB_LOCAL_PATH
@@ -40,21 +41,6 @@ else:
     s3_client = get_s3_client()
 
     if s3_client:
-
-        try:
-            response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=GEOJSON_FILE_NAME)
-        except ClientError as e:
-            custom_logger(INFO_LOG_LEVEL,f"Failed to fetch file from S3: {e}")
-        else:
-
-            try:
-                geojson_data = json.loads(response['Body'].read().decode('utf-8'))
-            except json.JSONDecodeError as ex:
-                custom_logger(WARNING_LOG_LEVEL, f"JSON decoding failed: {ex}")
-            else:
-                custom_logger(INFO_LOG_LEVEL,f"Successfully loaded {GEOJSON_FILE_NAME} into memory from S3 bucket.")
-
-    if geojson_data:
         custom_logger(INFO_LOG_LEVEL, f"Looking for zipcodes matching property records in GeoJSON data...")
 
         # Fetch address_street and municipality_name from properties
@@ -68,51 +54,36 @@ else:
         }
 
         count_matches = 0
-        existing_value_matches = 0
-        discrepancy_count = 0
-        new_zipcodes_found = 0
 
-        # Each line is a JSON object but not the whole file
-        for entry in geojson_data:
-            props = entry.get('properties', {})
-            street_number = props.get('number', '').strip()
-            street_name = props.get('street', '').strip()
-            city = props.get('city', '').strip().lower()
-            postcode = props.get('postcode', '').strip()
+        try:
+            response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=GEOJSON_FILE_NAME)
+        except ClientError as e:
+            custom_logger(INFO_LOG_LEVEL,f"Failed to fetch file from S3: {e}")
+        else:
 
-            if not street_number or not street_name or not city or not postcode:
-                # Skip incomplete records
-                continue
+            # "response['Body']" is a streaming object, compatible directly with ijson
+            # Save memory by not loading this large file all at once
+            geojson_data = ijson.items(response['Body'], 'item')
 
-            full_geojson_street = f"{street_number} {street_name}".lower()
-            prop_key = (full_geojson_street, city)
+            for entry in geojson_data:
+                props = entry.get('properties', {})
+                street_number = props.get('number', '').strip()
+                street_name = props.get('street', '').strip()
+                city = props.get('city', '').strip().lower()
+                postcode = props.get('postcode', '').strip()
 
-            if prop_key in properties_dict:
-                prop_id = properties_dict[prop_key]
-                count_matches += 1
-                custom_logger(
-                    INFO_LOG_LEVEL,
-                    f"Matched property {prop_id} with zipcode {postcode}")
+                if not street_number or not street_name or not city or not postcode:
+                    # Skip incomplete records
+                    continue
 
-                # Could be more efficient not keeping stats, should need arise.
-                # For now only finding 13536 matches, all new and I know that because of this code
-                current_value = zipcode_cache[prop_id] if prop_id in zipcode_cache else None
-                update_query = f"UPDATE {PROPERTIES_TABLE} SET address_zip = ? WHERE id = ?"
+                full_geojson_street = f"{street_number} {street_name}".lower()
+                prop_key = (full_geojson_street, city)
 
-                # Keep some stats on change being made and update if needed
-                if current_value:  # Existing value present
-                    custom_logger(
-                        INFO_LOG_LEVEL,
-                        f"Existing ZIP: {current_value}, Newly Found ZIP: {postcode}")
-
-                    if current_value == postcode:
-                        existing_value_matches += 1
-                    else:
-                        discrepancy_count += 1
-                        execute_db_query(update_query, params=(postcode, prop_id), fetch_results=False)
-                        zipcode_cache[prop_id] = postcode
-                else:
-                    new_zipcodes_found += 1
+                if prop_key in properties_dict:
+                    prop_id = properties_dict[prop_key]
+                    count_matches += 1
+                    custom_logger(INFO_LOG_LEVEL,f"Matched property {prop_id} with geo zipcode {postcode}")
+                    update_query = f"UPDATE {PROPERTIES_TABLE} SET address_zip = ? WHERE id = ?"
                     execute_db_query(update_query, params=(postcode, prop_id), fetch_results=False)
                     zipcode_cache[prop_id] = postcode
 
@@ -128,6 +99,3 @@ else:
             custom_logger(WARNING_LOG_LEVEL, f"Error uploading to S3: {e}")
 
         custom_logger(INFO_LOG_LEVEL, f"Total number of matches: {count_matches}")
-        custom_logger(INFO_LOG_LEVEL, f"Total Existing ZIP matches: {existing_value_matches}")
-        custom_logger(INFO_LOG_LEVEL, f"Total ZIP discrepancies found: {discrepancy_count}")
-        custom_logger(INFO_LOG_LEVEL, f"Total new ZIP codes populated (previously empty): {new_zipcodes_found}")
