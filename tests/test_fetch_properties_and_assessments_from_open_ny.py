@@ -115,9 +115,10 @@ def test_fetch_property_assessments_page_empty_response(mock_custom_logger, mock
 @patch("etl.open_ny_apis.property_assessments.fetch_property_assessments_page")
 @patch("etl.open_ny_apis.property_assessments.check_if_property_assessments_exist")
 @patch("etl.open_ny_apis.property_assessments.get_ny_property_classes_for_where_clause")
+@patch("etl.open_ny_apis.property_assessments.save_properties_and_assessments")
 @patch("etl.open_ny_apis.property_assessments.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
 def test_open_ny_apis_fetch_property_assessments_success_returns_all(
-    mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
+    mock_county_list, mock_save, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test successful fetching for all counties."""
     mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
     mock_check_if_exist.return_value = False
@@ -129,6 +130,7 @@ def test_open_ny_apis_fetch_property_assessments_success_returns_all(
         [{"key": "property4"}],  # County2 page 2
         []  # County2 no more data
     ]
+    mock_save.return_value = 2
     app_token = "fake_token"
     query_year = 2024
 
@@ -141,16 +143,17 @@ def test_open_ny_apis_fetch_property_assessments_success_returns_all(
     mock_check_if_exist.assert_any_call(query_year, "County1")
     mock_check_if_exist.assert_any_call(query_year, "County2")
     assert mock_fetch_page.call_count == 6
-    assert result == [{"key": "property1"}, {"key": "property2"}, {"key": "property3"}, {"key": "property4"}]
+    assert result == 8
 
 
 @patch("etl.open_ny_apis.property_assessments.custom_logger")
 @patch("etl.open_ny_apis.property_assessments.fetch_property_assessments_page")
 @patch("etl.open_ny_apis.property_assessments.check_if_property_assessments_exist")
 @patch("etl.open_ny_apis.property_assessments.get_ny_property_classes_for_where_clause")
+@patch("etl.open_ny_apis.property_assessments.save_properties_and_assessments")
 @patch("etl.open_ny_apis.property_assessments.CNY_COUNTY_LIST", new_callable=lambda: ["County1", "County2"])
 def test_open_ny_apis_fetch_property_assessments_skip_counties_with_existing_data(
-    mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
+    mock_county_list, mock_save, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test that counties with existing data are skipped."""
     mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
 
@@ -160,6 +163,7 @@ def test_open_ny_apis_fetch_property_assessments_skip_counties_with_existing_dat
         [{"key": "property_from_county2"}],
         []
     ]
+    mock_save.return_value = 1
     app_token = "fake_token"
     query_year = 2024
 
@@ -171,16 +175,17 @@ def test_open_ny_apis_fetch_property_assessments_skip_counties_with_existing_dat
     )
     # Skipped County1; only fetched for County2
     assert mock_fetch_page.call_count == 2
-    assert result == [{"key": "property_from_county2"}]
+    assert result == 1
 
 
 @patch("etl.open_ny_apis.property_assessments.custom_logger")
 @patch("etl.open_ny_apis.property_assessments.fetch_property_assessments_page")
 @patch("etl.open_ny_apis.property_assessments.check_if_property_assessments_exist")
 @patch("etl.open_ny_apis.property_assessments.get_ny_property_classes_for_where_clause")
+@patch("etl.open_ny_apis.property_assessments.save_properties_and_assessments")
 @patch("etl.open_ny_apis.property_assessments.CNY_COUNTY_LIST", new_callable=lambda: ["County1"])
 def test_open_ny_apis_fetch_property_assessments_empty_responses_end_fetching(
-    mock_county_list, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
+    mock_county_list, mock_save, mock_get_property_classes, mock_check_if_exist, mock_fetch_page, mock_logger):
     """Test function handles None API responses gracefully."""
     mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
     mock_check_if_exist.return_value = False
@@ -188,13 +193,14 @@ def test_open_ny_apis_fetch_property_assessments_empty_responses_end_fetching(
         [{"key": "property1"}],
         None
     ]
+    mock_save.return_value = 1
     app_token = "fake_token"
     query_year = 2024
 
     result = fetch_property_assessments(app_token, query_year)
 
     assert mock_fetch_page.call_count == 2
-    assert result == [{"key": "property1"}]
+    assert result == 1
 
 
 @patch("etl.open_ny_apis.property_assessments.custom_logger")
