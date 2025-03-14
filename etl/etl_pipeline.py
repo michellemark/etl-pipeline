@@ -41,12 +41,9 @@ def cny_real_estate_etl_workflow():
             if mar_results:
                 save_municipality_assessment_ratios(mar_results)
 
-            onypa_results = fetch_property_assessments(app_token=open_ny_token, query_year=query_year)
+            num_prop_found = fetch_property_assessments(app_token=open_ny_token, query_year=query_year)
 
-            if onypa_results:
-                save_properties_and_assessments(onypa_results)
-                upload_database_to_s3()
-
+            if num_prop_found:
                 # Get current zipcode cache from S3 or an empty dict
                 zipcode_cache = get_zipcodes_cache_as_json()
 
@@ -54,6 +51,8 @@ def cny_real_estate_etl_workflow():
                 number_updated = update_property_zipcodes_in_db_from_cache(zipcode_cache)
                 custom_logger(INFO_LOG_LEVEL, f"Updated {number_updated} zipcodes from cache.")
 
+            if mar_results or num_prop_found:
+                upload_database_to_s3()
 
         else:
             custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, database creation failed, ending ETL workflow.")
