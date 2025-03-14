@@ -17,9 +17,12 @@ from etl.constants import PROPERTIES_TABLE
 from etl.constants import S3_BUCKET_NAME
 from etl.constants import WARNING_LOG_LEVEL
 from etl.constants import ZIPCODE_CACHE_KEY
+from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
 from etl.db_utilities import download_database_from_s3
 from etl.db_utilities import execute_db_query
 from etl.db_utilities import get_s3_client
+from etl.db_utilities import upload_database_to_s3
+from etl.db_utilities import upload_zipcodes_cache_to_s3
 from etl.log_utilities import custom_logger
 from etl.update_zipcodes_from_cache import get_zipcodes_cache_as_json
 
@@ -54,15 +57,18 @@ else:
         }
 
         count_matches = 0
+        existing_value_matches = 0
+        discrepancy_count = 0
+        new_zipcodes_found = 0
 
         try:
             response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=GEOJSON_FILE_NAME)
         except ClientError as e:
-            custom_logger(INFO_LOG_LEVEL,f"Failed to fetch file from S3: {e}")
+            custom_logger(INFO_LOG_LEVEL, f"Failed to fetch file from S3: {e}")
         else:
 
-            # "response['Body']" is a streaming object, compatible directly with ijson
-            # Save memory by not loading this large file all at once
+            # "response['Body']" is a streaming object, compatible with ijson
+            # Save memory by not loading this large file all at once but streaming it
             geojson_data = ijson.items(response['Body'], 'item')
 
             for entry in geojson_data:
@@ -82,20 +88,45 @@ else:
                 if prop_key in properties_dict:
                     prop_id = properties_dict[prop_key]
                     count_matches += 1
-                    custom_logger(INFO_LOG_LEVEL,f"Matched property {prop_id} with geo zipcode {postcode}")
-                    update_query = f"UPDATE {PROPERTIES_TABLE} SET address_zip = ? WHERE id = ?"
+                    current_value = zipcode_cache.get(prop_id)
+
+                    if current_value:
+                        if current_value == postcode:
+                            existing_value_matches += 1
+
+                            # Zipcode already known, save the update query
+                            continue
+                        else:
+                            custom_logger(
+                                INFO_LOG_LEVEL,
+                                f"Matched property {prop_id} has discrepancy with existing zipcode {current_value}, updating to {postcode}.")
+                            discrepancy_count += 1
+                    else:
+                        custom_logger(INFO_LOG_LEVEL, f"Updating property {prop_id} with geo zipcode {postcode}")
+                        new_zipcodes_found += 1
+
+                    update_query = f"""
+                    UPDATE {PROPERTIES_TABLE} 
+                    SET address_zip = ?
+                    WHERE id = ?
+                    """
+                    print(f"Query Params: postcode={postcode}, prop_id={prop_id}")
                     execute_db_query(update_query, params=(postcode, prop_id), fetch_results=False)
                     zipcode_cache[prop_id] = postcode
 
-        # Save updated zipcode cache to s3
+        # Update zipcode cache and upload this and updated database to s3
         try:
-            s3_client.put_object(
-                Bucket=S3_BUCKET_NAME,
-                Key=ZIPCODE_CACHE_KEY,
-                Body=json.dumps(zipcode_cache, indent=4).encode('utf-8'),
-                ContentType='application/json'
-            )
-        except ClientError as e:
-            custom_logger(WARNING_LOG_LEVEL, f"Error uploading to S3: {e}")
+
+            with open(ZIPCODE_CACHE_LOCAL_PATH, "w") as cache_file:
+                json.dump(zipcode_cache, cache_file, indent=4)
+
+        except Exception as error:
+            custom_logger(WARNING_LOG_LEVEL, f"Error saving or uploading zipcodes cache: {error}")
+        else:
+            upload_zipcodes_cache_to_s3()
+            upload_database_to_s3()
 
         custom_logger(INFO_LOG_LEVEL, f"Total number of matches: {count_matches}")
+        custom_logger(INFO_LOG_LEVEL, f"Existing zipcodes matched and so not updated: {existing_value_matches}")
+        custom_logger(INFO_LOG_LEVEL, f"Discrepancies with existing zipcodes updated: {discrepancy_count}")
+        custom_logger(INFO_LOG_LEVEL, f"New zipcodes added: {new_zipcodes_found}")
