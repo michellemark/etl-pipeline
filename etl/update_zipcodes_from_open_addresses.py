@@ -1,8 +1,8 @@
 """
 Downloaded GeoJSON file of NY addresses from https://batch.openaddresses.io/job/554779#map=0/0/0
-Then filtered to only include addresses for a CNY county and saved it in a new JSON file.
+Then filtered to only include addresses for a CNY county, removed duplicates and saved it in a new JSON file.
 This was then manually uploaded to s3, as even filtered it is too large to want to check into the repo.
-Sadly this only resulted in 13536 new zipcodes, but it's something more.
+Sadly this only resulted in 12899 new zipcodes, but it's something more.
 """
 import json
 import os
@@ -16,7 +16,6 @@ from etl.constants import INFO_LOG_LEVEL
 from etl.constants import PROPERTIES_TABLE
 from etl.constants import S3_BUCKET_NAME
 from etl.constants import WARNING_LOG_LEVEL
-from etl.constants import ZIPCODE_CACHE_KEY
 from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
 from etl.db_utilities import download_database_from_s3
 from etl.db_utilities import execute_db_query
@@ -110,7 +109,6 @@ else:
                     SET address_zip = ?
                     WHERE id = ?
                     """
-                    print(f"Query Params: postcode={postcode}, prop_id={prop_id}")
                     execute_db_query(update_query, params=(postcode, prop_id), fetch_results=False)
                     zipcode_cache[prop_id] = postcode
 
