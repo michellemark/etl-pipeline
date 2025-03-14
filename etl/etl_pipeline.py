@@ -11,7 +11,6 @@ from etl.log_utilities import custom_logger
 from etl.open_ny_apis.municipality_assessment_ratios import fetch_municipality_assessment_ratios
 from etl.open_ny_apis.municipality_assessment_ratios import save_municipality_assessment_ratios
 from etl.open_ny_apis.property_assessments import fetch_property_assessments
-from etl.open_ny_apis.property_assessments import save_properties_and_assessments
 from etl.property_utilities import get_assessment_year_to_query
 from etl.property_utilities import get_open_ny_app_token
 from etl.update_zipcodes_from_cache import get_zipcodes_cache_as_json
@@ -61,7 +60,7 @@ def cny_real_estate_etl_workflow():
         custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, unable to get Open NY app token, ending ETL workflow.")
 
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     start_time = datetime.now()
     custom_logger(INFO_LOG_LEVEL, f"Starting ETL workflow at {start_time:%Y-%m-%d %H:%M:%S}")
     cny_real_estate_etl_workflow()
