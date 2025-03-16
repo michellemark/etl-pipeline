@@ -102,16 +102,22 @@ better budget something like Google's Geocoder API, for example, could fill in a
 the user interface I will be building will not be able to filter by zipcodes due to this issue.
 
 ## Development
-This repository has been developed using Python 3.12.  
-To install all required modules in your Python 3.12 virtual environment run command:
+This repository has been developed using Python 3.12, pyenv and poetry.
+
+- https://github.com/pyenv/pyenv
+- https://python-poetry.org/docs/
+
+
+Example installation, presuming pyenv with python 3.12.8 is installed and poetry is installed:
 ```
-pip install -r requirements.txt
+poetry install --with dev
 ```
 
 ### Unit Tests
 
 Unit testing has been set up using pytest and tox and should be run with the command
 ```
+poetry shell
 tox
 ```
 
@@ -119,7 +125,10 @@ tox
 
 To run the workflow locally:
 
-- Activate your python 3.12 venv with `requirements.txt` installed
+- Activate python virtualenv
+```
+poetry shell
+```
 - Set needed environment variables:
 ``` python
 AWS_ACCESS_KEY_ID # For an AWS user with permissions on your desired s3 bucket to use
