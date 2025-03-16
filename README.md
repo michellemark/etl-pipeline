@@ -179,7 +179,7 @@ export AWS_REGION="dummy"
 export OPEN_DATA_APP_TOKEN="<your-open-data-token>"
 ```
 
-### Running Workflows
+### Running Workflows Locally
 
 Run ETL workflow
 
@@ -192,3 +192,16 @@ Then, only after ETL completes successfully, run update zip codes workflow separ
 ```shell
 python -m etl.update_property_zipcodes
 ```
+
+# Deployment
+
+This app is intended to either be run locally or run using GitHub actions, and therefore 
+requires no deployment.  To run in GitHub actions requires being logged in as the 
+repository owner, and manually visting the repository, going to the Actions tab,
+clicking the workflow you wish to run and clicking Run Workflow.
+
+The main ETL Workflow offers a checkbox to flag the system to `FORCE_REFRESH`.  If 
+selected all data will be replaced in the database, causing all API calls to 
+happen again.  Without the FORCE_REFRESH option if the database already exists in 
+s3 it will skip pulling property assessment data for counties that already have 
+records in the properties table for the roll year.
