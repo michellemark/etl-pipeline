@@ -15,7 +15,7 @@ analytics in a user-friendly interface that provides graphs for visualization an
 
 Options to filter data in UI will include at least:
 1. Property type, (ie: single family vs multifamily, etc.)
-2. Zip code
+2. ~~Zip code~~
 3. School district
 
 So data for all these filters needs to be gathered for every property here.
@@ -28,9 +28,9 @@ After each ETL pipeline run new data is available to the user interface.
 
 Optionally, make the app available publicly with no ongoing cost.
 
-## Implementation Choices Made
+### Implementation Choices Made
 
-## Open NY APIs
+#### Open NY APIs
 
 New York State makes a wide variety of data available to the public via APIs, including 
 the property assessment data we will use for the main bulk of the data imported by this
@@ -46,9 +46,7 @@ To get an app token, so you can run this yourself, simply:
 - [Sign up for a free Socrata account](https://support.socrata.com/hc/en-us/articles/115004055807-How-to-Sign-Up-for-a-Tyler-Data-Insights-ID)
 - [Create a free app token](https://support.socrata.com/hc/en-us/articles/210138558-Generating-App-Tokens-and-API-Keys)
 
-
-
-### What NY counties will make up CNY for purposes of this project?
+#### What NY counties will make up CNY for purposes of this project?
 
 The [Central New York Regional Planning & Development Board](https://www.cnyrpdb.org/region.asp) defines Central New York as
 
@@ -58,7 +56,7 @@ The [Central New York Regional Planning & Development Board](https://www.cnyrpdb
 - Onondaga
 - Oswego
 
-### GitHub Actions
+#### GitHub Actions
 
 GitHub Actions usage is free for standard GitHub-hosted runners in public repositories, such as this.  
 The pipeline is designed to be run in GitHub actions free runners, where it can be executed for 
@@ -67,8 +65,7 @@ free runners, [but could easily be scheduled](https://docs.github.com/en/actions
 a better budget this code could really be run most places, in fact, and could easily become a 
 fully automated pipeline.
 
-
-### AWS Data Storage
+#### AWS Data Storage
 
 The generated SQLite database is stored in an AWS s3 bucket for a trivially small ongoing cost.
 Database estimated to stay below 250Mb in size, so an estimate of ongoing costs would be:
@@ -82,8 +79,7 @@ Database estimated to stay below 250Mb in size, so an estimate of ongoing costs 
     0.2441 * 0.023 ≈ 0.0056 per month (about half of a cent)
     0.0056 * 12 ≈ 0.07 cents per year
 
-
-## Zipcode Update Limitations Found
+#### Zipcode Update Limitations Found
 
 The Open NY property assessment data only returns the zipcode for the mailing address of the property 
 owner.  However, it is very common that the owner of the property does not live at the address of the 
