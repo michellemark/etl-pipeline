@@ -97,6 +97,14 @@ There are other services that would be better for gathering zipcode information,
 better budget something like Google's Geocoder API, for example, could fill in all those data gaps. For now 
 the user interface I will be building will not be able to filter by zipcodes due to this issue.
 
+Another attempt was made to get zipcodes from Open Addresses. A GeoJSON file was downloaded with all 
+Open Addresses data available for NY State from [here](https://batch.openaddresses.io/job/559314#map=0/0/0)
+The GeoJSON file was enormous, so I wrote a small script to pull out only data for the CNY counties 
+this project focuses on and remove obvious duplicates and wrote it to a new json file. The result was 
+still too large to check into the repository, so I added it manually to s3 and wrote a workflow to 
+update zipcodes from this data. Unfortunately, this only yielded about 13,000 updated zipcodes in
+the database, and the workflow is not truly repeatable for anyone not having access to my file in s3.
+
 ## Development
 
 This repository uses Python 3.12, managed by [pyenv](https://github.com/pyenv/pyenv) and dependencies managed
