@@ -104,12 +104,12 @@ the user interface I will be building will not be able to filter by zipcodes due
 ## Development
 
 This repository uses Python 3.12, managed by [pyenv](https://github.com/pyenv/pyenv) and dependencies managed
-with [Poetry](https://python-poetry.org).
+with [Poetry](https://python-poetry.org/docs/).
 
 Before you start, make sure you have:
 
 - `pyenv` installed and Python version 3.12.8 set as the current global or local Python version.
-- [Poetry](https://python-poetry.org/docs/) installed for dependency management.
+- `poetry` installed for dependency management.
 
 To install dependencies using Poetry (including dev dependencies):
 
