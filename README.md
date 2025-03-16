@@ -1,9 +1,13 @@
-# Capstone Project
+# ETL Pipeline
+
+- Part of 2 part capstone project
 - Author: Michelle Mark
 - For: Bachelors of Science in Computer Science, SUNY Poly
 - Copyright: All rights reserved, 2025
 
-## Central New York Real Estate Trends and Analytics App
+## ETL Pipeline Overview 
+
+### Gather Data For Central New York Real Estate Analytics App
 
 ### Goal 1:
 The purpose of this repository is to produce an **E**xtract **T**ransform **L**oad (ETL) 
