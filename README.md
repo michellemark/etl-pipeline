@@ -14,7 +14,8 @@ The purpose of this repository is to produce an **E**xtract **T**ransform **L**o
 pipeline to pull in available free data on real estate in the Central New York area.  Clean and 
 normalize the data into an SQLite database and upload it into cloud storage.  
 
-Another repository will focus on downloading the data from cloud storage and presenting 
+[Another repository](https://github.com/michellemark/central-ny-realestate-trends-dashboard) will 
+focus on downloading the data from cloud storage and presenting 
 analytics in a user-friendly interface that provides graphs for visualization and filtering.
 
 Options to filter data in UI will include at least:
