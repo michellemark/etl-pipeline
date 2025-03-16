@@ -15,8 +15,8 @@ analytics in a user-friendly interface that provides graphs for visualization an
 
 Options to filter data in UI will include at least:
 1. Property type, (ie: single family vs multifamily, etc.)
-2. ~~Zip code~~
-3. School district
+2. School district
+3. ~~Zip code~~ (see [Zipcode Update Limitations Found](#zipcode-update-limitations-found))
 
 So data for all these filters needs to be gathered for every property here.
 
