@@ -102,50 +102,84 @@ better budget something like Google's Geocoder API, for example, could fill in a
 the user interface I will be building will not be able to filter by zipcodes due to this issue.
 
 ## Development
-This repository has been developed using Python 3.12, pyenv and poetry.
 
-- https://github.com/pyenv/pyenv
-- https://python-poetry.org/docs/
+This repository uses Python 3.12, managed by [pyenv](https://github.com/pyenv/pyenv) and dependencies managed
+with [Poetry](https://python-poetry.org).
 
+Before you start, make sure you have:
 
-Example installation, presuming pyenv with python 3.12.8 is installed and poetry is installed:
-```
+- `pyenv` installed and Python version 3.12.8 set as the current global or local Python version.
+- [Poetry](https://python-poetry.org/docs/) installed for dependency management.
+
+To install dependencies using Poetry (including dev dependencies):
+
+```shell
 poetry install --with dev
 ```
 
-### Unit Tests
+### Activating Virtual Environment
 
-Unit testing has been set up using pytest and tox and should be run with the command
+To activate the virtual environment managed by Poetry, run the following command (recommended):
+
+```shell
+poetry shell
 ```
+
+Alternatively, you can run individual commands without activating the shell explicitly:
+
+```shell
+poetry run <command>
+```
+
+### Running Unit Tests
+
+Unit testing is configured with `pytest` and `tox`. Simply activate the environment and run tests using:
+```shell
 poetry shell
 tox
 ```
 
-### Local development:
+Alternatively, directly via poetry (without activating the environment explicitly)
+```shell
+poetry run tox
+```
 
-To run the workflow locally:
+### Local Development
 
-- Activate python virtualenv
-```
-poetry shell
-```
-- Set needed environment variables:
-``` python
-AWS_ACCESS_KEY_ID # For an AWS user with permissions on your desired s3 bucket to use
-AWS_SECRET_ACCESS_KEY # For an AWS user with permissions on your desired s3 bucket to use
-AWS_REGION # Region the s3 bucket you wish to use is located in
-OPEN_DATA_APP_TOKEN # Your free app token for Open NY API access
-```
-Note: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_REGION must be set, but if you 
-do not care about backing up the database to AWS and just want to run this locally you can
-set these with dummy values and see a local database generated.
+#### Set required environment variables:
 
-Then run the ETL workflow with:
+- `AWS_ACCESS_KEY_ID`: AWS user credentials with permission on the targeted S3 bucket
+- `AWS_SECRET_ACCESS_KEY`: associated AWS secret key
+- `AWS_REGION`: AWS region where your S3 bucket resides.
+- `OPEN_DATA_APP_TOKEN`: API key/token for accessing Open NY APIs
+
+```shell
+export AWS_ACCESS_KEY_ID="<your-access-key>"
+export AWS_SECRET_ACCESS_KEY="<your-secret-access-key>"
+export AWS_REGION="<your-region>"
+export OPEN_DATA_APP_TOKEN="<your-open-data-token>"
 ```
+
+**Note:**
+If not interested in uploading to AWS you may safely use dummy values, but Open NY API token still needs a
+real value
+```shell
+export AWS_ACCESS_KEY_ID="dummy"
+export AWS_SECRET_ACCESS_KEY="dummy"
+export AWS_REGION="dummy"
+export OPEN_DATA_APP_TOKEN="<your-open-data-token>"
+```
+
+### Running Workflows
+
+Run ETL workflow
+
+```shell
 python -m etl.etl_pipeline
 ```
-     
-To run the follow-up workflow, to update zipcodes, which is designed to not be run until after the ETL workflow has completed, run:
-```
+
+Then, only after ETL completes successfully, run update zip codes workflow separately:
+
+```shell
 python -m etl.update_property_zipcodes
 ```
