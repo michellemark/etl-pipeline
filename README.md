@@ -126,7 +126,7 @@ poetry install --with dev
 To activate the virtual environment managed by Poetry, run the following command (recommended):
 
 ```shell
-poetry shell
+poetry env activate
 ```
 
 Alternatively, you can run individual commands without activating the shell explicitly:
@@ -139,7 +139,7 @@ poetry run <command>
 
 Unit testing is configured with `pytest` and `tox`. Simply activate the environment and run tests using:
 ```shell
-poetry shell
+poetry env activate
 tox
 ```
 
