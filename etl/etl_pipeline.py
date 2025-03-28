@@ -15,6 +15,7 @@ from etl.property_utilities import get_assessment_year_to_query
 from etl.property_utilities import get_open_ny_app_token
 from etl.update_zipcodes_from_cache import get_zipcodes_cache_as_json
 from etl.update_zipcodes_from_cache import update_property_zipcodes_in_db_from_cache
+from etl.zillow_datasets.zillow_datasets import get_free_zillow_zhvi_sfh
 
 
 def cny_real_estate_etl_workflow():
@@ -28,9 +29,8 @@ def cny_real_estate_etl_workflow():
         # First see if we already have a database in s3 to add updated data to
         download_database_from_s3()
 
-        # If we do not have a database file now then make one
-        if not os.path.exists(DB_LOCAL_PATH):
-            create_database()
+        # Will have no effect on tables and indexes that already exist
+        create_database()
 
         if os.path.exists(DB_LOCAL_PATH):
 
@@ -50,8 +50,11 @@ def cny_real_estate_etl_workflow():
                 number_updated = update_property_zipcodes_in_db_from_cache(zipcode_cache)
                 custom_logger(INFO_LOG_LEVEL, f"Updated {number_updated} zipcodes from cache.")
 
-            if mar_results or num_prop_found:
-                upload_database_to_s3()
+            # Fetch Zillow research data
+            get_free_zillow_zhvi_sfh()
+
+            # Upload database to s3
+            upload_database_to_s3()
 
         else:
             custom_logger(ERROR_LOG_LEVEL, "Cannot proceed, database creation failed, ending ETL workflow.")

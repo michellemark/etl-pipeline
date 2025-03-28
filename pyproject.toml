@@ -13,7 +13,8 @@ dependencies = [
     "ijson (>=3.3.0,<4.0.0)",
     "limits (>=4.4.1,<5.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
-    "sodapy (>=2.2.0,<3.0.0)"
+    "sodapy (>=2.2.0,<3.0.0)",
+    "beautifulsoup4 (>=4.13.3,<5.0.0)"
 ]
 
 [tool.poetry]

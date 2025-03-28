@@ -229,6 +229,7 @@ def upload_database_to_s3():
     s3_client = get_s3_client()
 
     if s3_client:
+        custom_logger(INFO_LOG_LEVEL, "Uploading database to S3...")
 
         try:
             s3_client.upload_file(

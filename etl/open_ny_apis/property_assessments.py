@@ -178,7 +178,8 @@ def fetch_property_assessments(app_token: str, query_year: int) -> int:
     num_properties_saved = 0
     num_properties_found = 0
 
-    force_refresh = os.getenv('FORCE_REFRESH', False)
+    force_refresh_string = os.getenv('FORCE_REFRESH', 'False')
+    force_refresh = True if force_refresh_string.lower() == 'true' else False
     custom_logger(
         INFO_LOG_LEVEL,
         f"Starting fetching CNY property assessments for roll_year {query_year}..."
@@ -199,7 +200,7 @@ def fetch_property_assessments(app_token: str, query_year: int) -> int:
         # First see if we already have data for this county and roll year as it is only published once a year
         already_exists = check_if_property_assessments_exist(query_year, county)
 
-        if already_exists and not force_refresh:
+        if already_exists and force_refresh is False:
             custom_logger(
                 INFO_LOG_LEVEL,
                 f"Property assessments for county_name: {county} in roll year {query_year} already exist, ending.")

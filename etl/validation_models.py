@@ -222,3 +222,25 @@ class NYPropertyAssessment(BaseModel):
     class ConfigDict:
         # Ignore all fields not defined
         extra = "ignore"
+
+
+class ZillowHomeValueIndexSFHCity(BaseModel):
+    RegionName: str = Field(
+        min_length=2,
+        description="Name of city or town."
+    )
+    CountyName: str = Field(
+        min_length=2,
+        description="Name of county."
+    )
+    State: str = Field(
+        min_length=2,
+        description="State abbreviation."
+    )
+
+    def generate_county_name(self):
+        return self.CountyName.replace(" County", "").strip()
+
+    class ConfigDict:
+        # Ignore all fields not defined
+        extra = "ignore"
