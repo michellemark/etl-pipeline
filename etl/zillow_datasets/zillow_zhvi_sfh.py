@@ -45,31 +45,25 @@ def get_current_download_url():
 
         if response.ok:
             soup = BeautifulSoup(response.content, 'html.parser')
-            dropdown1 = soup.find('select', id='median-home-value-zillow-home-value-index-zhvi-dropdown-1')
+            dropdown2 = soup.find('select', id='median-home-value-zillow-home-value-index-zhvi-dropdown-2')
 
-            if dropdown1:
-                target_option = dropdown1.find('option', {'value': 'ZHVI Single-Family Homes Time Series ($)'})
+            if dropdown2:
+                city_option = None
 
-                if target_option:
-                    dropdown2 = soup.find('select', id='median-home-value-zillow-home-value-index-zhvi-dropdown-2')
+                for option in dropdown2.find_all('option'):
+                    if option.text.strip() == 'City':
+                        city_option = option
+                        break
 
-                    if dropdown2:
-                        city_option = None
+                if city_option and city_option.has_attr('value'):
+                    download_url = city_option['value']
 
-                        for option in dropdown2.find_all('option'):
-                            if option.text.strip() == 'City':
-                                city_option = option
-                                break
-
-                        if city_option and city_option.has_attr('value'):
-                            download_url = city_option['value']
-
-                        if not download_url.startswith(('https://')):
-                            custom_logger(
-                                WARNING_LOG_LEVEL,
-                                f"Download URL doesn't appear to be valid: {download_url}"
-                            )
-                            download_url = None
+                if not download_url.startswith(('https://')):
+                    custom_logger(
+                        WARNING_LOG_LEVEL,
+                        f"Download URL doesn't appear to be valid: {download_url}"
+                    )
+                    download_url = None
 
         else:
             custom_logger(

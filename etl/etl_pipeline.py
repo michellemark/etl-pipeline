@@ -15,7 +15,7 @@ from etl.property_utilities import get_assessment_year_to_query
 from etl.property_utilities import get_open_ny_app_token
 from etl.update_zipcodes_from_cache import get_zipcodes_cache_as_json
 from etl.update_zipcodes_from_cache import update_property_zipcodes_in_db_from_cache
-from etl.zillow_datasets.zillow_datasets import get_free_zillow_zhvi_sfh
+from etl.zillow_datasets.zillow_zhvi_sfh import get_free_zillow_zhvi_sfh
 
 
 def cny_real_estate_etl_workflow():
