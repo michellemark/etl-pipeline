@@ -1,5 +1,7 @@
+import gzip
 import json
 import os
+import shutil
 import sqlite3
 from typing import List, Tuple
 
@@ -10,9 +12,13 @@ from etl.constants import DB_LOCAL_PATH
 from etl.constants import ERROR_LOG_LEVEL
 from etl.constants import EXTRACTED_DATA_DIR
 from etl.constants import GENERATED_DATA_DIR
+from etl.constants import GZIPPED_DB_LOCAL_PATH
+from etl.constants import GZIPPED_DB_NAME
 from etl.constants import INFO_LOG_LEVEL
+from etl.constants import LOCAL_VERSION_PATH
 from etl.constants import S3_BUCKET_NAME
 from etl.constants import SQLITE_DB_NAME
+from etl.constants import VERSION_FILE_NAME
 from etl.constants import WARNING_LOG_LEVEL
 from etl.constants import ZIPCODE_CACHE_KEY
 from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
@@ -212,16 +218,61 @@ def download_database_from_s3():
         try:
             s3_client.download_file(
                 Bucket=S3_BUCKET_NAME,
-                Key=SQLITE_DB_NAME,
-                Filename=DB_LOCAL_PATH
+                Key=GZIPPED_DB_NAME,
+                Filename=GZIPPED_DB_LOCAL_PATH
             )
+            compressed_size = os.path.getsize(GZIPPED_DB_LOCAL_PATH)
+
+            # Decompress database to expected location
+            with gzip.open(GZIPPED_DB_LOCAL_PATH, 'rb') as unzipped_db:
+                with open(DB_LOCAL_PATH, 'wb+') as local_db:
+                    shutil.copyfileobj(unzipped_db, local_db)
+
+            decompressed_size = os.path.getsize(DB_LOCAL_PATH)
+
             custom_logger(
                 INFO_LOG_LEVEL,
-                f"Successfully downloaded {SQLITE_DB_NAME} from s3://{S3_BUCKET_NAME}/{SQLITE_DB_NAME} to {DB_LOCAL_PATH}")
+                f"Download complete: {compressed_size / (1024 ** 2):.2f} MB compressed → "
+                f"{decompressed_size / (1024 ** 2):.2f} MB decompressed.")
+
+            # Download current version file from AWS save as LOCAL_VERSION_PATH
+            s3_client.download_file(S3_BUCKET_NAME, VERSION_FILE_NAME, LOCAL_VERSION_PATH)
+
         except Exception as ex:
             custom_logger(
                 WARNING_LOG_LEVEL,
                 f"Failed to download database from S3: {ex}")
+
+
+def create_or_update_version_file_and_upload():
+    """Create or update version file and upload to S3."""
+    s3_client = get_s3_client()
+
+    with open(LOCAL_VERSION_PATH, 'a+') as version_file:
+        version_file.seek(0)
+        local_version = version_file.read().strip()
+
+        try:
+            local_version = int(local_version) + 1
+        except (TypeError, ValueError):
+            local_version = 1
+
+        version_file.write(str(local_version))
+
+        try:
+            s3_client.upload_file(
+                Filename=LOCAL_VERSION_PATH,
+                Bucket=S3_BUCKET_NAME,
+                Key=VERSION_FILE_NAME
+            )
+        except Exception as ex:
+            custom_logger(
+                ERROR_LOG_LEVEL,
+                f"Failed to upload version {local_version} to S3: {ex}")
+        else:
+            custom_logger(
+                INFO_LOG_LEVEL,
+                f"Successfully uploaded version {local_version} to s3://{S3_BUCKET_NAME}/{VERSION_FILE_NAME}")
 
 
 def upload_database_to_s3():
@@ -232,11 +283,18 @@ def upload_database_to_s3():
         custom_logger(INFO_LOG_LEVEL, "Uploading database to S3...")
 
         try:
+            # Compress database before uploading
+            with open(DB_LOCAL_PATH, 'rb') as local_db:
+                with gzip.open(GZIPPED_DB_LOCAL_PATH, 'wb+') as zipped_db:
+                    shutil.copyfileobj(local_db, zipped_db)
+
             s3_client.upload_file(
-                Filename=DB_LOCAL_PATH,
+                Filename=GZIPPED_DB_LOCAL_PATH,
                 Bucket=S3_BUCKET_NAME,
-                Key=SQLITE_DB_NAME
+                Key=GZIPPED_DB_NAME
             )
+            create_or_update_version_file_and_upload()
+
         except Exception as ex:
             custom_logger(
                 ERROR_LOG_LEVEL,
