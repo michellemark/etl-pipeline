@@ -1,3 +1,4 @@
+import socket
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -109,6 +110,26 @@ def test_fetch_property_assessments_page_empty_response(mock_custom_logger, mock
         f"Fetching property assessments for county_name: {county_name} starting at offset {offset}..."
     )
     assert result == []
+
+
+def test_fetch_property_assessments_page_retryable_error():
+    """Test that retryable errors are raised and handled in fetch_property_assessments_page."""
+    with patch("etl.open_ny_apis.property_assessments.Socrata") as mock_socrata_client:
+        app_token = "mock_token"
+        roll_year = 2024
+        county_name = "Cayuga"
+        where_clause = "roll_section = 1"
+        offset = 0
+        mock_client_instance = MagicMock()
+        mock_client_instance.get.side_effect = socket.timeout
+        mock_socrata_client.return_value.__enter__.return_value = mock_client_instance
+
+        try:
+            fetch_property_assessments_page(app_token, roll_year, county_name, where_clause, offset)
+        except socket.timeout:
+            pass
+        else:
+            assert False, "Retryable error did not propagate as expected"
 
 
 @patch("etl.open_ny_apis.property_assessments.custom_logger")

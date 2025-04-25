@@ -48,6 +48,10 @@ CREATE_TABLE_DEFINITIONS_FILE_PATH = os.path.join(
 )
 ZIPCODE_CACHE_KEY = "zipcodes_cache.json"
 ZIPCODE_CACHE_LOCAL_PATH = os.path.join(GENERATED_DATA_DIR, ZIPCODE_CACHE_KEY)
+VERSION_FILE_NAME = "cny-real-estate-version.txt"
+LOCAL_VERSION_PATH = os.path.join(GENERATED_DATA_DIR, "cny-real-estate-version.txt")
+GZIPPED_DB_NAME = f"{SQLITE_DB_NAME}.gz"
+GZIPPED_DB_LOCAL_PATH = os.path.join(GENERATED_DATA_DIR, GZIPPED_DB_NAME)
 
 # ******* Table names *********************************************
 ASSESSMENT_RATIOS_TABLE = "municipality_assessment_ratios"

@@ -1,15 +1,14 @@
 import gzip
-import json
 import os
 import shutil
 import sqlite3
-from typing import List, Tuple
+from typing import List
+from typing import Tuple
 
 import boto3
 
 from etl.constants import CREATE_TABLE_DEFINITIONS_FILE_PATH
 from etl.constants import DB_LOCAL_PATH
-from etl.constants import ERROR_LOG_LEVEL
 from etl.constants import EXTRACTED_DATA_DIR
 from etl.constants import GENERATED_DATA_DIR
 from etl.constants import GZIPPED_DB_LOCAL_PATH
@@ -53,7 +52,7 @@ def create_database():
         custom_logger(INFO_LOG_LEVEL, f"Database created at {DB_LOCAL_PATH}")
 
     except Exception as e:
-        custom_logger(ERROR_LOG_LEVEL, f"Error creating the database: {str(e)}")
+        custom_logger(WARNING_LOG_LEVEL, f"Error creating the database: {str(e)}")
 
 
 def insert_or_replace_into_database(table_name: str, column_names: List[str], data: List[Tuple]) -> Tuple[int, int]:
@@ -111,10 +110,10 @@ def insert_or_replace_into_database(table_name: str, column_names: List[str], da
                     )
                     rows_failed += 1
 
-        # custom_logger(
-        #     INFO_LOG_LEVEL,
-        #     f"rows_inserted: {rows_inserted}, rows_failed: {rows_failed}"
-        # )
+        custom_logger(
+            INFO_LOG_LEVEL,
+            f"rows_inserted: {rows_inserted}, rows_failed: {rows_failed}"
+        )
 
     except sqlite3.Error as ex:
         custom_logger(WARNING_LOG_LEVEL, f"Unexpected database error occurred: {ex}")
@@ -189,12 +188,17 @@ def get_s3_client():
     AWS_REGION = os.environ.get("AWS_REGION")
 
     if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_REGION:
-        aws_session = boto3.Session(
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            region_name=AWS_REGION
-        )
-        s3_client = aws_session.client("s3")
+        try:
+            aws_session = boto3.Session(
+                aws_access_key_id=AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                region_name=AWS_REGION
+            )
+            s3_client = aws_session.client("s3")
+        except Exception as ex:
+            custom_logger(
+                WARNING_LOG_LEVEL,
+                "Unable to create S3 client. Skipping operation.")
     else:
         if not AWS_ACCESS_KEY_ID:
             custom_logger(WARNING_LOG_LEVEL, "Missing AWS_ACCESS_KEY_ID environment variable.")
@@ -203,7 +207,7 @@ def get_s3_client():
         if not AWS_REGION:
             custom_logger(WARNING_LOG_LEVEL, "Missing AWS_REGION environment variable.")
 
-        custom_logger(ERROR_LOG_LEVEL, "Unable to create S3 client. Skipping operation.")
+        custom_logger(WARNING_LOG_LEVEL, "Unable to create S3 client. Skipping operation.")
 
     return s3_client
 
@@ -267,7 +271,7 @@ def create_or_update_version_file_and_upload():
             )
         except Exception as ex:
             custom_logger(
-                ERROR_LOG_LEVEL,
+                WARNING_LOG_LEVEL,
                 f"Failed to upload version {local_version} to S3: {ex}")
         else:
             custom_logger(
@@ -297,12 +301,12 @@ def upload_database_to_s3():
 
         except Exception as ex:
             custom_logger(
-                ERROR_LOG_LEVEL,
+                WARNING_LOG_LEVEL,
                 f"Failed to upload database to S3: {ex}")
         else:
             custom_logger(
                 INFO_LOG_LEVEL,
-                f"Successfully uploaded {DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{SQLITE_DB_NAME}")
+                f"Successfully uploaded {DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{GZIPPED_DB_NAME}")
 
 
 def download_zipcodes_cache_from_s3() -> dict | None:
@@ -341,7 +345,7 @@ def upload_zipcodes_cache_to_s3():
             )
         except Exception as ex:
             custom_logger(
-                ERROR_LOG_LEVEL,
+                WARNING_LOG_LEVEL,
                 f"Failed to upload zipcodes cache to S3: {ex}")
         else:
             custom_logger(

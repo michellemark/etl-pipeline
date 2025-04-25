@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from etl.constants import MINIMUM_ASSESSMENT_YEAR
 from etl.validation_models import MunicipalityAssessmentRatio, NYPropertyAssessment
+from etl.validation_models import ZillowHomeValueIndexSFHCity
 
 
 def test_valid_municipality_assessment_ratio_without_village_name():
@@ -357,3 +358,20 @@ def test_ny_property_assessment_invalid_primary_key_values():
         assert all_errors[1]["type"] == "missing"
         assert all_errors[1]["loc"][0] == "print_key_code"
         assert len(all_errors) == 2
+
+
+def test_generate_county_name_removes_county_suffix_from_zhvi_model():
+    """Test that generate_county_name removes the ' County' suffix and trims whitespace."""
+    data = {
+        "CountyName": "Cayuga County",
+        "RegionID": "1234",
+        "RegionName": "Auburn",
+        "StateName": "New York",
+        "State": "NY",
+        "Metro": "Syracuse",
+        "SizeRank": "150",
+    }
+
+    zhvi_model = ZillowHomeValueIndexSFHCity(**data)
+
+    assert zhvi_model.generate_county_name() == "Cayuga"

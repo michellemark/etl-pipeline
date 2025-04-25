@@ -47,7 +47,7 @@ def create_csv_batch_file(data: List[Dict[str, Any]]) -> Optional[str]:
     Write properties without ZIP codes as batch CSV file to send to geocoder batch api.
     Returns name of created CSV file or None if no csv written.
     """
-    # batch_file_path = None
+    batch_file_path = None
 
     try:
 
@@ -58,7 +58,7 @@ def create_csv_batch_file(data: List[Dict[str, Any]]) -> Optional[str]:
             batch_file_path = get_csv_file_path()
 
             with open(batch_file_path, mode="w+", newline="", encoding="utf-8") as csv_file:
-                writer = DictWriter(csv_file, fieldnames=header)
+                writer = DictWriter(csv_file, fieldnames=header, lineterminator="\n")
                 writer.writeheader()
                 writer.writerows(data)
 
@@ -94,6 +94,9 @@ def sanitize_address_string(address: str) -> str:
     # Perform all substitutions
     for pattern, replacement in substitutions.items():
         address = re.sub(pattern, replacement, address)
+
+    # Normalize spaces created by substitutions or present in the input
+    address = re.sub(r"\s+", " ", address)
 
     # Strip any trailing whitespace
     return address.strip()

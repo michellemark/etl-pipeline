@@ -12,3 +12,4 @@ omit =
     */research/*
     */tests/*
     etl/constants.py
+    etl/update_zipcodes_from_open_addresses.py

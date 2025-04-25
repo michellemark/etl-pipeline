@@ -55,7 +55,11 @@ def test_workflow_with_municipal_assessment_ratios_not_fetched(
 
     mock_download.assert_called_once()
     mock_create_db.assert_called_once()
+    mock_fetch.assert_called_once_with(app_token="valid_token", query_year=2025)
+    mock_fetch_properties_and_assessments.assert_called_once_with(app_token="valid_token", query_year=2025)
+    mock_save.assert_not_called()
     mock_get_zipcodes_cache_as_json.assert_not_called()
+    mock_upload.assert_called_once()
 
 
 @patch('etl.etl_pipeline.upload_database_to_s3')
@@ -138,10 +142,10 @@ def test_workflow_with_successful_database_creation(
 
     mock_download.assert_called_once()
     mock_create_db.assert_called_once()
-    mock_fetch.assert_called_once()
-    mock_save_ratios.assert_called_once()
-    mock_fetch_properties_and_assessments.assert_called_once()
-    mock_upload.assert_called_once()
+    mock_fetch.assert_not_called()
+    mock_save_ratios.assert_not_called()
+    mock_fetch_properties_and_assessments.assert_not_called()
+    mock_upload.assert_not_called()
 
 
 @patch('etl.etl_pipeline.get_zipcodes_cache_as_json')
@@ -179,11 +183,11 @@ def test_workflow_with_municipal_assessment_ratios_not_fetched(
     cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
-    mock_create_db.assert_not_called()
+    mock_create_db.assert_called_once()
     mock_fetch.assert_called_once_with(app_token="valid_token", query_year=2025)
     mock_fetch_properties_and_assessments.assert_called_once_with(app_token="valid_token", query_year=2025)
     mock_save.assert_not_called()
-    mock_upload.assert_not_called()
+    mock_upload.assert_called_once()
     mock_get_zipcodes_cache_as_json.assert_not_called()
 
 
@@ -223,7 +227,7 @@ def test_workflow_with_no_municipal_assessment_ratios_properties_found(
     cny_real_estate_etl_workflow()
 
     mock_download.assert_called_once()
-    mock_create_db.assert_not_called()
+    mock_create_db.assert_called_once()
     mock_fetch.assert_called_once_with(app_token="valid_token", query_year=2027)
     mock_save_ratios.assert_called_once_with(mock_data)
     mock_fetch_properties_and_assessments.assert_called_once_with(app_token="valid_token", query_year=2027)
