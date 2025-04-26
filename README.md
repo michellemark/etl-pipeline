@@ -66,30 +66,18 @@ To get an app token, so you can run this yourself, simply:
 
 ### Zillow Home Value Index (ZHVI) for Single-Family Homes
 
-The pipeline integrates the **Zillow Home Value Index (ZHVI)** for single-family homes (SFH) to provide comprehensive data on
-property values. This dataset is valuable for understanding housing market trends within Central New York (CNY) municipalities and
-counties.
+#### Update: Zillow Data Collection Disabled
 
-#### How Zillow Data Is Collected:
+Initially, this pipeline included functionality to scrape data for the **Zillow Home Value Index (ZHVI)** for single-family
+homes (SFH) to provide insights into housing market trends in Central New York. However, due to changes in the structure of
+Zillow’s website and the absence of a public API, scraping Zillow data is no longer feasible.
+This portion of the ETL pipeline has been **disabled** in the final implementation, but the related code and unit tests remain in
+the repository to document the work that was completed toward this feature.
+As a result:
 
-- The ETL workflow scrapes the **Zillow research data page** to fetch the latest **ZHVI Single-Family Homes Time Series (City)**
-  dataset.
-- The dataset is validated row-by-row and filtered to include only counties in Central New York (CNY). Non-CNY data is discarded.
-- For valid cities and towns, ZHVI data is stored in the `zillow_home_value_index_sfh` table, with fields:
-    - `municipality_name`: The city or town.
-    - `county_name`: The county name.
-    - `state`: The state (currently limited to "NY").
-    - `date`: Month and year of the home value index, formatted as `YYYY-MM`.
-    - `home_value_index`: The average home value estimate (in USD) for single-family homes.
-
-#### Data Source:
-
-All Zillow ZHVI data is publicly available from the Zillow Research [data page](https://www.zillow.com/research/data/).
-
-#### Limitations:
-
-- The script depends on Zillow's website structure to scrape the dataset URL. If the structure changes, the script may need
-  updates.  This is unfortunately the only way given Zillow not having a public API to retrieve the data.
+- **Zillow research data page scraping code** remains in the codebase but is no longer executed.
+- The database table used to store Zillow data is not loaded or updated in the pipeline. `zillow_home_value_index_sfh`
+- Zillow-related workflows are omitted from the final functioning ETL process
 
 #### GitHub Actions
 

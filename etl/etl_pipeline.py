@@ -50,8 +50,6 @@ def cny_real_estate_etl_workflow():
                 number_updated = update_property_zipcodes_in_db_from_cache(zipcode_cache)
                 custom_logger(INFO_LOG_LEVEL, f"Updated {number_updated} zipcodes from cache.")
 
-            get_free_zillow_zhvi_sfh()
-
             # Upload database to s3
             upload_database_to_s3()
 

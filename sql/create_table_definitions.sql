@@ -121,19 +121,3 @@ CREATE INDEX IF NOT EXISTS idx_ny_property_assessments_class_property
 -- Optimize join with properties on property_id
 CREATE INDEX IF NOT EXISTS idx_ny_property_assessments_class_year_property
     ON ny_property_assessments (property_class, roll_year, property_id);
-
-
--- Zillow Home Value Index Single-Family Homes
-CREATE TABLE IF NOT EXISTS zillow_home_value_index_sfh
-(
-    municipality_name  TEXT,
-    county_name        TEXT NOT NULL,
-    state              TEXT NOT NULL, -- always NY given current CNY focus
-    date               TEXT NOT NULL, -- stored as YYYY-MM
-    home_value_index   REAL,
-    PRIMARY KEY (municipality_name, county_name, state, date)
-);
-
--- Optimize search by county name and date
-CREATE INDEX IF NOT EXISTS idx_zillow_hvi_sfh_county_date
-    ON zillow_home_value_index_sfh (county_name, date);
