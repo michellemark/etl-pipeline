@@ -115,20 +115,27 @@ For more information about S3 pricing, see the [S3 Pricing Guide](https://aws.am
 
 _Challenge:_
 
-- Open NY property assessment data only includes the property owner's mailing address zip code, which does not 
+- Open NY property assessment data only includes the property owner's mailing address zip code, which does not
   always reflect the assessed property's location.
-- Given this, there are many missing zipcodes, impacting the ability to filter properties by zip code in the user interface.
+- **Owner occupancy**: the owner's mailing address is compared to the parcel address to decide if the property is 
+  owner-occupied. If owner-occupied, the mailing zip code is used; otherwise, the zip code is omitted.
+- Many zip codes for non-owner-occupied properties remain missing, impacting the ability to filter properties by zip code in the
+  user interface.
 
 _Partial Solutions:_
 
+- **Owner Occupancy Logic Adjustment**: Through validation, zip codes are only included in the database if the property is
+  determined to be owner-occupied (based on matching parcel and mailing addresses). For non-owner-occupied properties, zip code
+  data is purposefully excluded to avoid introducing inaccuracies.
 - **US Census Bureau Geocoder API** provided partial coverage (~30%). However, due to API limitations, many zip codes could not be
   retrieved. [documentation](https://geocoding.geo.census.gov/geocoder/returntype/addressbatch)
 - **Open Addresses GeoJSON Data** yielded a small subset of updated zip codes. While functional, it is not a repeatable or
   complete solution. [documentation](https://batch.openaddresses.io/job/559314#map=0/0/0)
 
 _Conclusion:_  
-Greater budget allowance could enable integration of more accurate geocoding APIs, such as Google Geocoder, for comprehensive zip
-code data.
+A greater budget allowance could enable the integration of more accurate geocoding APIs, such as Google Geocoder, for
+comprehensive zip code data. Additionally, further refining the owner-occupancy logic and leveraging larger datasets could help
+improve zip code coverage in future implementations.
 
 ## Development
 
