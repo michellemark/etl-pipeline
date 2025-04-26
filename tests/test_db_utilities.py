@@ -316,15 +316,23 @@ class TestDownloadDatabaseFromS3:
 
     @patch('etl.db_utilities.get_s3_client')
     @patch('etl.db_utilities.ensure_data_directories_exist')
+    @patch('os.path.getsize')
     @patch('os.path.exists')
     @patch('gzip.open')
     @patch('builtins.open', new_callable=mock_open)
     @patch('shutil.copyfileobj')
     def test_download_from_s3_not_cached(self, mock_copyfileobj, mock_file_open, mock_gzip_open,
-                                         mock_exists, mock_ensure_dirs, mock_get_s3_client):
+                                         mock_exists, mock_getsize, mock_ensure_dirs, mock_get_s3_client):
+        """
+        Test downloading the database from S3 when it is not cached locally.
+        """
         mock_s3 = MagicMock()
         mock_get_s3_client.return_value = mock_s3
         mock_exists.return_value = False
+        mock_getsize.side_effect = lambda path: {
+            GZIPPED_DB_LOCAL_PATH: 38 * 1024 ** 2,  # 38 MB (gzipped file size)
+            DB_LOCAL_PATH: 250 * 1024 ** 2  # 250 MB (decompressed file size)
+        }.get(path, 0)  # Return 0 if the path is not matched
         mock_gzip_context = MagicMock()
         mock_gzip_open.return_value.__enter__.return_value = mock_gzip_context
         mock_file_context = MagicMock()
@@ -360,19 +368,31 @@ class TestDownloadDatabaseFromS3:
     @patch('etl.db_utilities.get_s3_client')
     @patch('etl.db_utilities.ensure_data_directories_exist')
     @patch('os.path.exists')
+    @patch('os.path.getsize')
     @patch('gzip.open')
     @patch('etl.db_utilities.custom_logger')
-    def test_download_from_s3_gzip_open_failure(self, mock_logger, mock_gzip_open, mock_exists, mock_ensure_dirs, mock_get_s3_client):
+    def test_download_from_s3_gzip_open_failure(
+            self, mock_custom_logger, mock_gzip_open, mock_getsize,
+            mock_exists, mock_ensure_dirs, mock_get_s3_client
+    ):
         mock_s3 = MagicMock()
         mock_get_s3_client.return_value = mock_s3
-        mock_exists.return_value = False
-        mock_s3.download_file.return_value = None
-        mock_gzip_open.side_effect = OSError("Error opening Gzip file")  # Simulate gzip open failure
+        mock_exists.side_effect = lambda path: path == GZIPPED_DB_LOCAL_PATH  # Gzip file "exists"
+        mock_getsize.return_value = 1024 * 1024  # Mock 1MB size for the gzip file
+        mock_gzip_open.side_effect = OSError("Error opening Gzip file")
 
         download_database_from_s3()
 
         mock_ensure_dirs.assert_called_once()
-        mock_logger.assert_called_with(WARNING_LOG_LEVEL, "Failed to download database from S3: Error opening Gzip file")
+        mock_s3.download_file.assert_called_once_with(
+            Bucket=S3_BUCKET_NAME,
+            Key=GZIPPED_DB_NAME,
+            Filename=GZIPPED_DB_LOCAL_PATH
+        )
+        mock_gzip_open.assert_called_once_with(GZIPPED_DB_LOCAL_PATH, 'rb')
+        mock_custom_logger.assert_called_once_with(
+            WARNING_LOG_LEVEL, "Failed to download database from S3: Error opening Gzip file"
+        )
 
 
 class TestCreateOrUpdateVersionFileAndUpload:
@@ -486,7 +506,8 @@ class TestUploadDatabaseToS3:
 
     @patch('etl.db_utilities.create_or_update_version_file_and_upload')
     @patch('etl.db_utilities.get_s3_client')
-    @patch('gzip.open')
+    @patch('os.path.exists')
+    @patch('gzip.open', new_callable=mock_open)
     @patch('builtins.open', new_callable=mock_open)
     @patch('shutil.copyfileobj')
     @patch('etl.db_utilities.custom_logger')
@@ -496,11 +517,13 @@ class TestUploadDatabaseToS3:
             mock_copyfileobj,
             mock_file_open,
             mock_gzip_open,
+            mock_path_exists,
             mock_get_s3_client,
             mock_create_version_file,
     ):
         mock_s3_client = MagicMock()
         mock_get_s3_client.return_value = mock_s3_client
+        mock_path_exists.side_effect = lambda filepath: filepath == DB_LOCAL_PATH  # Only DB_LOCAL_PATH "exists"
         mock_file_open_instance = mock_file_open.return_value.__enter__.return_value
         mock_gzip_open_instance = mock_gzip_open.return_value.__enter__.return_value
 
@@ -518,7 +541,7 @@ class TestUploadDatabaseToS3:
         mock_create_version_file.assert_called_once()
         mock_logger.assert_any_call(
             INFO_LOG_LEVEL,
-            f"Successfully uploaded {DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{GZIPPED_DB_NAME}",
+            f"Successfully uploaded {GZIPPED_DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{GZIPPED_DB_NAME}",
         )
 
     @patch('etl.db_utilities.create_or_update_version_file_and_upload')

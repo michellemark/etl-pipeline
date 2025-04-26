@@ -224,20 +224,56 @@ def test_open_ny_apis_fetch_property_assessments_empty_responses_end_fetching(
     assert result == 1
 
 
-@patch("etl.open_ny_apis.property_assessments.custom_logger")
+@patch("etl.open_ny_apis.property_assessments.check_if_property_assessments_exist")
+@patch("etl.open_ny_apis.property_assessments.fetch_property_assessments_page")
+@patch("etl.open_ny_apis.property_assessments.save_properties_and_assessments")
+@patch("etl.open_ny_apis.property_assessments.CNY_COUNTY_LIST", new=["Onondaga", "Oswego"])
 @patch("etl.open_ny_apis.property_assessments.get_ny_property_classes_for_where_clause")
-def test_open_ny_apis_fetch_property_assessments_where_clause_construction(mock_get_property_classes, mock_logger):
-    """Test that 'where_clause' is constructed as expected."""
-    mock_get_property_classes.return_value = "property_class IN (\"210\", \"220\")"
+@patch("etl.open_ny_apis.property_assessments.custom_logger")
+def test_open_ny_apis_fetch_property_assessments_where_clause_construction(
+        mock_logger,
+        mock_get_property_classes,
+        mock_save_properties,
+        mock_fetch_page,
+        mock_check_if_exist):
+    mock_get_property_classes.return_value = 'property_class IN ("210", "220")'
+    mock_check_if_exist.side_effect = [False, False]
+    mock_fetch_page.side_effect = [
+        [{"property": "data1"}],  # Response for first fetch (County 1, Page 1)
+        [],  # No more data for County 1
+        [{"property": "data2"}],  # Response for first fetch (County 2, Page 1)
+        []  # No more data for County 2
+    ]
+    mock_save_properties.side_effect = lambda data: len(data)
     app_token = "fake_token"
     query_year = 2024
 
-    fetch_property_assessments(app_token, query_year)
+    num_properties_saved = fetch_property_assessments(app_token, query_year)
 
     mock_logger.assert_any_call(
-        INFO_LOG_LEVEL, "\nwhere_clause built: roll_section = 1 AND property_class IN (\"210\", \"220\")\n"
+        INFO_LOG_LEVEL,
+        '\nwhere_clause built: roll_section = 1 AND property_class IN ("210", "220")\n'
     )
     mock_get_property_classes.assert_called_once()
+    assert mock_fetch_page.call_count == 4
+    mock_fetch_page.assert_any_call(
+        app_token=app_token,
+        roll_year=query_year,
+        county_name="Onondaga",
+        where_clause='roll_section = 1 AND property_class IN ("210", "220")',
+        offset=0
+    )
+    mock_fetch_page.assert_any_call(
+        app_token=app_token,
+        roll_year=query_year,
+        county_name="Oswego",
+        where_clause='roll_section = 1 AND property_class IN ("210", "220")',
+        offset=0
+    )
+    assert mock_save_properties.call_count == 2
+    mock_save_properties.assert_any_call([{"property": "data1"}])
+    mock_save_properties.assert_any_call([{"property": "data2"}])
+    assert num_properties_saved == 2
 
 
 @patch("etl.open_ny_apis.property_assessments.NYPropertyAssessment")
