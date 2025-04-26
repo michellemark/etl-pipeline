@@ -38,6 +38,16 @@ Optionally, make the app available publicly with no ongoing cost.
 
 ### Implementation Choices Made
 
+#### What NY counties will make up CNY for purposes of this project?
+
+The [Central New York Regional Planning & Development Board](https://www.cnyrpdb.org/region.asp) defines Central New York as
+
+- Cayuga
+- Cortland
+- Madison
+- Onondaga
+- Oswego
+
 #### Open NY APIs
 
 New York State makes a wide variety of data available to the public via APIs, including 
@@ -54,15 +64,32 @@ To get an app token, so you can run this yourself, simply:
 - [Sign up for a free Socrata account](https://support.socrata.com/hc/en-us/articles/115004055807-How-to-Sign-Up-for-a-Tyler-Data-Insights-ID)
 - [Create a free app token](https://support.socrata.com/hc/en-us/articles/210138558-Generating-App-Tokens-and-API-Keys)
 
-#### What NY counties will make up CNY for purposes of this project?
+### Zillow Home Value Index (ZHVI) for Single-Family Homes
 
-The [Central New York Regional Planning & Development Board](https://www.cnyrpdb.org/region.asp) defines Central New York as
+The pipeline integrates the **Zillow Home Value Index (ZHVI)** for single-family homes (SFH) to provide comprehensive data on
+property values. This dataset is valuable for understanding housing market trends within Central New York (CNY) municipalities and
+counties.
 
-- Cayuga
-- Cortland
-- Madison
-- Onondaga
-- Oswego
+#### How Zillow Data Is Collected:
+
+- The ETL workflow scrapes the **Zillow research data page** to fetch the latest **ZHVI Single-Family Homes Time Series (City)**
+  dataset.
+- The dataset is validated row-by-row and filtered to include only counties in Central New York (CNY). Non-CNY data is discarded.
+- For valid cities and towns, ZHVI data is stored in the `zillow_home_value_index_sfh` table, with fields:
+    - `municipality_name`: The city or town.
+    - `county_name`: The county name.
+    - `state`: The state (currently limited to "NY").
+    - `date`: Month and year of the home value index, formatted as `YYYY-MM`.
+    - `home_value_index`: The average home value estimate (in USD) for single-family homes.
+
+#### Data Source:
+
+All Zillow ZHVI data is publicly available from the Zillow Research [data page](https://www.zillow.com/research/data/).
+
+#### Limitations:
+
+- The script depends on Zillow's website structure to scrape the dataset URL. If the structure changes, the script may need
+  updates.  This is unfortunately the only way given Zillow not having a public API to retrieve the data.
 
 #### GitHub Actions
 
