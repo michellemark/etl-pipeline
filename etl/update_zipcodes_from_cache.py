@@ -8,6 +8,7 @@ from etl.constants import WARNING_LOG_LEVEL
 from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
 from etl.db_utilities import download_zipcodes_cache_from_s3
 from etl.db_utilities import execute_db_query
+from etl.db_utilities import upload_zipcodes_cache_to_s3
 from etl.log_utilities import custom_logger
 
 
@@ -56,3 +57,35 @@ def update_property_zipcodes_in_db_from_cache(zipcodes_cache: Dict[str, str]) ->
             number_updated += rowcount
 
     return number_updated
+
+
+def update_zipcode_cache(zipcode_cache: dict) -> dict:
+    """
+    Update the zipcode cache with the latest zipcodes from the properties table.
+    Updates the local cache file and uploads to S3.
+
+    :param zipcode_cache: dict - The current zipcode cache loaded as a JSON object.
+    :return: dict - The updated zipcode cache with the latest zipcodes from the properties table.
+    """
+    try:
+        query = f"SELECT id, address_zip FROM {PROPERTIES_TABLE} WHERE address_zip IS NOT NULL"
+        results = execute_db_query(query, fetch_results=True)
+
+        if results:
+            custom_logger(INFO_LOG_LEVEL, f"Fetched {len(results)} properties with zipcodes from the database.")
+
+        for property_id, zipcode in results:
+            zipcode_cache[str(property_id)] = zipcode
+
+        custom_logger(INFO_LOG_LEVEL, "Updated the zipcode cache with recently fetched property zipcodes.")
+
+        with open(ZIPCODE_CACHE_LOCAL_PATH, "w") as cache_file:
+            json.dump(zipcode_cache, cache_file, indent=4)
+            custom_logger(INFO_LOG_LEVEL, f"Updated the local zipcode cache file at {ZIPCODE_CACHE_LOCAL_PATH}.")
+
+        upload_zipcodes_cache_to_s3()
+
+    except Exception as e:
+        custom_logger(WARNING_LOG_LEVEL, f"Failed to update the zipcode cache: {e}")
+
+    return zipcode_cache

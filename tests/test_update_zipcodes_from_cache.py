@@ -6,8 +6,10 @@ from unittest.mock import patch
 from etl.constants import INFO_LOG_LEVEL
 from etl.constants import PROPERTIES_TABLE
 from etl.constants import WARNING_LOG_LEVEL
+from etl.constants import ZIPCODE_CACHE_LOCAL_PATH
 from etl.update_zipcodes_from_cache import get_zipcodes_cache_as_json
 from etl.update_zipcodes_from_cache import update_property_zipcodes_in_db_from_cache
+from etl.update_zipcodes_from_cache import update_zipcode_cache
 
 
 def normalize_query(query: str) -> str:
@@ -121,3 +123,27 @@ class TestUpdatePropertyZipcodesInDBFromCache:
 
         assert result == 0
         mock_execute.assert_not_called()
+
+
+@patch("etl.update_zipcodes_from_cache.execute_db_query")
+@patch("etl.update_zipcodes_from_cache.open", new_callable=mock_open, read_data='{"1": "11111", "3": "33333"}')
+@patch("etl.update_zipcodes_from_cache.upload_zipcodes_cache_to_s3")
+@patch("etl.update_zipcodes_from_cache.custom_logger")
+def test_update_zipcode_cache_success(mock_logger, mock_upload, mock_open_file, mock_execute_query):
+    """Test that the zipcode cache is successfully updated with new data from the database."""
+    mock_execute_query.return_value = [(1, "12345"), (2, "67890")]
+    zipcode_cache = {"1": "11111", "3": "33333"}
+    updated_cache = update_zipcode_cache(zipcode_cache)
+
+    expected_cache = {"1": "12345", "2": "67890", "3": "33333"}
+    assert updated_cache == expected_cache
+    mock_execute_query.assert_called_once_with(
+        "SELECT id, address_zip FROM properties WHERE address_zip IS NOT NULL",
+        fetch_results=True,
+    )
+    written_data = "".join(call.args[0] for call in mock_open_file().write.call_args_list)
+    assert json.loads(written_data) == expected_cache
+    mock_upload.assert_called_once()
+    mock_logger.assert_any_call(INFO_LOG_LEVEL, "Fetched 2 properties with zipcodes from the database.")
+    mock_logger.assert_any_call(INFO_LOG_LEVEL, "Updated the zipcode cache with recently fetched property zipcodes.")
+    mock_logger.assert_any_call(INFO_LOG_LEVEL, f"Updated the local zipcode cache file at {ZIPCODE_CACHE_LOCAL_PATH}.")

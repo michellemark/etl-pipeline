@@ -15,7 +15,7 @@ from etl.property_utilities import get_assessment_year_to_query
 from etl.property_utilities import get_open_ny_app_token
 from etl.update_zipcodes_from_cache import get_zipcodes_cache_as_json
 from etl.update_zipcodes_from_cache import update_property_zipcodes_in_db_from_cache
-from etl.zillow_datasets.zillow_zhvi_sfh import get_free_zillow_zhvi_sfh
+from etl.update_zipcodes_from_cache import update_zipcode_cache
 
 
 def cny_real_estate_etl_workflow():
@@ -45,6 +45,9 @@ def cny_real_estate_etl_workflow():
             if num_prop_found:
                 # Get current zipcode cache from S3 or an empty dict
                 zipcode_cache = get_zipcodes_cache_as_json()
+
+                # Update zipcode cache with any new zipcodes we just got from owner-occupied properties
+                zipcode_cache = update_zipcode_cache(zipcode_cache)
 
                 # Update any null zipcodes we can from zipcode cache
                 number_updated = update_property_zipcodes_in_db_from_cache(zipcode_cache)
