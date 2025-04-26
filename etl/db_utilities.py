@@ -306,7 +306,7 @@ def upload_database_to_s3():
         else:
             custom_logger(
                 INFO_LOG_LEVEL,
-                f"Successfully uploaded {DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{GZIPPED_DB_NAME}")
+                f"Successfully uploaded {GZIPPED_DB_LOCAL_PATH} to s3://{S3_BUCKET_NAME}/{GZIPPED_DB_NAME}")
 
 
 def download_zipcodes_cache_from_s3() -> dict | None:
