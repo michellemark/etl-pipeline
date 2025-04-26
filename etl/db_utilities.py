@@ -252,7 +252,7 @@ def create_or_update_version_file_and_upload():
     """Create or update version file and upload to S3."""
     s3_client = get_s3_client()
 
-    with open(LOCAL_VERSION_PATH, 'a+') as version_file:
+    with open(LOCAL_VERSION_PATH, 'w+') as version_file:
         version_file.seek(0)
         local_version = version_file.read().strip()
 

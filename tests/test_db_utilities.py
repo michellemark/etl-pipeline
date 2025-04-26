@@ -408,7 +408,7 @@ class TestCreateOrUpdateVersionFileAndUpload:
 
         create_or_update_version_file_and_upload()
 
-        mock_open.assert_called_once_with(LOCAL_VERSION_PATH, "a+")
+        mock_open.assert_called_once_with(LOCAL_VERSION_PATH, "w+")
         mock_file.seek.assert_called_once_with(0)
         mock_file.read.assert_called_once()
         mock_file.write.assert_called_once_with("6")
@@ -429,7 +429,7 @@ class TestCreateOrUpdateVersionFileAndUpload:
 
         create_or_update_version_file_and_upload()
 
-        mock_open.assert_called_once_with(LOCAL_VERSION_PATH, "a+")
+        mock_open.assert_called_once_with(LOCAL_VERSION_PATH, "w+")
         mock_file.seek.assert_called_once_with(0)
         mock_file.read.assert_called_once()
         mock_file.write.assert_called_once_with("1")
@@ -451,7 +451,7 @@ class TestCreateOrUpdateVersionFileAndUpload:
 
         create_or_update_version_file_and_upload()
 
-        mock_open.assert_called_once_with(LOCAL_VERSION_PATH, "a+")
+        mock_open.assert_called_once_with(LOCAL_VERSION_PATH, "w+")
         mock_file.seek.assert_called_once_with(0)
         mock_file.read.assert_called_once()
         mock_file.write.assert_called_once_with("1")
@@ -476,7 +476,7 @@ class TestCreateOrUpdateVersionFileAndUpload:
 
         create_or_update_version_file_and_upload()
 
-        mock_open.assert_called_once_with(LOCAL_VERSION_PATH, "a+")
+        mock_open.assert_called_once_with(LOCAL_VERSION_PATH, "w+")
         mock_file.seek.assert_called_once_with(0)
         mock_file.read.assert_called_once()
         mock_file.write.assert_called_once_with("6")
