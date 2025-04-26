@@ -138,6 +138,12 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables():
         "parcel_address_number": "833",
         "parcel_address_street": "Hiawatha",
         "parcel_address_suff": "Blvd",
+        "mailing_address_number": "833",
+        "mailing_address_street": "Hiawatha",
+        "mailing_address_suff": "Blvd",
+        "mailing_address_city": "Syracuse",
+        "mailing_address_state": "NY",
+        "mailing_address_zip": "13208",
         "front": "29",
         "depth": "111.7",
         "full_market_value": "9760",
@@ -156,7 +162,8 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables():
     assert properties_record["school_district_name"] == "Syracuse"
     assert properties_record["address_street"] == "833 Hiawatha Blvd"
     assert properties_record["address_state"] == NYPropertyAssessment.STATE
-    assert len(properties_record) == 10
+    assert properties_record["address_zip"] == "13208"
+    assert len(properties_record) == 11
 
     onypa_record = model.to_ny_property_assessments_row()
     assert onypa_record["property_id"] == "311500 001.1-01-21.0"
@@ -170,6 +177,12 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables():
     assert onypa_record["assessment_land"] == 7550
     assert onypa_record["assessment_total"] == 0
     assert len(onypa_record) == 10
+
+    # Modify to simulate non-owner-occupied case
+    valid_data["mailing_address_number"] = "100"
+    model = NYPropertyAssessment(**valid_data)
+    properties_record = model.to_properties_row()
+    assert properties_record["address_zip"] is None
 
 
 def test_valid_ny_property_record_outputs_expected_data_for_two_tables_missing_assessment_totals():
@@ -203,7 +216,8 @@ def test_valid_ny_property_record_outputs_expected_data_for_two_tables_missing_a
     assert properties_record["school_district_name"] == "Syracuse"
     assert properties_record["address_street"] == "833 Hiawatha Blvd"
     assert properties_record["address_state"] == NYPropertyAssessment.STATE
-    assert len(properties_record) == 10
+    assert properties_record["address_zip"] is None
+    assert len(properties_record) == 11
 
     onypa_record = model.to_ny_property_assessments_row()
     assert onypa_record["property_id"] == "311500 001.1-01-21.0"
@@ -240,7 +254,7 @@ def test_valid_ny_property_record_missing_optional_parcel_address_parts():
     model = NYPropertyAssessment(**valid_data)
     properties_record = model.to_properties_row()
     assert properties_record["address_street"] == "833 Hiawatha Blvd"
-    assert len(properties_record) == 10
+    assert len(properties_record) == 11
 
 
 def test_ny_property_assessment_invalid_role_year():
@@ -358,6 +372,155 @@ def test_ny_property_assessment_invalid_primary_key_values():
         assert all_errors[1]["type"] == "missing"
         assert all_errors[1]["loc"][0] == "print_key_code"
         assert len(all_errors) == 2
+
+
+def test_is_owner_occupied_handles_empty_or_missing_values():
+    data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_number": "833",
+        "parcel_address_street": "Hiawatha",
+        "parcel_address_suff": "Blvd",
+        "mailing_address_number": "",
+        "mailing_address_street": None,
+        "mailing_address_suff": "",
+        "mailing_address_city": "Syracuse",
+        "mailing_address_state": "NY",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+    model = NYPropertyAssessment(**data)
+    assert not model.is_owner_occupied()
+
+
+def test_is_owner_occupied_with_normalization():
+    data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse ",  # Trailing space in municipality_name
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_number": "833 ",
+        "parcel_address_street": "hIawatha",  # Mixed case
+        "parcel_address_suff": " BLVD",  # Leading/trailing space & case difference
+        "mailing_address_number": "833",
+        "mailing_address_street": "Hiawatha",
+        "mailing_address_suff": "Blvd",
+        "mailing_address_city": "syracuse",
+        "mailing_address_state": "ny",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+    model = NYPropertyAssessment(**data)
+    assert model.is_owner_occupied()
+
+
+def test_to_properties_row_with_full_and_partial_addresses():
+    # Full mailing address, owner-occupied
+    data_full = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_number": "800",
+        "parcel_address_street": "Main St",
+        "mailing_address_number": "800",
+        "mailing_address_street": "Main St",
+        "mailing_address_city": "Syracuse",
+        "mailing_address_state": "NY",
+        "mailing_address_zip": "13000",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+    model_full = NYPropertyAssessment(**data_full)
+    properties_row_full = model_full.to_properties_row()
+    assert properties_row_full["address_zip"] == "13000"
+
+    # Missing mailing address fields, not owner-occupied
+    data_partial = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "property_class": "311",
+        "property_class_description": "Residential Vacant Land",
+        "print_key_code": "001.1-01-21.0",
+        "parcel_address_number": "800",
+        "parcel_address_street": "Main St",
+        "mailing_address_city": "Syracuse",
+        "mailing_address_state": "NY",
+        "mailing_address_zip": "13000",
+        "front": "29",
+        "depth": "111.7",
+        "full_market_value": "9760"
+    }
+    model_partial = NYPropertyAssessment(**data_partial)
+    properties_row_partial = model_partial.to_properties_row()
+    assert properties_row_partial["address_zip"] is None
+
+
+def test_is_owner_occupied_mixed_cities():
+    data = {
+        "roll_year": "2024",
+        "county_name": "Onondaga",
+        "municipality_code": "311500",
+        "municipality_name": "Syracuse",
+        "school_district_code": "311500",
+        "school_district_name": "Syracuse",
+        "swis_code": "311500",
+        "roll_section": "1",
+        "property_class": "210",
+        "property_class_description": "One Family Year-Round Residence",
+        "print_key_code": "002.-04-04.0",
+        "parcel_address_number": "1305",
+        "parcel_address_street": "Carbon",
+        "parcel_address_suff": "St",
+        "front": "29",
+        "depth": "99",
+        "mailing_address_number": "1305",
+        "mailing_address_street": "Carbon",
+        "mailing_address_suff": "St",
+        "mailing_address_city": "Fayetteville",  # Does not match municipality_name
+        "mailing_address_state": "NY",
+        "mailing_address_zip": "13208",
+        "full_market_value": "62080"
+    }
+    model = NYPropertyAssessment(**data)
+    assert not model.is_owner_occupied()
+    properties_row = model.to_properties_row()
+    assert properties_row["address_zip"] is None
+
+    # Fix the mismatch
+    data["mailing_address_city"] = "Syracuse"
+    model = NYPropertyAssessment(**data)
+    assert model.is_owner_occupied()
+    properties_row = model.to_properties_row()
+    assert properties_row["address_zip"] == "13208"
 
 
 def test_generate_county_name_removes_county_suffix_from_zhvi_model():

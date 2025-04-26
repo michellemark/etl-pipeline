@@ -98,6 +98,30 @@ class NYPropertyAssessment(BaseModel):
         default=None,
         description="Street suffix associated with physical location of property."
     )
+    mailing_address_number: Optional[str] = Field(
+        default=None,
+        description="Street number of owner's mailing address."
+    )
+    mailing_address_street: Optional[str] = Field(
+        default=None,
+        description="Street name of owner's mailing address."
+    )
+    mailing_address_suff: Optional[str] = Field(
+        default=None,
+        description="Street suffix of owner's mailing address."
+    )
+    mailing_address_city: Optional[str] = Field(
+        default=None,
+        description="City of owner's mailing address."
+    )
+    mailing_address_state: Optional[str] = Field(
+        default=None,
+        description="City of owner's mailing address."
+    )
+    mailing_address_zip: Optional[str] = Field(
+        default=None,
+        description="Zipcode of owner's mailing address."
+    )
     front: int | float = Field(
         ge=0,
         description="The width of the parcel from the front in feet."
@@ -159,6 +183,36 @@ class NYPropertyAssessment(BaseModel):
         """All properties are in New York."""
         return NYPropertyAssessment.STATE
 
+    def is_owner_occupied(self) -> bool:
+        """
+        Determines if a property is owner-occupied by comparing the
+        parcel address to the owner's mailing address. All components
+        of the addresses (number, street, suffix, city, state) must match.
+        """
+
+        def normalize(value: Optional[str]) -> str:
+            """Normalize address components to handle empty strings, None, and whitespace."""
+            return value.strip().lower() if value else ""
+
+        parcel_number = normalize(self.parcel_address_number)
+        parcel_street = normalize(self.parcel_address_street)
+        parcel_suffix = normalize(self.parcel_address_suff)
+        parcel_city = normalize(self.municipality_name)
+        parcel_state = normalize(self.STATE)
+        mailing_number = normalize(self.mailing_address_number)
+        mailing_street = normalize(self.mailing_address_street)
+        mailing_suffix = normalize(self.mailing_address_suff)
+        mailing_city = normalize(self.mailing_address_city)
+        mailing_state = normalize(self.mailing_address_state)
+
+        return (
+                parcel_number == mailing_number
+                and parcel_street == mailing_street
+                and parcel_suffix == mailing_suffix
+                and parcel_city == mailing_city
+                and parcel_state == mailing_state
+        )
+
     def to_properties_row(self) -> dict:
         """
         Return data for a row in `properties` table from full record.
@@ -186,7 +240,8 @@ class NYPropertyAssessment(BaseModel):
             "school_district_code": self.school_district_code,
             "school_district_name": self.school_district_name,
             "address_street": self.generate_address_street(),
-            "address_state": self.generate_address_state()
+            "address_state": self.generate_address_state(),
+            "address_zip": self.mailing_address_zip if self.is_owner_occupied() else None
         }
 
     def to_ny_property_assessments_row(self) -> dict:
