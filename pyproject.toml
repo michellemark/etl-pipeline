@@ -16,7 +16,6 @@ dependencies = [
     "sodapy (>=2.2.0,<3.0.0)",
     "beautifulsoup4 (>=4.13.3,<5.0.0)",
     "pandas (>=2.2.3,<3.0.0)",
-    "notebook (>=7.3.3,<8.0.0)"
 ]
 
 [tool.poetry]
